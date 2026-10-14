@@ -2,7 +2,7 @@
 
 **Version 1.26** · Windows PowerShell 5.1 · Windows administration and diagnostics
 
-The **Cochise County IT Toolkit** is a portable, PowerShell-based utility for IT technicians who troubleshoot and document Windows workstations and servers. It provides a graphical interface and a Classic console menu for remote diagnostics, access checks, reporting, and system inventory comparisons.
+The **IT Toolkit** is a portable, PowerShell-based utility for IT technicians who troubleshoot and document Windows workstations and servers. It provides a graphical interface and a Classic console menu for remote diagnostics, access checks, reporting, and system inventory comparisons.
 
 > **Platform support:** Version 1.26 is designed for **Windows**. Its graphical interface uses Windows Presentation Foundation (WPF), and several collectors use Windows-specific management APIs. **macOS and Linux are not supported by this release.** A cross-platform edition is a potential future project.
 
@@ -123,4 +123,4 @@ Review these patterns for your own repository before adopting them; excluding al
 
 ---
 
-*Developed for Cochise County IT workflows. This README documents the v1.26 Windows release.*
+*Developed for IT workflows. This README documents the v1.26 Windows release.*
