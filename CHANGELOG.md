@@ -1,6 +1,6 @@
 # Changelog
 
-Documented changes to **Cochise County IT Toolkit** are recorded here. This file distinguishes confirmed release changes from development milestones. Dates are included only where established; historical versions have not been assigned speculative dates.
+Documented changes to **IT Toolkit** are recorded here. This file distinguishes confirmed release changes from development milestones. Dates are included only where established; historical versions have not been assigned speculative dates.
 
 The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentation Foundation (WPF); the Classic interface uses a text menu.
 
@@ -37,7 +37,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Functional validation completed during development for GUI and Classic alternate-credential diagnostics, snapshot creation and comparison, and dashboard `ADMIN$` success/failure classification.
 - Static preflight checks of the development installation passed. A separately extracted final release-package clean-install test was recommended; no completed clean-install result has been documented here.
 
-## [1.25.7] — 2026-10-14
+## [1.25.7]
 
 **Protected stable baseline before v1.26 development.**
 
@@ -48,7 +48,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Restored and validated detection of x64 Sysinternals tools.
 - Used as the known-working rollback baseline while v1.26 was developed in a separate copy.
 
-## [1.25.0–1.25.6] — Development series, October 2026
+## [1.25.0–1.25.6] — Development series
 
 **Progressive introduction of the graphical toolkit.** Individual patch-level feature attribution within this range is not fully documented in the available historical material.
 
@@ -57,7 +57,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Replaced the initial GUI placeholder with a functional desktop interface for targets, diagnostics, tools, reports, and settings.
 - Iterated on target selection, Favorites, custom external tools, report browsing, snapshot comparisons, and general UI integration.
 
-## [1.24] — October 2026
+## [1.24]
 
 **Modularized the Classic toolkit.**
 
@@ -69,7 +69,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.0–1.23] — Original Classic development (historical entries)
 
-The entries below are preserved from the project's **Master Version Changelog**, established October 12, 2026. They record the individual milestones as documented at that time. Earlier release dates are not specified in the source, so none are inferred here. The original document identified v1.23 as the frozen stable baseline **at that time**; it has since been superseded by v1.26.
+The entries below are preserved from the project's **Master Version Changelog**. They record the individual milestones as documented at that time.
 
 ### [1.0] — Initial Toolkit
 
@@ -77,35 +77,35 @@ The entries below are preserved from the project's **Master Version Changelog**,
 - Established the menu-driven interface for administrative and troubleshooting utilities.
 - Began organizing commonly used tools and diagnostic functions into one application.
 
-### [1.1] — PortQry Integration
+### [1.01] — PortQry Integration
 
 - Added support for Microsoft's PortQry utility.
 - Expanded the toolkit's network troubleshooting capabilities.
 - Continued organizing external troubleshooting utilities within the menu system.
 
-### [1.2] — Menu Improvements
+### [1.02] — Menu Improvements
 
 - Improved descriptions of available tools and submenu options.
 - Separated functionality into more clearly identified sections.
 - Improved menu readability and navigation.
 
-### [1.3] — Utility Organization
+### [1.03] — Utility Organization
 
 - Continued improvements to menu spacing and organization.
 - Added or improved access to Active Directory Explorer.
 - Refined the presentation of the available utilities.
 
-### [1.4] — PortQry Configuration
+### [1.04] — PortQry Configuration
 
 - Expanded PortQry configuration and management.
 - Improved the way external utility settings were handled.
 
-### [1.5] — Target and Settings Separation
+### [1.05] — Target and Settings Separation
 
 - Improved separation between target computer selection and toolkit configuration.
 - Refined the workflow for choosing remote systems and managing settings.
 
-### [1.6] — Reporting Foundation
+### [1.06] — Reporting Foundation
 
 - Introduced or substantially expanded the diagnostic reporting system.
 - Added the ability to run a comprehensive, all-in-one report.
@@ -113,19 +113,19 @@ The entries below are preserved from the project's **Master Version Changelog**,
 - Established the foundation for the reporting features developed in subsequent releases.
 
 
-### [1.7] — Administrative Access Checks
+### [1.07] — Administrative Access Checks
 
 - Improved remote administrative access testing.
 - Added cached or manually initiated access checks to reduce unnecessary repeated testing.
 - Refined remote target handling and diagnostic readiness checks.
 
-### [1.8] — User, Group, and Share Reporting
+### [1.08] — User, Group, and Share Reporting
 
 - Expanded diagnostic coverage for local user accounts.
 - Improved local group and group membership reporting.
 - Added or enhanced shared resource inventories.
 
-### [1.9] — Comprehensive Diagnostic Coverage
+### [1.09] — Comprehensive Diagnostic Coverage
 
 - Expanded reporting toward the full set of approximately 20 diagnostic sections.
 - Added or improved permission reporting, including share and NTFS access information.
