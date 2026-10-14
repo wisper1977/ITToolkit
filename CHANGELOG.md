@@ -1,6 +1,6 @@
 # Changelog
 
-All notable documented changes to **Cochise County IT Toolkit** are recorded here. This file distinguishes confirmed release changes from development milestones. Dates are included only where established; historical versions have not been assigned speculative dates.
+All notable documented changes to **IT Toolkit** are recorded here. This file distinguishes confirmed release changes from development milestones. Dates are included only where established; historical versions have not been assigned speculative dates.
 
 The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentation Foundation (WPF); the Classic interface uses a text menu.
 
