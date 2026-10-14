@@ -1,6 +1,6 @@
 # Changelog
 
-All notable documented changes to **IT Toolkit** are recorded here. This file distinguishes confirmed release changes from development milestones. Dates are included only where established; historical versions have not been assigned speculative dates.
+Documented changes to **Cochise County IT Toolkit** are recorded here. This file distinguishes confirmed release changes from development milestones. Dates are included only where established; historical versions have not been assigned speculative dates.
 
 The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentation Foundation (WPF); the Classic interface uses a text menu.
 
@@ -37,7 +37,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Functional validation completed during development for GUI and Classic alternate-credential diagnostics, snapshot creation and comparison, and dashboard `ADMIN$` success/failure classification.
 - Static preflight checks of the development installation passed. A separately extracted final release-package clean-install test was recommended; no completed clean-install result has been documented here.
 
-## [1.25.7]
+## [1.25.7] — 2026-10-14
 
 **Protected stable baseline before v1.26 development.**
 
@@ -48,7 +48,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Restored and validated detection of x64 Sysinternals tools.
 - Used as the known-working rollback baseline while v1.26 was developed in a separate copy.
 
-## [1.25.0–1.25.6] — Development series
+## [1.25.0–1.25.6] — Development series, October 2026
 
 **Progressive introduction of the graphical toolkit.** Individual patch-level feature attribution within this range is not fully documented in the available historical material.
 
@@ -57,7 +57,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Replaced the initial GUI placeholder with a functional desktop interface for targets, diagnostics, tools, reports, and settings.
 - Iterated on target selection, Favorites, custom external tools, report browsing, snapshot comparisons, and general UI integration.
 
-## [1.24] 
+## [1.24] — October 2026
 
 **Modularized the Classic toolkit.**
 
@@ -67,13 +67,182 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Preserved the established Classic menus, diagnostic tools, reporting, and snapshot/comparison functionality.
 - Retained v1.23 as the fallback during validation.
 
-## [1.0–1.23] — Earlier development history
+## [1.0–1.23] — Original Classic development (historical entries)
 
-**Original Classic PowerShell toolkit and subsequent iterations.**
+The entries below are preserved from the project's **Master Version Changelog**, established October 12, 2026. They record the individual milestones as documented at that time. Earlier release dates are not specified in the source, so none are inferred here. The original document identified v1.23 as the frozen stable baseline **at that time**; it has since been superseded by v1.26.
 
-The original project progressed through numbered releases v1.0–v1.23 before the documented v1.24 modularization. Earlier work established the Classic menu-driven troubleshooting utility and the diagnostics/reporting/snapshot functionality carried forward into v1.24.
+### [1.0] — Initial Toolkit
 
-A historical master changelog covering v1.0–v1.23 was reportedly maintained during development, but its version-by-version entries are not presently available for independent verification. Rather than assign changes to the wrong versions, this section intentionally remains a historical summary until that original changelog is recovered.
+- Created the original PowerShell-based IT Toolkit.
+- Established the menu-driven interface for administrative and troubleshooting utilities.
+- Began organizing commonly used tools and diagnostic functions into one application.
+
+### [1.1] — PortQry Integration
+
+- Added support for Microsoft's PortQry utility.
+- Expanded the toolkit's network troubleshooting capabilities.
+- Continued organizing external troubleshooting utilities within the menu system.
+
+### [1.2] — Menu Improvements
+
+- Improved descriptions of available tools and submenu options.
+- Separated functionality into more clearly identified sections.
+- Improved menu readability and navigation.
+
+### [1.3] — Utility Organization
+
+- Continued improvements to menu spacing and organization.
+- Added or improved access to Active Directory Explorer.
+- Refined the presentation of the available utilities.
+
+### [1.4] — PortQry Configuration
+
+- Expanded PortQry configuration and management.
+- Improved the way external utility settings were handled.
+
+### [1.5] — Target and Settings Separation
+
+- Improved separation between target computer selection and toolkit configuration.
+- Refined the workflow for choosing remote systems and managing settings.
+
+### [1.6] — Reporting Foundation
+
+- Introduced or substantially expanded the diagnostic reporting system.
+- Added the ability to run a comprehensive, all-in-one report.
+- Added individual diagnostic reports for targeted troubleshooting.
+- Established the foundation for the reporting features developed in subsequent releases.
+
+
+### [1.7] — Administrative Access Checks
+
+- Improved remote administrative access testing.
+- Added cached or manually initiated access checks to reduce unnecessary repeated testing.
+- Refined remote target handling and diagnostic readiness checks.
+
+### [1.8] — User, Group, and Share Reporting
+
+- Expanded diagnostic coverage for local user accounts.
+- Improved local group and group membership reporting.
+- Added or enhanced shared resource inventories.
+
+### [1.9] — Comprehensive Diagnostic Coverage
+
+- Expanded reporting toward the full set of approximately 20 diagnostic sections.
+- Added or improved permission reporting, including share and NTFS access information.
+- Expanded reporting formats and diagnostic output.
+- Improved coverage of system configuration, security, and remote administration information.
+
+### [1.10] — Diagnostic Status and Fallback Improvements
+
+- Introduced clearer diagnostic execution statuses.
+- Distinguished successful queries from queries returning no results.
+- Improved reporting of inaccessible or unavailable diagnostic sources.
+- Added more resilient Event Log query fallback behavior.
+- Improved BitLocker detection using alternative query methods.
+- Clarified that successful data collection does not necessarily mean a system is healthy.
+
+
+### [1.11] — Configuration and Snapshot Improvements
+
+- Migrated toolkit configuration to `Toolkit-config.json`.
+- Added Sysinternals utility auto-detection with support for manual configuration.
+- Improved portable launcher and deployment behavior.
+- Expanded diagnostic snapshots and comparison functionality.
+- Improved service configuration capture and comparison details.
+- Continued centralizing configuration values rather than hardcoding them.
+
+### [1.12] — HTML Reporting Improvements
+
+- Added improved color-coded HTML diagnostic output.
+- Made success, warning, error, and unavailable statuses easier to distinguish.
+- Added or improved the ability to open generated HTML reports after saving.
+- Improved the readability of generated diagnostic reports.
+
+### [1.13] — Menu and Settings Refinement
+
+- Reorganized menu numbering into a more consistent sequential structure.
+- Centralized settings and configuration options.
+- Improved general navigation through the toolkit.
+- Preserved existing diagnostics and reporting capabilities.
+
+
+### [1.14] — Scheduled Tasks and Comparison Fixes
+
+- Fixed Scheduled Tasks reporting that incorrectly returned `NO RESULTS`.
+- Improved BitLocker status reporting when required providers or features were unavailable.
+- Prevented unavailable BitLocker queries from being mistaken for an unencrypted system.
+- Corrected JSON snapshot comparison totals and summary calculations.
+
+### [1.15] — Remote IP Configuration
+
+- Added remote `ipconfig /all` collection to the Network Report.
+- Used PowerShell Remoting when available.
+- Added fallback collection through Windows management interfaces.
+- Ensured the reported configuration came from the target computer rather than the technician's workstation.
+
+### [1.16] — Service Comparison Improvements
+
+- Improved detection of service status and startup configuration changes.
+- Verified that comparisons could identify a service changing from `Running / Automatic` to `Stopped / Manual`.
+- Continued validating network and scheduled task reporting.
+
+### [1.17] — Scheduled Tasks Summary
+
+- Improved Scheduled Tasks inventory accuracy and summary counts.
+- Normalized placeholder dates to indicate tasks that had never run.
+- Added clearer summaries of nonzero task results.
+- Introduced a count of scheduled task results needing review.
+- Improved task table output without omitting entries from the full inventory.
+
+### [1.18] — Scheduled Task Result Explanations
+
+- Added human-readable descriptions for recognized Scheduled Task result codes.
+- Preserved original numeric result codes for troubleshooting.
+- Distinguished standard Task Scheduler informational results from potentially problematic results.
+- Avoided classifying every nonzero result as a confirmed failure.
+- Added explanations for unmapped or task-specific codes.
+
+
+### [1.19] — HTML Report Redesign
+
+- Redesigned the HTML report presentation.
+- Added section bookmarks for navigating large reports.
+- Added collapsible and expandable diagnostic sections.
+- Improved Scheduled Tasks tables with defined columns.
+- Preserved task result descriptions and rows requiring review.
+- Improved overall formatting without changing diagnostic collection behavior.
+
+### [1.20] — Multi-Column Bookmarks
+
+- Replaced the single flowing bookmark list with a responsive grid.
+- Added four-column navigation on wider displays.
+- Added automatic adjustment to three, two, or one column on smaller displays.
+- Preserved existing section links and collapsible report sections.
+
+### [1.21] — Alternating Row Colors
+
+- Removed unnecessary text separator lines from generated HTML reports.
+- Introduced alternating light-blue row backgrounds for text-based report sections.
+- Improved readability when following long lines of diagnostic information.
+- Preserved green, yellow, and red diagnostic highlighting.
+- Extended consistent alternating row formatting to Scheduled Tasks tables.
+- Left TXT, CSV, JSON, and diagnostic collection behavior unchanged.
+
+### [1.22] — Improved Color Contrast
+
+- Darkened alternating blue report rows to `#C9E0F8`.
+- Improved visibility on displays where the previous shading was difficult to distinguish.
+- Strengthened Scheduled Tasks row hover highlighting.
+- Preserved warning, error, success, and unavailable status colors.
+- Verified the updated appearance using a newly generated Complete Report.
+
+### [1.23] — Back to Top Navigation
+
+- Added a `Back to Top` link to HTML report sections.
+- Allowed technicians to return quickly to the title and bookmark navigation.
+- Hid navigation links from printed reports.
+- Preserved the existing responsive bookmarks, collapsible sections, and alternating row formatting.
+- Confirmed that Back to Top navigation worked during testing.
 
 ## Release history policy
 
