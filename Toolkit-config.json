@@ -1,0 +1,17 @@
+{
+    "Version":  "1.26",
+    "SysinternalsPath":  "Auto",
+    "PortQryPath":  "C:\\PortQryV2\\portqry.exe",
+    "ReportFolder":  "Reports",
+    "ReportFormat":  "HTML",
+    "AuthenticationDomain":  "COCHISE",
+    "Branding":  {
+                     "OrganizationName":  "Cochise County",
+                     "ApplicationName":  "IT Toolkit",
+                     "LogoPath":  "Branding\\Logo.png",
+                     "LoginImagePath":  "Branding\\LoginBackground.png",
+                     "AppIconPath":  "Branding\\AppIcon.ico",
+                     "PrimaryColor":  "#17365D",
+                     "AccentColor":  "#3673AE"
+                 }
+}
