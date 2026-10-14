@@ -1,6 +1,1 @@
-# Keep the Reports folder, but ignore generated reports
-Reports/*
-!Reports/.gitkeep
 
-# Ignore snapshot files anywhere in the repository
-*.snapshot.json
