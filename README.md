@@ -1,4 +1,4 @@
-# Cochise County IT Toolkit
+# IT Toolkit
 
 **Version 1.26** · Windows PowerShell 5.1 · Windows administration and diagnostics
 
