@@ -83,24 +83,6 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 - The `ADMIN$` check uses SMB; existing sessions and credential conflicts can affect its result. Avoid disrupting pre-existing SMB connections.
 - Review the repository contents and branding before publishing. The included configuration contains **Cochise County-specific defaults** and should be adapted for other environments.
 
-### Recommended `.gitignore`
-
-If you publish the source, consider excluding generated files and local settings:
-
-```gitignore
-Reports/*
-!Reports/.gitkeep
-*.snapshot.json
-*.html
-*.csv
-*.log
-*.tmp
-*.bak
-.DS_Store
-```
-
-Review these patterns for your own repository before adopting them; excluding all HTML or CSV files may be too broad if you later add documentation samples.
-
 ## Current limitations
 
 - Windows PowerShell 5.1 and WPF are Windows-specific; this is **not** a native MacBook application.
@@ -116,10 +98,6 @@ Review these patterns for your own repository before adopting them; excluding al
 - Integrated credential-aware access checking for WMI, WinRM, and `ADMIN$`.
 - Improved GUI and Classic reporting and result-status presentation.
 - Added GUI and Classic snapshot creation with structured JSON comparisons.
-
-## License and attribution
-
-**No license is specified in this README.** Before making the repository public, select an appropriate license and confirm you have permission to publish the source code, organization name, logos, and other included assets. Without a license, others generally do not receive permission to reuse or redistribute the code.
 
 ---
 
