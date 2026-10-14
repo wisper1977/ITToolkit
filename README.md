@@ -100,5 +100,13 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 - Added GUI and Classic snapshot creation with structured JSON comparisons.
 
 ---
+## License
+
+Cochise County IT Toolkit is licensed under the
+GNU General Public License, Version 2.0 (GPL-2.0-only).
+
+Copyright (C) 2026 [Copyright Holder]
+
+See the [LICENSE](LICENSE) file for the full license text.
 
 *Developed for IT workflows. This README documents the v1.26 Windows release.*
