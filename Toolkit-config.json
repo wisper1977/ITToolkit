@@ -4,9 +4,9 @@
     "PortQryPath":  "C:\\PortQryV2\\portqry.exe",
     "ReportFolder":  "Reports",
     "ReportFormat":  "HTML",
-    "AuthenticationDomain":  "COCHISE",
+    "AuthenticationDomain":  "YOURDOMAIN",
     "Branding":  {
-                     "OrganizationName":  "Cochise County",
+                     "OrganizationName":  "Your Organization",
                      "ApplicationName":  "IT Toolkit",
                      "LogoPath":  "Branding\\Logo.png",
                      "LoginImagePath":  "Branding\\LoginBackground.png",
