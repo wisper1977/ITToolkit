@@ -68,7 +68,7 @@ ITToolKit/
 ├── Toolkit-config.json
 ├── Branding/
 ├── Modules/
-└── Reports/            # Generated report output; do not commit reports
+└── Reports/
 ```
 
 The release distribution may omit development test scripts. They are not required for routine use.
@@ -99,6 +99,7 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 - Improved GUI and Classic reporting and result-status presentation.
 - Added GUI and Classic snapshot creation with structured JSON comparisons.
 
+See the [complete changelog](CHANGELOG.md) for the development history from v1.0 through v1.26.
 ---
 ## License
 
