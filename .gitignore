@@ -1,0 +1,42 @@
+
+# Cochise County IT Toolkit
+# Generated diagnostic reports
+Reports/
+reports/
+*.snapshot.json
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+*.bak
+*.old
+*.swp
+*~
+
+# PowerShell transcripts
+*transcript*.txt
+
+# Editor and IDE settings
+.vscode/
+.idea/
+.vs/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Development and testing output
+TestResults/
+coverage/
+
+# Local configuration backups
+Toolkit-config.local.json
+Toolkit-config.*.backup.json
+
+# Credentials and sensitive exports
+*.credential.xml
+*.clixml
+*.pfx
+*.key
