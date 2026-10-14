@@ -37,7 +37,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Functional validation completed during development for GUI and Classic alternate-credential diagnostics, snapshot creation and comparison, and dashboard `ADMIN$` success/failure classification.
 - Static preflight checks of the development installation passed. A separately extracted final release-package clean-install test was recommended; no completed clean-install result has been documented here.
 
-## [1.25.7] — 2026-10-14
+## [1.25.7]
 
 **Protected stable baseline before v1.26 development.**
 
@@ -48,7 +48,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Restored and validated detection of x64 Sysinternals tools.
 - Used as the known-working rollback baseline while v1.26 was developed in a separate copy.
 
-## [1.25.0–1.25.6] — Development series, October 2026
+## [1.25.0–1.25.6] — Development series
 
 **Progressive introduction of the graphical toolkit.** Individual patch-level feature attribution within this range is not fully documented in the available historical material.
 
@@ -57,7 +57,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Replaced the initial GUI placeholder with a functional desktop interface for targets, diagnostics, tools, reports, and settings.
 - Iterated on target selection, Favorites, custom external tools, report browsing, snapshot comparisons, and general UI integration.
 
-## [1.24] — October 2026
+## [1.24] 
 
 **Modularized the Classic toolkit.**
 
