@@ -105,7 +105,7 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 Cochise County IT Toolkit is licensed under the
 GNU General Public License, Version 2.0 (GPL-2.0-only).
 
-Copyright (C) 2026 [Copyright Holder]
+Copyright (C) 2026 Chris Collins
 
 See the [LICENSE](LICENSE) file for the full license text.
 
