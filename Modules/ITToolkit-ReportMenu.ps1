@@ -58,18 +58,33 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
     $results = New-Object System.Collections.Generic.List[object]
     foreach ($section in $Sections) {
         Write-Host "Collecting $section ..." -ForegroundColor Cyan
-        try { $content = [string](Get-ReportSection $section $target) }
-        catch { $content = "UNAVAILABLE / ACCESS DENIED / ERROR: $($_.Exception.Message)" }
-        $status = Get-SectionStatus $section $content
+        if ($script:LocalTargetMode) {
+            if ($section -notin @('System','Firewall')) {
+                $status = 'NOT TESTED'
+                $content = 'Error details: Direct-local collection is not implemented for this section yet.'
+            } else {
+                $localResult = Get-ToolkitLocalDiagnostic -Section $section
+                $status = [string]$localResult.Status
+                $parts = New-Object System.Collections.Generic.List[string]
+                $parts.Add("Status category: $($localResult.StatusCategory)")
+                if ($localResult.Error) { $parts.Add("Error details: $($localResult.Error)") }
+                foreach ($record in @($localResult.Data)) { $parts.Add(($record | Format-List * | Out-String -Width 200).TrimEnd()) }
+                $content = $parts -join "`r`n"
+            }
+        } else {
+            try { $content = [string](Get-ReportSection $section $target) }
+            catch { $content = "Error details: $($_.Exception.Message)" }
+            $status = Get-SectionStatus $section $content
+        }
         $results.Add([pscustomobject]@{ Section=$section; Status=$status; Content=$content })
     }
     $lines = New-Object System.Collections.Generic.List[string]
-    $lines.Add("$($script:ToolkitDisplayName.ToUpperInvariant()) v$script:ToolkitVersion - REMOTE DIAGNOSTIC REPORT")
+    $lines.Add("$($script:ToolkitDisplayName.ToUpperInvariant()) v$script:ToolkitVersion - $(if ($script:LocalTargetMode) {'LOCAL'} else {'REMOTE'}) DIAGNOSTIC REPORT")
     $lines.Add("Report: $Label")
     $lines.Add("Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')")
     $lines.Add("Technician account: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)")
     $lines.Add("Target hostname: $target")
-    $lines.Add("Target IPv4: $(Resolve-TargetIPv4 $target)")
+    $lines.Add("Target IPv4: $(if ($script:LocalTargetMode) {'(not needed for local collection)'} else {Resolve-TargetIPv4 $target})")
     $lines.Add('Read-only queries. UNAVAILABLE does not establish that an issue does not exist.')
     $lines.Add('SUCCESS means a query returned successfully, not that configuration is healthy.')
     $lines.Add('')
@@ -82,6 +97,7 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
         $lines.Add(('=' * 68))
         $lines.Add("$($item.Section) REPORT")
         $lines.Add("STATUS: $($item.Status)")
+        if ($script:LocalTargetMode -and $item.Status -eq 'NOT TESTED') { $lines.Add('Status category: NotTested') }
         $lines.Add(('=' * 68))
         $lines.Add($item.Content)
         $lines.Add('')
@@ -190,7 +206,7 @@ function Menu-Reports {
         if ($choice -eq 'B' -or $choice -eq '0') { return }
         if ($choice -eq '22') { Save-ClassicCollectedReport; continue }
         if ($choice -eq '23') { Menu-ReportArchive; continue }
-        if ($choice -eq '24') { New-ClassicComparisonSnapshot; continue }
+        if ($choice -eq '24') { if ($script:LocalTargetMode) { Write-Host 'Local snapshots are not yet supported. Select a remote target.' -ForegroundColor Yellow; Pause-Toolkit } else { New-ClassicComparisonSnapshot }; continue }
         if ($choice -eq '1') { Save-DiagnosticReport $all 'Complete'; continue }
         if ($options.ContainsKey($choice)) {
             $sections = $options[$choice]
