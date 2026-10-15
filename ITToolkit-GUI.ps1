@@ -1241,7 +1241,7 @@ $script:DiagnosticTimer.Add_Tick({
                     @{Name='HealthServicesDetail'; Check='AutomaticServices'; Title='Services'},
                     @{Name='HealthEventsDetail'; Check='RecentSystemEvents'; Title='Events'}
                 )) {
-                    $pattern = '(?m)^\\[(Review|Observed|Unavailable)\\] ' + [regex]::Escape($entry.Check) + ': ([^\\r\\n]*)'
+                    $pattern = '(?m)^\[(Review|Observed|Unavailable)\] ' + [regex]::Escape($entry.Check) + ': ([^\r\n]*)'
                     $finding = [regex]::Match($ui.DiagnosticOutput.Text, $pattern)
                     $ui[$entry.Name].Text = if ($finding.Success) {
                         $entry.Title + ': ' + $finding.Groups[1].Value + ' — ' + $finding.Groups[2].Value
