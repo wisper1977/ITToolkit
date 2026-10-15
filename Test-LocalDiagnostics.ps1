@@ -3,7 +3,7 @@
 # Change the default Section when the next collector is ready to test.
 [CmdletBinding()]
 param(
-    [string]$Section = 'BitLocker'
+    [string]$Section = 'Sessions'
 )
 
 $ErrorActionPreference = 'Stop'
