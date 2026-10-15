@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks, Events and Startup validated locally; BitLocker permission path verified; Sessions newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks, Events, Startup and Sessions validated locally; BitLocker permission path verified; Policy newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -172,3 +172,7 @@ These have no assigned milestone or implementation commitment:
 **BitLocker negative-path verification (2026-10-15):** The local collector returned ACCESS DENIED / AccessDenied; proper failure reporting verified, successful volume-status enumeration not yet tested.
 
 **Sessions newly implemented (Windows verification pending):** Local `quser.exe` inventory enabled in shared GUI/Classic collector and selected as smoke-test default. Interface/output/report validation pending.
+
+**Sessions Windows validation (2026-10-15):** GUI and Classic local session output and HTML save/open confirmed, showing active console session under current identity.
+
+**Local Policy increment (Windows validation pending):** Shared local collector invokes `gpresult.exe /SCOPE COMPUTER /R` and preserves exit-code failure reporting. Both interfaces now route Policy locally and the smoke-test defaults to Policy. No Group Policy refresh or change is performed. Windows collector, UI, saved HTML, restricted/no-RSoP and remote regression tests remain pending.
