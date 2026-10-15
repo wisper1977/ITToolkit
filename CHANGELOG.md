@@ -6,6 +6,14 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### v1.27 — Explicit CurrentUser RemoteSigned option for UAC diagnostics (Windows testing pending, 2026-10-15)
+
+- Wired the existing optional execution-policy adjustment into both GUI and Classic local BitLocker/Policy UAC workflows, using a **separate explicit confirmation**. GUI approval choices allow or decline the persistent policy change; Cancel stops collection. Classic asks before UAC retry.
+- When explicitly authorized, an elevated administrator account with effective `Restricted` PowerShell policy can set its own persistent **CurrentUser** policy to `RemoteSigned`, provided MachinePolicy and UserPolicy are confirmed Undefined. No change to computer-wide policy or the initiating standard-user identity. Without approval, the diagnostic attempts its existing execution path and reports any block.
+- Records elevated collection identity and effective execution-policy before/after, including whether policy was changed; a subsequent child failure reports the account-level change where possible. Fixed execution-policy scope inspection to use actual Scope/ExecutionPolicy rows rather than property names on the result array.
+- **Not Windows-validated:** domain credential UAC, approved/declined policy paths, script execution after change, GUI and Classic reports, and regression/security testing. Production main not modified.
+
+
 ### GUI direct Edge report-opening compatibility (2026-10-15)
 
 - Follow-up to the shell `Open` verb attempt: that change did not resolve the reported GUI symptom on the affected workstation. HTML reports now use an explicit Edge executable and file URI when Edge is installed; otherwise the Windows `Open` verb remains the fallback. Recent reports and the Reports archive share this implementation.
