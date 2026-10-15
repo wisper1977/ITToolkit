@@ -92,34 +92,57 @@ while ($true) {
     Write-Host ' 7 Change Target Computer - Select a new remote computer'
     Write-Host ' 8 Clear Target Computer  - Remove selected computer'
     Write-Host ' 9 Recheck Admin Access    - Rerun admin share permission test'
-    Write-Host '13 Use Local Computer     - Direct System and Firewall diagnostics'
+    Write-Host '10 Use Local Computer    - Direct System, Firewall and Services reports'
     Write-Host '------------------------------------------------------------' -ForegroundColor DarkGray
     Write-Host ' SETTINGS' -ForegroundColor Yellow
-    Write-Host '10 Toolkit Settings       - Manage all application settings'
-    Write-Host '11 Tools                  - Shared catalog, Favorites and downloads'
-    Write-Host '12 Target Credentials     - Select and test remote identity'
+    Write-Host '11 Toolkit Settings       - Manage all application settings'
+    Write-Host '12 Tools                  - Shared catalog, Favorites and downloads'
+    Write-Host '13 Target Credentials     - Select and test remote identity'
     Write-Host " Authentication: $script:ToolkitAuthMode $script:ToolkitAuthUserName" -ForegroundColor Cyan
     Write-Host " Collection mode: $(if ($script:LocalTargetMode) {'Local (current identity)'} else {'Remote'})" -ForegroundColor Cyan
     Write-Host '------------------------------------------------------------' -ForegroundColor DarkGray
+    Write-Host ' INTERFACE' -ForegroundColor Yellow
+    Write-Host '14 Switch to GUI         - Open graphical interface as current user'
     Write-Host ' B Refresh main menu'
     Write-Host '------------------------------------------------------------' -ForegroundColor DarkGray
     Write-Host ' 0 Exit'
     Write-Host ''
     $choice=(Read-Host 'Choose').Trim().ToUpperInvariant()
     switch ($choice) {
-        '1' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-Sysinternals } }
-        '2' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-Network } }
-        '3' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-Windows } }
-        '4' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-AD } }
+        '1' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall/Services reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-Sysinternals } }
+        '2' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall/Services reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-Network } }
+        '3' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall/Services reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-Windows } }
+        '4' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall/Services reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-AD } }
         '5' { Menu-Reports }
         '6' { Menu-Comparison } # offline file comparison; no remote identity required
         '7' { Reset-ClassicAlternateCredential; Change-Target }
         '8' { Reset-ClassicAlternateCredential; $script:LocalTargetMode=$false; $script:TargetComputer=$null; $script:TargetIPv4='(not selected)'; $script:AdminStatus='Not checked'; $script:AdminDetail='Select a target to run an access check.'; $script:AdminCheckedAt=$null }
         '9' { if ($script:LocalTargetMode) { Write-Host 'ADMIN$ check does not apply to direct-local collection.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (-not (Assert-ClassicDefaultAuthentication)) { continue }; if ($script:TargetComputer) { Test-RemoteAdminAccess; Write-Host $script:AdminDetail; Pause-Toolkit } else { Write-Host 'Select a target first.' -ForegroundColor Yellow; Pause-Toolkit } }
-        '10' { Menu-Settings }
-        '11' { Menu-ClassicCatalog }
-        '12' { if ($script:LocalTargetMode) { Write-Host 'Alternate-admin local collection is not yet implemented. Switch to remote target mode first.' -ForegroundColor Yellow; Pause-Toolkit } else { Set-ClassicTargetCredential } }
-        '13' { Reset-ClassicAlternateCredential; $script:LocalTargetMode=$true; $script:TargetComputer=[string]$env:COMPUTERNAME; $script:TargetIPv4='(local collection)'; $script:AdminStatus='Local mode'; $script:AdminDetail='Direct local System and Firewall only; other sections and snapshots are not yet supported.'; $script:AdminCheckedAt=$null }
+        '11' { Menu-Settings }
+        '12' { Menu-ClassicCatalog }
+        '13' { if ($script:LocalTargetMode) { Write-Host 'Alternate-admin local collection is not yet implemented. Switch to remote target mode first.' -ForegroundColor Yellow; Pause-Toolkit } else { Set-ClassicTargetCredential } }
+        '10' { Reset-ClassicAlternateCredential; $script:LocalTargetMode=$true; $script:TargetComputer=[string]$env:COMPUTERNAME; $script:TargetIPv4='(local collection)'; $script:AdminStatus='Local mode'; $script:AdminDetail='Direct local System, Firewall and Services; other sections and snapshots are not yet supported.'; $script:AdminCheckedAt=$null }
+        '14' {
+            $guiScript = Join-Path $script:ToolkitRoot 'ITToolkit-GUI.ps1'
+            if (-not (Test-Path -LiteralPath $guiScript -PathType Leaf)) {
+                Write-Host 'GUI script was not found; staying in Classic.' -ForegroundColor Yellow
+                Pause-Toolkit
+                continue
+            }
+            # This starts the GUI with the current Windows process identity, never a stored or alternate credential.
+            # Do not pass selected targets, credentials, or transient session state.
+            try {
+                $psExe = Join-Path $PSHOME 'powershell.exe'
+                $arguments = '-NoLogo -NoProfile -STA -File "' + $guiScript + '"'
+                $newProcess = Start-Process -FilePath $psExe -ArgumentList $arguments -WorkingDirectory $script:ToolkitRoot -PassThru -ErrorAction Stop
+                if ($null -eq $newProcess) { throw 'Windows did not return a process.' }
+                Reset-ClassicAlternateCredential
+                return
+            } catch {
+                Write-Host "Could not open GUI; staying in Classic: $($_.Exception.Message)" -ForegroundColor Yellow
+                Pause-Toolkit
+            }
+        }
         '0' { return }
     }
 }
