@@ -59,7 +59,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 ### v1.27C — GUI switch positioning (Windows layout retest pending)
 
 - Moved **Switch to Classic** from the primary navigation group to the bottom of the GUI left sidebar, beneath Target Computer. The sidebar now uses a three-row Grid so the switch stays bottom-aligned when the window is resized.
-- The button uses the existing click handler; interface switching, identity handling, and active-collection safeguards are unchanged. Windows GUI rendering and switch regression tests are pending.
+- The button uses the existing click handler; interface switching, identity handling, and active-collection safeguards are unchanged. Windows GUI positioning and basic switching were confirmed by the technician; broader regressions remain pending.
 
 ### v1.27C — Classic Services and interface switching (implementation; Windows switch validation pending)
 
@@ -376,3 +376,5 @@ The entries below are preserved from the project's **Master Version Changelog**.
 [1.26]: https://github.com/wisper1977/ITToolkit/releases/tag/v1.26
 
 - **GUI local Services display retest passed (2026-10-14):** The GUI report for `DESKTOP-8EHGAPD` showed Local/current-identity collection, `SUCCESS` / `Success`, all 324 queried services in the summary, and the same seven stopped automatic-start services as the independent collector test. This validates the report content and presentation only; GUI Services report save/reopen, Classic Services execution, and remote regression tests remain pending.
+
+- **Windows validation passed (2026-10-14):** Technician confirmed the relocated bottom-aligned GUI **Switch to Classic** button works as intended after pulling the updated development branch. No new code changes were needed. Remaining diagnostic/report/credential regressions are tracked separately.
