@@ -164,3 +164,5 @@ See the [LICENSE](LICENSE) file for the full license text.
 *Developed for IT workflows. This development-branch README documents v1.27 work in progress; v1.26 remains the stable Windows release.*
 
 **v1.27C Local Services collector validation (Windows-tested independently; interface tests pending):** The direct-local `Win32_Service` collector returned `SUCCESS`/`Success` with no errors on Windows workstation `DESKTOP-8EHGAPD`, querying 324 services and identifying seven automatic-start services that were not running. Findings are evidence for review, not confirmed service faults. Local GUI and Classic Services execution, report formatting/saving, and remote regression checks remain to be validated.
+
+**v1.27C GUI Local Services display validation (Windows-tested):** GUI local Services report on `DESKTOP-8EHGAPD` displayed `SUCCESS` / `Success`, 324 queried services and seven automatic-start services not running, matching the direct collector test. GUI report save/reopen for Services, Classic Services validation, and remote regression tests are still pending.
