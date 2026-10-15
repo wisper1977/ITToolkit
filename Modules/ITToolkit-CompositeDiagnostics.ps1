@@ -90,11 +90,33 @@ function Get-ToolkitCompositeDiagnostic {
                             $patches=@(Get-WmiObject Win32_QuickFixEngineering -ErrorAction Stop)
                             [pscustomobject]@{Check='Installed QFE count';Value=[string]$patches.Count;Status='SUCCESS'}
                         } catch {[pscustomobject]@{Check='Installed QFE count';Value=$_.Exception.Message;Status='UNAVAILABLE'}}
+                        try {
+                            $reasons=New-Object System.Collections.Generic.List[string]
+                            $reg=[Microsoft.Win32.RegistryKey]::OpenBaseKey(
+                                [Microsoft.Win32.RegistryHive]::LocalMachine,
+                                [Microsoft.Win32.RegistryView]::Default)
+                            try {
+                                foreach ($entry in @(
+                                    @('Component servicing','SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending'),
+                                    @('Windows Update','SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired')
+                                )) {
+                                    $key=$reg.OpenSubKey([string]$entry[1],$false)
+                                    if ($null -ne $key) { $reasons.Add([string]$entry[0]);$key.Dispose() }
+                                }
+                                $session=$reg.OpenSubKey('SYSTEM\CurrentControlSet\Control\Session Manager',$false)
+                                if ($null -eq $session) { throw 'Session Manager registry key unavailable.' }
+                                try {
+                                    $pending=$session.GetValue('PendingFileRenameOperations',$null)
+                                    if ($null -ne $pending -and @($pending).Count -gt 0) { $reasons.Add('Pending file rename operations') }
+                                } finally { $session.Dispose() }
+                            } finally { $reg.Dispose() }
+                            [pscustomobject]@{Check='Pending restart indicators';Value=($reasons -join ', ');IndicatorCount=$reasons.Count;Status='SUCCESS'}
+                        } catch {[pscustomobject]@{Check='Pending restart indicators';Value=$_.Exception.Message;Status='UNAVAILABLE'}}
                     })
                     $rows+=@($extra)
                 } catch {
                     $errors.Add('Extended remote Health: '+$_.Exception.Message)
-                    foreach ($name in @('System uptime (days)','Disabled firewall profiles','Installed QFE count')) {
+                    foreach ($name in @('System uptime (days)','Disabled firewall profiles','Installed QFE count','Pending restart indicators')) {
                         $rows += [pscustomobject]@{Check=$name;Value=$_.Exception.Message;Status='UNAVAILABLE'}
                     }
                 }
