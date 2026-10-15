@@ -6,6 +6,13 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### v1.27C — Users validated; Groups implementation (2026-10-15)
+
+- **Windows technician confirmed:** Local Users worked in GUI and Classic, and the HTML reports saved and reopened. Seven local accounts appeared with account-state fields; no security-health conclusion was drawn from disabled accounts.
+- Added read-only local `Win32_Group` enumeration for local groups (domain, name, SID, description) in the shared collector and wired GUI and Classic local collection to it. Group **membership is not included** in this increment and must not be represented as tested.
+- Set the reusable smoke test's default section to Groups. **Pending Windows tests:** direct collector, both interfaces, HTML save/open, no-data/denied cases, and remote regressions. Users CSV/TXT coverage remains pending.
+
+
 ### v1.27C — Network validated; Hardware implementation (2026-10-15)
 
 - **Windows technician confirmed:** Local Network works in GUI and Classic and its HTML report saves and opens. Two IP-enabled adapters were reported; an Ethernet adapter had a 169.254.x.x link-local address and Wi-Fi had a routable private address and gateway. These are observed configurations, not health verdicts.
