@@ -83,6 +83,20 @@ function Get-ToolkitLocalHealthAnalysis {
             }
         }
     }
+    $pendingRows = @($Result.Data | Where-Object { $_ -and [string]$_.Check -eq 'PendingRestart' } | Select-Object -First 1)
+    if ($pendingRows.Count -ne 1 -or [string]$pendingRows[0].QueryStatus -ne 'Available' -or $null -eq $pendingRows[0].IndicatorCount) {
+        $unavailable++
+        $why = if ($pendingRows.Count -eq 1 -and $pendingRows[0].Error) { [string]$pendingRows[0].Error } else { 'Restart indicators not available.' }
+        $findings.Add([pscustomobject]@{Check='PendingRestart';Level='Unavailable';Evidence=$why;NextStep='Review registry read permissions; absence of evidence is not an all-clear.'})
+    } else {
+        $available++
+        if ([int]$pendingRows[0].IndicatorCount -gt 0) {
+            $review++
+            $findings.Add([pscustomobject]@{Check='PendingRestart';Level='Review';Evidence=('Potential pending restart: ' + [string]$pendingRows[0].Indicators);NextStep='Verify servicing and operational readiness before planning a restart; no restart is performed.'})
+        } else {
+            $findings.Add([pscustomobject]@{Check='PendingRestart';Level='Observed';Evidence='No selected pending-restart registry indicators found; other reasons for restart may exist.';NextStep='This does not determine Windows Update compliance.'})
+        }
+    }
     return [pscustomobject]@{
         Target = [string]$Result.Target
         Mode = 'Local'
@@ -223,6 +237,27 @@ function Get-ToolkitRemoteHealthAnalysis {
                 }
                 $available++
                 $findings.Add([pscustomobject]@{Check=$extra.Check;Level='Observed';Evidence=("$count installed QFE entries returned; missing updates not assessed.");NextStep='Use an approved patch compliance source for missing updates.'})
+            }
+        }
+    }
+    $restartRows = @($Result.Data | Where-Object { $_ -and [string]$_.Check -eq 'Pending restart indicators' } | Select-Object -First 1)
+    if ($restartRows.Count -ne 1 -or [string]$restartRows[0].Status -ne 'SUCCESS' -or
+        -not $restartRows[0].PSObject.Properties['IndicatorCount']) {
+        $unavailable++
+        $why = if ($restartRows.Count -eq 1) { [string]$restartRows[0].Value } else { 'No verified remote restart data.' }
+        $findings.Add([pscustomobject]@{Check='PendingRestart';Level='Unavailable';Evidence=$why;NextStep='Review remote WinRM permissions and registry access.'})
+    } else {
+        $n = [int]$restartRows[0].IndicatorCount
+        if ($n -lt 0 -or $n -gt 3) {
+            $unavailable++
+            $findings.Add([pscustomobject]@{Check='PendingRestart';Level='Unavailable';Evidence='Invalid remote restart indicator count.';NextStep='Inspect source registry evidence.'})
+        } else {
+            $available++
+            if ($n -gt 0) {
+                $review++
+                $findings.Add([pscustomobject]@{Check='PendingRestart';Level='Review';Evidence=('Remote pending-restart indicators: ' + [string]$restartRows[0].Value);NextStep='Review servicing status and obtain approval before scheduling a restart.'})
+            } else {
+                $findings.Add([pscustomobject]@{Check='PendingRestart';Level='Observed';Evidence='No selected remote pending-restart indicators found; this is not an all-clear.';NextStep='Missing Windows Updates are not assessed.'})
             }
         }
     }
