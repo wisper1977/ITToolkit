@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services')]
+        [ValidateSet('System','Firewall','Services','Storage')]
         [string]$Section
     )
 
@@ -43,6 +43,25 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Storage' {
+                # Match the existing remote disk-space report: fixed logical disks only.
+                # Local CIM does not require remote WinRM, ADMIN$, or alternate credentials.
+                $disks = @(Get-CimInstance -ClassName Win32_LogicalDisk -Filter 'DriveType=3' -ErrorAction Stop)
+                $result.Data = @($disks | Sort-Object DeviceID | ForEach-Object {
+                    $capacity = if ($null -ne $_.Size) { [double]$_.Size } else { $null }
+                    $free = if ($null -ne $_.FreeSpace) { [double]$_.FreeSpace } else { $null }
+                    [pscustomobject]@{
+                        DeviceID = [string]$_.DeviceID
+                        VolumeName = [string]$_.VolumeName
+                        SizeGB = if ($null -ne $capacity) { [math]::Round($capacity / 1GB, 2) } else { $null }
+                        FreeGB = if ($null -ne $free) { [math]::Round($free / 1GB, 2) } else { $null }
+                        FreePercent = if ($null -ne $capacity -and $capacity -gt 0 -and $null -ne $free) {
+                            [math]::Round(100 * $free / $capacity, 1)
+                        } else { $null }
+                    }
+                })
+                # An empty fixed-drive query is NoData; it is not evidence of zero free space.
             }
             'Services' {
                 # Match the existing remote Services report: automatic-start
