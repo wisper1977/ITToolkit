@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware')]
         [string]$Section
     )
 
@@ -43,6 +43,50 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Hardware' {
+                # Read-only direct CIM inventory. Preserve type per record for report clarity.
+                $computer = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop
+                $bios = Get-CimInstance -ClassName Win32_BIOS -ErrorAction Stop
+                $processors = @(Get-CimInstance -ClassName Win32_Processor -ErrorAction Stop)
+                $drives = @(Get-CimInstance -ClassName Win32_DiskDrive -ErrorAction Stop)
+                if ($null -eq $computer -or $null -eq $bios -or $processors.Count -eq 0) {
+                    throw 'Essential local hardware inventory was missing; collection cannot be verified.'
+                }
+                $records = New-Object System.Collections.Generic.List[object]
+                $records.Add([pscustomobject]@{
+                    RecordType = 'Computer'
+                    Manufacturer = [string]$computer.Manufacturer
+                    Model = [string]$computer.Model
+                    TotalPhysicalMemoryGB = if ($null -ne $computer.TotalPhysicalMemory) {
+                        [math]::Round([double]$computer.TotalPhysicalMemory / 1GB, 2)
+                    } else { $null }
+                })
+                $records.Add([pscustomobject]@{
+                    RecordType = 'BIOS'
+                    Manufacturer = [string]$bios.Manufacturer
+                    SMBIOSBIOSVersion = [string]$bios.SMBIOSBIOSVersion
+                    SerialNumber = [string]$bios.SerialNumber
+                })
+                foreach ($cpu in $processors) {
+                    $records.Add([pscustomobject]@{
+                        RecordType = 'Processor'
+                        Name = [string]$cpu.Name
+                        NumberOfCores = $cpu.NumberOfCores
+                        NumberOfLogicalProcessors = $cpu.NumberOfLogicalProcessors
+                    })
+                }
+                foreach ($disk in $drives) {
+                    $records.Add([pscustomobject]@{
+                        RecordType = 'PhysicalDisk'
+                        Model = [string]$disk.Model
+                        InterfaceType = [string]$disk.InterfaceType
+                        SizeGB = if ($null -ne $disk.Size) {
+                            [math]::Round([double]$disk.Size / 1GB, 2)
+                        } else { $null }
+                    })
+                }
+                $result.Data = @($records.ToArray())
             }
             'Network' {
                 # Read-only local adapter configuration; no remote ping, traceroute or WinRM.
