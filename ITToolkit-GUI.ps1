@@ -274,8 +274,22 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
       <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="19" CornerRadius="5" Margin="0,0,0,15">
        <StackPanel>
         <TextBlock Text="LAST LOCAL HEALTH ANALYSIS" FontWeight="SemiBold" Foreground="#17365D" Margin="0,0,0,8"/>
-        <TextBlock Name="DashboardHealthSummary" Text="Run the local Quick health check to populate an evidence-based summary." TextWrapping="Wrap" Foreground="#53677E"/>
-        <TextBlock Text="Unavailable evidence is not a pass. Review findings are not a system health score." FontSize="11" Foreground="#60738A" TextWrapping="Wrap" Margin="0,8,0,0"/>
+        <TextBlock Name="DashboardHealthSummary" Text="Run the local Quick health check to populate an evidence-based summary." TextWrapping="Wrap" Foreground="#53677E" Margin="0,0,0,12"/>
+        <UniformGrid Columns="3" Margin="0,0,0,8">
+         <Border Background="#FFF2DD" CornerRadius="5" Padding="12,8" Margin="0,0,8,0"><StackPanel><TextBlock Text="REVIEW FINDINGS" FontSize="10" FontWeight="SemiBold" Foreground="#785018"/><TextBlock Name="HealthReviewCount" Text="—" FontSize="23" FontWeight="SemiBold" Foreground="#785018"/></StackPanel></Border>
+         <Border Background="#EDF4FD" CornerRadius="5" Padding="12,8" Margin="0,0,8,0"><StackPanel><TextBlock Text="AVAILABLE CHECKS" FontSize="10" FontWeight="SemiBold" Foreground="#274C79"/><TextBlock Name="HealthAvailableCount" Text="—" FontSize="23" FontWeight="SemiBold" Foreground="#274C79"/></StackPanel></Border>
+         <Border Background="#EFF1F4" CornerRadius="5" Padding="12,8"><StackPanel><TextBlock Text="UNAVAILABLE CHECKS" FontSize="10" FontWeight="SemiBold" Foreground="#4B5563"/><TextBlock Name="HealthUnavailableCount" Text="—" FontSize="23" FontWeight="SemiBold" Foreground="#4B5563"/></StackPanel></Border>
+        </UniformGrid>
+        <TextBlock Text="EVIDENCE BY CATEGORY" FontWeight="SemiBold" FontSize="11" Foreground="#17365D" Margin="0,4,0,6"/>
+        <UniformGrid Columns="2">
+         <TextBlock Name="HealthStorageDetail" Text="Storage: Not assessed" TextWrapping="Wrap" Margin="0,0,12,8"/>
+         <TextBlock Name="HealthServicesDetail" Text="Services: Not assessed" TextWrapping="Wrap" Margin="0,0,12,8"/>
+         <TextBlock Name="HealthEventsDetail" Text="Events: Not assessed" TextWrapping="Wrap" Margin="0,0,12,8"/>
+         <TextBlock Text="System: Not assessed in this quick check" TextWrapping="Wrap" Margin="0,0,12,8"/>
+         <TextBlock Text="Security: Not assessed in this quick check" TextWrapping="Wrap" Margin="0,0,12,8"/>
+         <TextBlock Text="Updates: Not assessed in this quick check" TextWrapping="Wrap" Margin="0,0,12,8"/>
+        </UniformGrid>
+        <TextBlock Text="Only the three named checks are currently interpreted. Other sections are NOT ASSESSED, not healthy. See Diagnostics for source evidence." FontSize="11" Foreground="#60738A" TextWrapping="Wrap" Margin="0,6,0,0"/>
        </StackPanel>
       </Border>
       <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="19" CornerRadius="5" Margin="0,0,0,15">
@@ -461,7 +475,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $ui = @{}
-foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','DashboardHealthSummary','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
+foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','DashboardHealthSummary','HealthReviewCount','HealthAvailableCount','HealthUnavailableCount','HealthStorageDetail','HealthServicesDetail','HealthEventsDetail','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
 $window.Title = "$displayName - Graphical Interface"
 $ui.Heading.Text = $displayName
 $ui.Subtitle.Text = "Graphical Interface  |  Toolkit v$version"
@@ -515,12 +529,19 @@ function Update-TargetInfo {
     $ui.TargetCheckTime.Text = if ($script:TargetLastChecked) { $script:TargetLastChecked.ToString('g') } else { 'Not checked' }
     $ui.TargetLastDiagnostic.Text = [string]$script:LastDiagnosticSummary
 }
+function Clear-DashboardHealthDetails {
+    $ui.DashboardHealthSummary.Text = 'Run the local Quick health check to populate an evidence-based summary.'
+    foreach ($name in @('HealthReviewCount','HealthAvailableCount','HealthUnavailableCount')) { $ui[$name].Text = '—' }
+    $ui.HealthStorageDetail.Text = 'Storage: Not assessed'
+    $ui.HealthServicesDetail.Text = 'Services: Not assessed'
+    $ui.HealthEventsDetail.Text = 'Events: Not assessed'
+}
 function Update-TargetView {
     # Do not display another target's prior health observations as current.
     if ($script:DashboardHealthTarget -and
         (-not $script:LocalTargetMode -or $script:DashboardHealthTarget -ine $script:TargetComputer)) {
         $script:DashboardHealthTarget = $null
-        $ui.DashboardHealthSummary.Text = 'Run the local Quick health check to populate an evidence-based summary.'
+        Clear-DashboardHealthDetails
     }
     $label = if ($script:TargetComputer) { $script:TargetComputer } else { 'Not selected' }
     $ipText = if ($script:TargetIPv4) { [string]$script:TargetIPv4 } else { '(not selected)' }
@@ -1212,9 +1233,24 @@ $script:DiagnosticTimer.Add_Tick({
             $script:DashboardHealthTarget = [string]$completed.Target
             $summary = [regex]::Match($ui.DiagnosticOutput.Text, 'Review: (\d+) \| Available: (\d+) \| Unavailable: (\d+)')
             if ($summary.Success) {
+                $ui.HealthReviewCount.Text = $summary.Groups[1].Value
+                $ui.HealthAvailableCount.Text = $summary.Groups[2].Value
+                $ui.HealthUnavailableCount.Text = $summary.Groups[3].Value
+                foreach ($entry in @(
+                    @{Name='HealthStorageDetail'; Check='SystemDrive'; Title='Storage'},
+                    @{Name='HealthServicesDetail'; Check='AutomaticServices'; Title='Services'},
+                    @{Name='HealthEventsDetail'; Check='RecentSystemEvents'; Title='Events'}
+                )) {
+                    $pattern = '(?m)^\\[(Review|Observed|Unavailable)\\] ' + [regex]::Escape($entry.Check) + ': ([^\\r\\n]*)'
+                    $finding = [regex]::Match($ui.DiagnosticOutput.Text, $pattern)
+                    $ui[$entry.Name].Text = if ($finding.Success) {
+                        $entry.Title + ': ' + $finding.Groups[1].Value + ' — ' + $finding.Groups[2].Value
+                    } else { $entry.Title + ': Not assessed / unavailable' }
+                }
                 $ui.DashboardHealthSummary.Text = ("{0}: {1} review findings, {2} available checks, {3} unavailable checks. Collection initiated by {4}; see Diagnostics for evidence and next steps." -f
                     $completed.Target,$summary.Groups[1].Value,$summary.Groups[2].Value,$summary.Groups[3].Value,$completed.Identity)
             } else {
+                Clear-DashboardHealthDetails
                 $ui.DashboardHealthSummary.Text = 'Health analysis unavailable. See the Diagnostics report for details.'
             }
         }
@@ -1732,7 +1768,7 @@ $ui.UseLocalTarget.Add_Click({
     $script:TargetLastChecked = Get-Date
     $script:LastDiagnosticSummary = 'None this session'
     $script:AdminStatus = 'Local mode'
-    $script:AdminDetail = 'System and Firewall collect directly under your current Windows identity. Other local checks and snapshots are not yet implemented.'
+    $script:AdminDetail = 'All 20 local diagnostics and local snapshots use direct-local collection. BitLocker and Policy can request separate Windows UAC approval when needed.'
     Set-GUIAuthView
     Update-TargetView
     $ui.Status.Text = 'Local computer selected — System and Firewall available.'
