@@ -671,3 +671,10 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Added shared remote analysis for disk capacity, automatic services and 24-hour bounded System event counts. Remote failures and malformed evidence remain Unavailable; ADMIN$ is not inferred from health probes, and no overall health score is generated.
 - GUI Health cards now support local or remote results and retain selected target, auth mode and requested identity; changes clear prior health evidence. Classic Default and Alternate remote Health reports now include the same analysis. Remote Default retains its existing main report and labels the independently collected WinRM evidence.
 - **Not Windows-validated yet:** remote Health rendering, WinRM-unavailable cases, alternative identity and target switching, saved reports, full Classic/GUI parity. Local disk-review threshold is 10%, remote's existing health threshold is 15%; align rules in a later focused change after validation.
+
+### v1.27 — Compact computer-health sidebar (Windows layout validation pending)
+
+- Technician screenshots confirm that GUI local and remote Health analysis populates all three existing evidence categories and counts under the selected target/identity.
+- Moved the full-width Dashboard Health block into a compact Computer Health card in the left navigation panel beneath target status. Three small review/checked/unknown counters accompany individual Storage, Services and Events summaries, with non-collected System, Security and Updates explicitly marked not assessed.
+- Increased sidebar width modestly to fit readable information and added independent vertical scrolling while retaining Switch to Classic anchored at the bottom. Removed the redundant full-width Health block so the Dashboard main area has more space.
+- **Implementation committed, Windows layout regression pending** for narrow displays, panel scrolling, target and authentication changes. No new health collection or Classic behavior changes.
