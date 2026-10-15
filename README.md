@@ -133,6 +133,8 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 - The existing Classic Default diagnostics continue using their established `Get-SectionStatus` logic; a full cross-mode parity test is still pending.
 - Existing diagnostic collection methods, authentication selection, and saved report formats remain in place. **The change needs Windows regression testing before v1.27B can be considered complete.**
 
+**v1.27C foundation (development branch; not yet available through GUI or Classic):** Added a read-only direct-local collector module for System and Firewall checks. It uses local CIM and firewall cmdlets without remote WinRM/ADMIN$ and returns structured status and error information. Current Windows identity only in this increment; secure alternate-admin execution and interface integration remain planned. Windows testing pending.
+
 **Future development:** See the [IT Toolkit Roadmap](ROADMAP.md) for upcoming milestones, enterprise local diagnostics, Quick Fix, NIST/best-practices checks, and additional proposals. Planned features are not included in the current build.
 
 ### v1.26
