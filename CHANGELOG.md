@@ -361,3 +361,5 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Do not treat a diagnostic collection status of **Success** as proof that the target system itself is healthy.
 
 [1.26]: https://github.com/wisper1977/ITToolkit/releases/tag/v1.26
+
+- **GUI local Services display retest passed (2026-10-14):** The GUI report for `DESKTOP-8EHGAPD` showed Local/current-identity collection, `SUCCESS` / `Success`, all 324 queried services in the summary, and the same seven stopped automatic-start services as the independent collector test. This validates the report content and presentation only; GUI Services report save/reopen, Classic Services execution, and remote regression tests remain pending.
