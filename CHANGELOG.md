@@ -6,6 +6,14 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### v1.27C — Software verified; Local Updates increment (2026-10-15)
+
+- **Windows technician confirmed:** Local Software worked in GUI and Classic and HTML saving/opening passed. The collector listed many machine-wide uninstall registry entries, including names, versions and publishers. Some records have blank metadata as supplied by the registry.
+- Added direct-local, read-only installed-hotfix inventory through `Win32_QuickFixEngineering`, exposing HotFixID, Description, InstalledOn and InstalledBy. An empty result is `NO RESULTS` / `NoData`, not a compliant or up-to-date verdict.
+- Enabled Updates in local GUI and Classic routes and made Updates the default of `Test-LocalDiagnostics.ps1`. The remote Updates diagnostic remains unchanged. This local first increment does not include recent Windows Update failure events, missing patches or update scans.
+- **Pending Windows tests:** Updates collector, both UIs, HTML saved report, unavailable/empty cases and remote regression; Software CSV/TXT formats not separately verified.
+
+
 ### v1.27C — Shares Windows verification; Local Software implementation (2026-10-15)
 
 - **Windows technician confirmed:** Local Shares ran successfully in GUI and Classic, including saved/reopened HTML. Four shares were listed: ADMIN$, C$, E$, IPC$. Reported share presence does not verify SMB access or NTFS/share permissions.
