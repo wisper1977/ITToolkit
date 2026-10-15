@@ -174,3 +174,9 @@ See the [LICENSE](LICENSE) file for the full license text.
 **Local Services report saving (technician-confirmed, 2026-10-14):** Saving a Local Services diagnostic report works in Windows testing. Exact interface and per-format HTML/CSV/TXT coverage were not specified by this confirmation and remain to be independently enumerated; remote regression tests remain outstanding.
 
 **v1.27C Local Storage increment (implemented; Windows verification pending):** GUI and Classic now route local Storage diagnostics through the shared read-only `Win32_LogicalDisk` collector. It reports fixed logical drives (`DriveType=3`), volume name, capacity GB, free GB, and free percentage. Unknown or zero capacity does not produce a misleading percentage. No fixed disks yields `NO RESULTS` / `NoData` rather than a healthy-drive assertion. Remote Storage behavior is unchanged. Windows collector, GUI/Classic, saving, and regression testing remain pending.
+
+### Developer smoke test: local diagnostics
+
+On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **Storage**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
+
+**Local Storage direct collector validation (technician-confirmed, 2026-10-14):** Windows PowerShell returned `SUCCESS`/`Success` with no error and two fixed logical drives (C: and E:), including size, free GB, and percentage. GUI/Classic Storage output and report-save checks remain pending.
