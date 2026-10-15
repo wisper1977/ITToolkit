@@ -690,3 +690,11 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Technician clarified that the scrolled position in the screenshot was intentional and demonstrated successful independent scrolling, not a bug.
 - Reverted the subsequently introduced, unrequested auto-scroll-to-top behavior. Fixed navigation, selected target, independently scrollable health pane, and Switch to Classic remain intact.
 - Compact layout is technician-validated at the pictured reduced window size; other resize and edge cases remain subject to regression testing.
+
+### v1.27 — Six-category local and remote Health evidence (Windows validation pending)
+
+- Extended local Quick Health read-only collection with independent OS uptime, Windows Firewall profile enumeration and installed-QFE inventory, preserving partial collection when any check fails.
+- Extended selected-identity remote WinRM Health collection with equivalent independently handled evidence; remote authentication and target remain unchanged, and no local fallback is permitted.
+- Shared Health analyzer now distinguishes observed uptime and installed-hotfix counts from disabled-firewall-profile review findings and unavailable checks. Hotfix counts explicitly **do not identify missing Windows Updates** or establish patch compliance.
+- Compact GUI sidebar now presents System, Security and Updates alongside Storage, Services and Events. Classic automatically displays all six through its existing shared Health formatter; no extra user action is needed.
+- **Required validation:** Windows local/remote Default/Alternate GUI and Classic health reports, firewall profile state, empty QFE inventory, WinRM failure, per-check denied/partial evidence, scroll sizing, report saving, and target/identity isolation. Production `main` unchanged.
