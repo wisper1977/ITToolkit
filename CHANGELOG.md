@@ -704,3 +704,10 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Technician-provided screenshots verify `IT-7PY1M84` (Local) and `ML-PCSCALE` (Default remote) each display **2 review findings, 6 available checks, 0 unavailable checks** in the compact sidebar, including System uptime, firewall profiles and installed QFE inventory.
 - Local evidence: system uptime 3.2 days, 7 automatic-start services not running among 306 queried and 3 enabled firewall profiles. Remote evidence: uptime 6.9 days, 3 stopped automatic-start services and 3 enabled firewall profiles. Results differ by target as expected.
 - The pictured panels retain independent scrolling and fixed target/nav/Classic controls. This validates the GUI successful-results path only. **Still pending:** Classic six-category report check, remote Alternate mode, individual access/transport failures, saved report validation and any broader security or patch compliance claims.
+
+### v1.27 — Pending-restart health evidence (implemented; Windows test pending)
+
+- Added one independent read-only **PendingRestart** signal to local Health, checking CBS servicing, Windows Update reboot-required and Session Manager pending-file-rename registry indicators. Registry errors remain Unavailable.
+- Added equivalent registry checks to the existing selected-credential remote WinRM Health collector; remote failure does not cause local fallback or identity substitution.
+- Shared Health analysis now returns seven available/review/unavailable checks where all are readable, with a distinct pending-restart investigation note in Classic and the compact GUI sidebar. No reboot action or Windows Update compliance assertion.
+- **Windows testing required:** local and remote Default/Alternate, real positive and negative indicators, access denied, partial/unavailable results, GUI sidebar and Classic saved Health reports. The preceding six-category local and Default remote GUI tests remain separately documented.
