@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates')]
         [string]$Section
     )
 
@@ -43,6 +43,21 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Updates' {
+                # Read-only installed hotfix inventory. This does not scan Windows
+                # Update, install patches, or assess missing security updates.
+                $fixes = @(Get-CimInstance -ClassName Win32_QuickFixEngineering -ErrorAction Stop)
+                $result.Data = @($fixes | Sort-Object HotFixID | ForEach-Object {
+                    [pscustomobject]@{
+                        RecordType = 'InstalledHotfix'
+                        HotFixID = [string]$_.HotFixID
+                        Description = [string]$_.Description
+                        InstalledOn = [string]$_.InstalledOn
+                        InstalledBy = [string]$_.InstalledBy
+                    }
+                })
+                # No QFE records is NoData, never evidence of patch compliance.
             }
             'Software' {
                 # Read-only machine-wide uninstall registry entries in both registry
