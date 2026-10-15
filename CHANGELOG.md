@@ -545,3 +545,10 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - BitLocker returned two volumes, C: and E:, both FullyDecrypted, protection Off, 0% encrypted, encryption method None and Unlocked. No recovery secrets collected.
 - Policy returned 37 result lines for the standalone workstation's computer scope; Local Group Policy was reported Not Applied (Empty).
 - **Validation remains open:** GUI and Classic elevated collection and saved/reopened HTML for BitLocker and Policy have not been reported. Existing 18 sections have GUI/Classic HTML confirmation; no promotion of v1.27C completion yet. Additional regression and output-format checks are outstanding.
+
+### v1.27C — Targeted elevation for local BitLocker/Policy (Windows test pending)
+
+- Added explicit GUI **Run selected with UAC** action, scoped to the currently selected Local BitLocker or Policy report. The normal GUI process and all other diagnostics remain non-elevated.
+- In Classic, when one of those two local checks returns ACCESS DENIED, offer a Y/N retry through Windows UAC for that section only. A declined prompt keeps the original status.
+- Added shared `Invoke-ToolkitElevatedLocalDiagnostic` UAC helper. Child PowerShell runs only the selected read-only local check, with temporary ACL-restricted CLIXML output and cleanup. Results are discarded if UAC runs under a different Windows identity. No passwords, elevation tokens, BitLocker key protectors, or recovery secrets are persisted.
+- Elevated results enter existing GUI/Classic report formatting and saving rather than a separate report implementation. **Windows verification pending:** positive, denied, cancel, different identity, saved HTML, GUI responsiveness, and Classic/remote regression. No release completion claimed.
