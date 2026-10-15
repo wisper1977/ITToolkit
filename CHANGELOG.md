@@ -4,6 +4,30 @@ Documented changes to **IT Toolkit** are recorded here. This file distinguishes 
 
 The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentation Foundation (WPF); the Classic interface uses a text menu.
 
+## [1.27] — In development (started 2026-10-14)
+
+**Development branch:** `develop/v1.27`. Version 1.26 on `main` remains the stable production release. The entries below describe implemented development work, not a published v1.27 release.
+
+### v1.27A — GUI refinements (completed; Windows-tested)
+
+#### Changed
+- Introduced a shared WPF multiline, centered button-label helper for dynamically generated tool buttons.
+- Enabled wrapped labels and increased minimum button height on both the **Tools** page and **Dashboard Favorite Shortcuts**, including long names such as *Active Directory Users and Computers*.
+- Improved handling of long selected-target names, recent-target buttons, and recent-report filenames in the dashboard.
+- Adjusted technician and computer-name footer layouts to support truncation in limited horizontal space.
+- Preserved full target identity in tooltips and existing full report paths in report tooltips.
+- Set the development branch's `Toolkit-config.json` version to **1.27**.
+- Updated the development-branch README to distinguish v1.27 work in progress from the stable v1.26 release.
+
+#### Validation
+- The Tools page and Dashboard favorite button wrapping were confirmed working in Windows testing.
+- The subsequent dashboard and footer layout refinements were reviewed in Windows and accepted.
+- Tool launching, favorites, report opening, and authentication behaviors were intended to remain unchanged; no comprehensive regression test of these areas is claimed.
+
+### Planned (not yet implemented)
+- **v1.27B:** Shared diagnostic result handling and more consistent status/error reporting across GUI and Classic.
+- Later proposals: evidence-based Health Analysis, expanded network diagnostics, snapshot enhancements, and clearer ticket/report summaries.
+
 ## [1.26] — 2026-10-14
 
 **Major update: credential-aware diagnostics, verified remote access checks, and snapshot creation from both interfaces.**
