@@ -177,7 +177,7 @@ See the [LICENSE](LICENSE) file for the full license text.
 
 ### Developer smoke test: local diagnostics
 
-On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **Administrators**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
+On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **Shares**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
 
 **Local Storage direct collector validation (technician-confirmed, 2026-10-14):** Windows PowerShell returned `SUCCESS`/`Success` with no error and two fixed logical drives (C: and E:), including size, free GB, and percentage. GUI/Classic Storage output and report-save checks remain pending.
 
@@ -200,3 +200,7 @@ On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiag
 **Local Groups Windows validation (2026-10-15):** Technician confirmed successful GUI and Classic execution and HTML save/open.
 
 **Local Administrators (Windows verification pending):** The shared collector reads direct members of built-in Administrators by SID S-1-5-32-544. It reports member identity/type/source and SID without changing permissions or expanding nested domain groups. Both interfaces are wired; the smoke-test default is Administrators.
+
+**Local Administrators Windows validation (2026-10-15):** Technician confirmed `SUCCESS` in GUI and Classic and successful HTML save/open. Report enumerated two direct members of the built-in Administrators group: local Administrator and one Microsoft-account-backed user. Built-in Administrator was previously reported disabled; group membership alone does not establish that the account can sign in. Domain group nesting is not expanded. CSV/TXT and remote regressions remain pending.
+
+**v1.27C Local Shares implementation (Windows validation pending):** Shared collector uses local read-only `Win32_Share` inventory including administrative shares, reporting name, backing path, description and share type. Does not read share permissions or NTFS ACLs and performs no connection or share modification. Both GUI and Classic are routed through the shared collector; `Test-LocalDiagnostics.ps1` defaults to Shares.
