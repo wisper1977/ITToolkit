@@ -126,7 +126,9 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 
 - A shared diagnostic classification now distinguishes `Success`, `NoData`, `Review`, `Partial`, `Unavailable`, `AccessDenied`, `NotTested`, and `Unknown` without replacing the collectors' original status or error detail.
 - The shared dispatcher adds a `StatusCategory` field to its results; the Classic alternate-credential formatter and GUI default/alternate diagnostic reports can display the category.
-- Classic alternate-credential report section objects now retain the structured `StatusCategory` field, and GUI collection-exception output explicitly labels the category as `Unavailable` while preserving the original error message.
+- Classic alternate-credential report section objects retain the structured `StatusCategory` field.
+- **v1.27B follow-up:** Shared exception handling in the dispatcher and both GUI diagnostic modes now distinguishes explicit authorization-denied errors (`ACCESS DENIED` / `AccessDenied`) from other failures (`UNAVAILABLE` / `Unavailable`). The original exception message is preserved. A nonexistent or unreachable host is not classified as access denied solely because collection failed.
+- The existing Classic Default diagnostics continue using their established `Get-SectionStatus` logic; a full cross-mode parity test is still pending.
 - Existing diagnostic collection methods, authentication selection, and saved report formats remain in place. **The change needs Windows regression testing before v1.27B can be considered complete.**
 
 **Planned next:** Continue v1.27B with cross-interface verification and error/status consistency. Health analysis, network diagnostics, snapshot enhancements, and report improvements remain proposals, **not yet implemented**.
