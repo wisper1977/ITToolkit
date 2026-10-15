@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks')]
         [string]$Section
     )
 
@@ -43,6 +43,34 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Tasks' {
+                # Read-only local Task Scheduler inventory. Failed task-info reads are
+                # surfaced per task instead of replacing values with a success claim.
+                $tasks = @(Get-ScheduledTask -ErrorAction Stop)
+                $records = New-Object System.Collections.Generic.List[object]
+                foreach ($task in @($tasks | Sort-Object TaskPath,TaskName)) {
+                    $info = $null
+                    $infoError = ''
+                    try {
+                        $info = $task | Get-ScheduledTaskInfo -ErrorAction Stop
+                    } catch {
+                        $infoError = [string]$_.Exception.Message
+                    }
+                    $records.Add([pscustomobject]@{
+                        TaskPath = [string]$task.TaskPath
+                        TaskName = [string]$task.TaskName
+                        State = [string]$task.State
+                        LastRunTime = if ($null -ne $info) { $info.LastRunTime } else { $null }
+                        LastTaskResult = if ($null -ne $info) { $info.LastTaskResult } else { $null }
+                        NextRunTime = if ($null -ne $info) { $info.NextRunTime } else { $null }
+                        DetailStatus = if ($null -ne $info) { 'Available' } else { 'Unavailable' }
+                        DetailError = $infoError
+                    })
+                }
+                $result.Data = @($records.ToArray())
+                # A task's nonzero LastTaskResult is evidence for review, not proof
+                # that local task inventory failed.
             }
             'Updates' {
                 # Read-only installed hotfix inventory. This does not scan Windows
