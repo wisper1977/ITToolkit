@@ -650,3 +650,10 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Added **Windows PowerShell (Administrator)** to the shared GUI/Classic built-in Tools catalog; it can also be pinned as a Favorite without affecting the existing normal Windows PowerShell entry.
 - GUI and Classic require explicit user confirmation and use Windows UAC (`Start-Process -Verb RunAs`) to launch an independent elevated PowerShell 5.1 console, without elevating the toolkit, substituting remote credentials, collecting passwords, or changing execution policy.
 - **Validation pending:** Windows approved/denied UAC flows, separate admin account identity and token, GUI and Classic launch, Favorite shortcut, and non-elevated PowerShell regression. Not promoted to stable `main`.
+
+### v1.27 — Health analysis restored to active milestone; first dashboard increment (2026-10-15)
+
+- Added a shared, read-only `ITToolkit-HealthAnalysis.ps1` engine to interpret structured local Health collector evidence. Produces review observations, unavailable checks, explanatory evidence and investigative next steps; does not equate successful collection with a healthy system.
+- GUI local Health report includes formatted analysis, and Dashboard now displays a last-local-health review/available/unavailable summary. Classic local Health reports use the same analysis engine.
+- Coverage in this increment is limited to system-drive capacity, automatic-start services, and last-day System critical/error events. Other collector categories and remote analysis are not yet analyzed. **Windows validation required** for local GUI/Classic presentation, report save/open, missing evidence and regression paths. v1.27 is **not ready for release** until the dashboard work is completed and verified.
+- Separately, technician confirmed the Windows PowerShell (Administrator) launcher works as intended in Windows; no claim of exhaustive cancellation/favorite tests.
