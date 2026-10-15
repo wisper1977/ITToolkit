@@ -121,7 +121,12 @@ function Invoke-ClassicCatalogTool([object]$Tool) {
     $path = Resolve-ClassicToolPath $Tool
     if (-not $path) { Write-Host "Tool not detected: $($Tool.Name)" -ForegroundColor Yellow; Wait-ClassicCatalog; return }
     try {
-        if ($Tool.Id -in @('portqry','psexec')) {
+        if ($Tool.Id -eq 'powershell-admin') {
+            Write-Host 'Windows UAC will request administrator credentials or consent. IT Toolkit stays under the current identity.' -ForegroundColor Yellow
+            $approval = (Read-Host 'Open a separate elevated Windows PowerShell console? (Y/N)').Trim().ToUpperInvariant()
+            if ($approval -ne 'Y') { return }
+            Start-Process -FilePath $path -ArgumentList '-NoLogo' -Verb RunAs -ErrorAction Stop | Out-Null
+        } elseif ($Tool.Id -in @('portqry','psexec')) {
             # Open only catalog-defined command-line utilities in a persistent cmd console.
             $args = '/k ""' + $path + '" -?"'
             Start-Process -FilePath $env:ComSpec -ArgumentList $args -ErrorAction Stop | Out-Null
