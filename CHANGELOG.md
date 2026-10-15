@@ -6,6 +6,14 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### v1.27C — Sessions verified; Local Computer Policy implemented (2026-10-15)
+
+- **Technician-confirmed Windows test:** Local Sessions returned a valid active console session in GUI and Classic; HTML reports saved and reopened.
+- Added read-only direct-local Computer Policy collection using `gpresult.exe /SCOPE COMPUTER /R`. Its output is preserved as lines and nonzero exit codes fail visibly. Does not refresh Group Policy, elevate privileges, or switch identities.
+- Enabled Policy in the local GUI/Classic routes and changed the reusable smoke test's default to Policy. Existing remote Policy behavior remains unchanged.
+- **Pending:** Local Policy Windows output or access/RSoP error handling, both interfaces, HTML saved-report validation, alternate environment validation and remote regression. BitLocker authorized positive-path validation remains pending.
+
+
 ### v1.27C — Events verified; Local Startup implementation (2026-10-15)
 
 - **Windows technician confirmed:** Events worked in GUI and Classic and HTML reports saved and opened. The System log had 13 error events over seven days; the Application log returned no matching errors (`NoData`). The overall query reported `SUCCESS`. DCOM connection attempts to `WisperPC` and WindowsUpdateClient app install failures were observed but are not automatic health verdicts.
