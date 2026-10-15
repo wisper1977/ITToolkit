@@ -58,7 +58,10 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ### Planned (not yet implemented)
 - **v1.27B continuation:** Cross-interface verification and further status/error consistency.
-- Later proposals: evidence-based Health Analysis, expanded network diagnostics, snapshot enhancements, and clearer ticket/report summaries.
+- **v1.27C — Local Computer Diagnostics:** Direct local diagnostics for GUI and Classic using shared collection, avoiding dependency on remote WinRM/ADMIN$ for local runs; support common results, reports, and snapshots.
+- **v1.27D — Health Analysis:** Evidence-based findings using collected diagnostic results.
+- **Quick Fix menu (tentatively after v1.27D; no implementation yet):** GUI and Classic access to shared, technician-confirmed repairs. Candidate actions include flush DNS, restart Print Spooler or selected services, recover Windows Update services, SFC/DISM checks, and enable/configure WinRM where authorized. Remote actions must validate the management channel; WinRM-disabled systems need a separate authorized method (for example suitable RPC/service management or centrally deployed policy), not a WinRM call. Distinguish locally flushed DNS from the target's cache. Require warning/confirmation and explicit opt-in for disruptive network changes or reboots; preserve credentials boundaries, verify outcomes, and include action logging. Never silently perform a repair when collecting diagnostics.
+- Later proposals: expanded network diagnostics, snapshot enhancements, and clearer ticket/report summaries.
 
 ## [1.26] — 2026-10-14
 
