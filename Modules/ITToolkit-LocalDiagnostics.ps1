@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares')]
         [string]$Section
     )
 
@@ -43,6 +43,20 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Shares' {
+                # Read-only SMB share inventory (including built-in administrative shares).
+                # Share permissions and backing-path ACLs are separate diagnostics.
+                $shares = @(Get-CimInstance -ClassName Win32_Share -ErrorAction Stop)
+                $result.Data = @($shares | Sort-Object Name | ForEach-Object {
+                    [pscustomobject]@{
+                        Name = [string]$_.Name
+                        Path = [string]$_.Path
+                        Description = [string]$_.Description
+                        Type = [uint32]$_.Type
+                    }
+                })
+                # No shares is a NoData result; it is not evidence of missing access.
             }
             'Administrators' {
                 # SID identifies the built-in group independently of OS display language.
