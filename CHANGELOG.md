@@ -56,7 +56,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Regression-test this increment with a nonexistent target (expected `UNAVAILABLE`) and, later, a real explicit permission rejection (expected `ACCESS DENIED`). Other collector-reported statuses remain unchanged.
 - Confirm report saving, snapshots, and existing diagnostics remain operational; **v1.27B is not yet marked complete**.
 
-### v1.27C — Local diagnostics foundation (first increment; Windows testing pending)
+### v1.27C — Local diagnostics foundation (first increment; partially Windows-tested)
 
 #### Added
 - New `Modules/ITToolkit-LocalDiagnostics.ps1` with `Get-ToolkitLocalDiagnostic` for direct local System and Firewall collection, using the current Windows security token and no remote WinRM/ADMIN$ dependency.
@@ -65,7 +65,8 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 #### Limitations and validation pending
 - The collector is not yet connected to GUI or Classic target selection, diagnostics, reports, or snapshots. Alternate local administrative identity execution has not been built. Neither interface should claim local diagnostic mode is ready.
-- Windows PowerShell 5.1 validation is pending for successful collection, missing permissions, and WinRM-disabled operation.
+- **Windows validation passed (current-user success paths):** On Windows 11 Pro, local System and Firewall returned `SUCCESS` / `Success`, populated data, and empty `Error` values, using the current identity while WinRM was stopped. Firewall showed enabled Domain, Private, and Public profiles. The results confirm direct collection without a responding WinRM endpoint.
+- **Validation still pending:** permission-denied and collection-failure paths, GUI/Classic integration, snapshots/reports, and alternate-administrator execution.
 
 ### Documentation organization
 
