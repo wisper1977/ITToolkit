@@ -31,6 +31,9 @@ function Convert-ClassicDispatcherResult {
     $lines = New-Object System.Collections.Generic.List[string]
     $lines.Add(('Section: {0}' -f $Result.Section))
     $lines.Add(('Status: {0}' -f $Result.Status))
+    if ($Result.PSObject.Properties['StatusCategory']) {
+        $lines.Add(('Status category: {0}' -f $Result.StatusCategory))
+    }
     $lines.Add(('Adapter: {0}' -f $Result.Adapter))
     $lines.Add(('Remote query identity: {0}' -f $Result.UserName))
     if (-not [string]::IsNullOrWhiteSpace([string]$Result.Error)) {
