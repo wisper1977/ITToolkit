@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events')]
         [string]$Section
     )
 
@@ -42,6 +42,63 @@ function Get-ToolkitLocalDiagnostic {
                         LastBootUpTime = $os.LastBootUpTime
                         OSArchitecture = [string]$os.OSArchitecture
                     })
+                }
+            }
+            'Events' {
+                # Bounded local System/Application error log inspection (past 7 days,
+                # latest 25 per log). A lack of error events is not a health verdict.
+                $since = (Get-Date).AddDays(-7)
+                $records = New-Object System.Collections.Generic.List[object]
+                $failedLogs = New-Object System.Collections.Generic.List[string]
+                foreach ($logName in @('System','Application')) {
+                    $events = @()
+                    $queryStatus = 'Available'
+                    $queryError = ''
+                    try {
+                        $events = @(Get-WinEvent -FilterHashtable @{
+                            LogName = $logName
+                            Level = 2
+                            StartTime = $since
+                        } -MaxEvents 25 -ErrorAction Stop)
+                    } catch {
+                        $queryError = [string]$_.Exception.Message
+                        if ($_.FullyQualifiedErrorId -match 'NoMatchingEventsFound' -or
+                            $queryError -match '(?i)^No events were found') {
+                            $queryStatus = 'NoData'
+                            $queryError = ''
+                        } else {
+                            $queryStatus = 'Unavailable'
+                            $failedLogs.Add($logName)
+                        }
+                    }
+                    $records.Add([pscustomobject]@{
+                        RecordType = 'LogSummary'
+                        LogName = $logName
+                        QueryStatus = $queryStatus
+                        ErrorEventsReturned = $events.Count
+                        WindowDays = 7
+                        MaxEvents = 25
+                        Error = $queryError
+                    })
+                    foreach ($event in $events) {
+                        $message = ([string]$event.Message -replace '\s+', ' ').Trim()
+                        if ($message.Length -gt 300) { $message = $message.Substring(0, 300) }
+                        $records.Add([pscustomobject]@{
+                            RecordType = 'ErrorEvent'
+                            LogName = $logName
+                            TimeCreated = $event.TimeCreated
+                            Id = $event.Id
+                            ProviderName = [string]$event.ProviderName
+                            LevelDisplayName = [string]$event.LevelDisplayName
+                            Message = $message
+                        })
+                    }
+                }
+                $result.Data = @($records.ToArray())
+                if ($failedLogs.Count -gt 0) {
+                    $result.Status = 'PARTIAL'
+                    $result.StatusCategory = 'Partial'
+                    $result.Error = 'One or more event logs could not be queried: ' + ($failedLogs -join ', ')
                 }
             }
             'Tasks' {
@@ -327,7 +384,9 @@ function Get-ToolkitLocalDiagnostic {
                 })
             }
         }
-        if (@($result.Data).Count -gt 0) {
+        if ($result.StatusCategory -eq 'Partial') {
+            # Preserve a partial result when a per-log failure was recorded.
+        } elseif (@($result.Data).Count -gt 0) {
             $result.Status = 'SUCCESS'
             $result.StatusCategory = 'Success'
         } else {
