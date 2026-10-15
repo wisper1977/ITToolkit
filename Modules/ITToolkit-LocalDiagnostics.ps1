@@ -734,8 +734,17 @@ try {
         if (Test-Path -LiteralPath $errorFile -PathType Leaf) {
             $childError = Import-Clixml -LiteralPath $errorFile -ErrorAction Stop
             if ([string]$childError.Nonce -eq $nonce) {
-                throw ("Elevated diagnostic under {0} failed: {1}" -f
-                    [string]$childError.CollectionIdentity, [string]$childError.Error)
+                $childMessage = [string]$childError.Error
+                $childAccount = [string]$childError.CollectionIdentity
+                if ($childMessage -match '(?i)running scripts is disabled|cannot be loaded because|execution.polic|PSSecurityException|UnauthorizedAccess.*script') {
+                    $detail = ("Windows PowerShell execution policy blocked the local diagnostic module under {0}. " +
+                        "The administrator UAC sign-in succeeded, but the collector was NOT run. " +
+                        "Review the effective policy for that administrative account with Get-ExecutionPolicy -List " +
+                        "and consult your organization's approved signed-script or execution-policy deployment process. " +
+                        "IT Toolkit will not override execution policy. Original error: {1}")
+                    throw ($detail -f $childAccount, $childMessage)
+                }
+                throw ("Elevated diagnostic under {0} failed: {1}" -f $childAccount, $childMessage)
             }
         }
         if (-not (Test-Path -LiteralPath $outputFile -PathType Leaf)) {
