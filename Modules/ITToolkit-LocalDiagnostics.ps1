@@ -686,13 +686,31 @@ $diagnosticResult = Get-ToolkitLocalDiagnostic -Section __SECTION__
 '@
         $child = $child.Replace('__MODULE__',$safeModule).Replace('__SECTION__',$safeSection).Replace('__OUTPUT__',$safeOutput)
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($child))
-        $process = Start-Process -FilePath $exe -ArgumentList @(
-            '-NoProfile','-NonInteractive','-EncodedCommand',$encoded
-        ) -Verb RunAs -Wait -PassThru -ErrorAction Stop
-        if ($process.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $outputFile -PathType Leaf)) {
-            throw 'The elevated process did not provide a diagnostic result.'
+        try {
+            $process = Start-Process -FilePath $exe -ArgumentList @(
+                '-NoProfile','-NonInteractive','-EncodedCommand',$encoded
+            ) -Verb RunAs -Wait -PassThru -ErrorAction Stop
+        } catch {
+            $startError = [string]$_.Exception.Message
+            if ($_.Exception -is [System.ComponentModel.Win32Exception] -and
+                $_.Exception.NativeErrorCode -eq 1223) {
+                throw 'Windows UAC approval was cancelled. No elevated diagnostic was collected.'
+            }
+            throw ("Windows could not start the UAC diagnostic process: {0}. Check local elevation permissions and endpoint security events." -f $startError)
+        }
+        $hasOutput = Test-Path -LiteralPath $outputFile -PathType Leaf
+        if (-not $hasOutput) {
+            throw ("Elevated diagnostic process ended without an accessible result (exit code: {0}). " +
+                "Possible causes include endpoint security restrictions, process launch failure, or " +
+                "UAC running under a different administrator account. The result folder is restricted " +
+                "to the requesting user, Administrators and SYSTEM. No alternate identity was used " +
+                "or accepted by IT Toolkit. Review Windows/endpoint security logs; do not disable protection." -f
+                $process.ExitCode)
         }
         $payload = Import-Clixml -LiteralPath $outputFile -ErrorAction Stop
+        if ($process.ExitCode -ne 0) {
+            throw ("The elevated diagnostic exited with code {0}; the result was discarded." -f $process.ExitCode)
+        }
         if ([string]$payload.Identity -ine $caller) {
             throw ('UAC selected a different Windows account (' + [string]$payload.Identity +
                 '). Results were discarded rather than attributed to the original user.')
