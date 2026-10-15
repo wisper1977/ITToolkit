@@ -113,6 +113,8 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 
 **Report Archive diagnostic status (Windows retest pending):** The separate-PowerShell Reports-folder launch still failed to display an Explorer window from the GUI despite working when invoked manually. The development GUI now captures and reports child PowerShell exit errors or completion instead of merely claiming the request succeeded. Copy Folder Path remains the working fallback. See [ROADMAP.md](ROADMAP.md).
 
+**Known v1.27 development limitation:** Report Archive → Open Reports Folder can launch a child PowerShell process successfully without showing an Explorer window in the tested alternate-admin GUI context. Copy Folder Path remains usable. The Explorer desktop-session issue is still being investigated.
+
 ## Version history
 
 ### v1.27 (in development)
