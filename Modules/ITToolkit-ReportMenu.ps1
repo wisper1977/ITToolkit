@@ -157,7 +157,15 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
                 $content = $parts -join "`r`n"
             }
         } else {
-            try { $content = [string](Get-ReportSection $section $target) }
+            try {
+                $content = [string](Get-ReportSection $section $target)
+                if ($section -eq 'Health' -and $script:ToolkitAuthMode -ne 'Alternate') {
+                    $healthContext = New-ToolkitAuthContext -ComputerName $target -Mode Default
+                    $healthResult = Get-ToolkitCompositeDiagnostic -Context $healthContext -Section Health
+                    $content += "`r`n`r`nRemote Health evidence collected separately under Default identity over WinRM.`r`n" +
+                        (Format-ToolkitHealthAnalysis -Analysis (Get-ToolkitRemoteHealthAnalysis -Result $healthResult))
+                }
+            }
             catch { $content = "Error details: $($_.Exception.Message)" }
             $status = Get-SectionStatus $section $content
         }
