@@ -791,7 +791,18 @@ function Start-GUITool([string]$id) {
     $exe = $script:ResolvedApps[$id]
     if (-not $exe) { [Windows.MessageBox]::Show("$($app.Name) was not found on this computer.", 'Tool unavailable') | Out-Null; return }
     try {
-        if ($id -in @('portqry','psexec')) {
+        if ($id -eq 'powershell-admin') {
+            # Windows requests the administrator identity through UAC. Do not
+            # forward alternate target credentials or elevate the toolkit.
+            $confirm = [Windows.MessageBox]::Show(
+                'Open a separate Windows PowerShell session as administrator? Windows UAC will request approval or credentials. IT Toolkit stays under your current account.',
+                'Open elevated PowerShell',
+                [Windows.MessageBoxButton]::YesNo,
+                [Windows.MessageBoxImage]::Question)
+            if ($confirm -ne [Windows.MessageBoxResult]::Yes) { return }
+            Start-Process -FilePath $exe -ArgumentList '-NoLogo' -Verb RunAs -ErrorAction Stop | Out-Null
+        }
+        elseif ($id -in @('portqry','psexec')) {
             # Command-line utilities: keep help, EULA prompts, and error output visible.
             Start-Process -FilePath $env:ComSpec -ArgumentList ('/k ""' + $exe + '" -?"') -ErrorAction Stop | Out-Null
         }
