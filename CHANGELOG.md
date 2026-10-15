@@ -717,3 +717,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Technician screenshots confirm `IT-7PY1M84` (local) and `ML-PCSCALE` (remote Default) both display **3 review / 7 checked / 0 unknown** in the scrollable Computer Health sidebar.
 - `PendingRestart` correctly displays a Review finding for **Pending file rename operations** on both computers, without declaring Windows Update missing or restarting machines. Existing storage, services, events, uptime, firewall and QFE evidence remains distinct by target.
 - These screenshots validate the GUI positive-indicator read/display path only. Still require a confirmed negative-indicator case, restricted/partial failure, remote Alternate identity, Classic rendering, and saved-report regression before release.
+
+### v1.27 — GUI remote Alternate Health path technician-verified (2026-10-15)
+
+- Technician confirms Alternate authentication was selected for remote `ML-PCSCALE`. Screenshot shows seven populated checks (3 review, 7 checked, 0 unknown), three enabled firewall profiles, 6.9-day uptime, and a pending-file-rename indicator, consistent with the earlier Default run.
+- This verifies GUI Alternate-mode display/collection by technician report, **not independent authentication identity provenance**: the sidebar screenshot does not include the alternate account or remote token. Verify requested and actual identity through the diagnostic report where available; do not infer from a matching result.
+- Successful basic Health GUI paths now include Local, remote Default, and remote Alternate. Classic seven-check output, errors/partial states, and no-restart-indicator cases remain to test.
