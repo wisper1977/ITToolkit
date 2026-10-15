@@ -1540,7 +1540,7 @@ $ui.SwitchClassic.Add_Click({
     try {
         # Launch under the current Windows token, without credential or target handoff.
         $psExe = Join-Path $PSHOME 'powershell.exe'
-        $arguments = '-NoLogo -NoProfile -STA -NoExit -File "' + $classicScript + '"'
+        $arguments = '-NoLogo -NoProfile -STA -File "' + $classicScript + '"'
         $process = Start-Process -FilePath $psExe -ArgumentList $arguments -WorkingDirectory $PSScriptRoot -PassThru -ErrorAction Stop
         if ($null -eq $process) { throw 'Windows did not return a process.' }
         $window.Close()
