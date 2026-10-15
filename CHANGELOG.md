@@ -56,6 +56,12 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Regression-test this increment with a nonexistent target (expected `UNAVAILABLE`) and, later, a real explicit permission rejection (expected `ACCESS DENIED`). Other collector-reported statuses remain unchanged.
 - Confirm report saving, snapshots, and existing diagnostics remain operational; **v1.27B is not yet marked complete**.
 
+### v1.27C — Local Services collector Windows verification
+
+- **Confirmed collector success on Windows workstation `DESKTOP-8EHGAPD`:** Explicitly reloaded the current `Modules/ITToolkit-LocalDiagnostics.ps1` function; `Get-ToolkitLocalDiagnostic -Section Services` returned `SUCCESS` / `Success` with no error, 324 service records queried, and seven automatic-start services currently not running.
+- The seven records were AppXSvc, AsusUpdateCheck, edgeupdate, Intel(R) TPM Provisioning Service, MapsBroker, sppsvc, and TrustedInstaller. These findings are **not** automatically service failures; idle, trigger-start, and on-demand behavior require context.
+- The collector test is complete for this successful local path only. **GUI and Classic Local Services integration, report saving and formatting, error paths, and remote regression remain unverified.** No repairs or service-state changes were performed.
+
 ### v1.27C — Local diagnostics foundation (first increment; partially Windows-tested)
 
 #### Added
