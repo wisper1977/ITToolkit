@@ -1284,7 +1284,7 @@ foreach ($section in $requested) {
     $lines.Add(('=' * 65))
     $lines.Add("$section REPORT")
     $lines.Add(('=' * 65))
-    if ($section -notin @('System','Firewall','Services')) {
+    if ($section -notin @('System','Firewall','Services','Storage')) {
         $lines.Add('STATUS: NOT TESTED')
         $lines.Add('Status category: NotTested')
         $lines.Add('Error details: Direct-local collection is not implemented for this section yet.')
