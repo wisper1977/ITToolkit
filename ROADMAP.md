@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups and Administrators validated locally; Shares newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators and Shares validated locally; Software newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -144,3 +144,7 @@ These have no assigned milestone or implementation commitment:
 **Local Administrators validation (2026-10-15):** Both Windows interfaces worked with a successful HTML report save/open. Two direct Administrators members reported; nested membership not expanded.
 
 **Local Shares implementation (Windows validation pending):** Shared local `Win32_Share` inventory now returns share name, path, description and type in GUI and Classic. Test harness defaults to Shares. Permissions and share accessibility are out of scope; Windows collector, UI, report saving and regression testing remain pending.
+
+**Local Shares verified (2026-10-15):** GUI and Classic reported standard Windows administrative shares and HTML saved/opened. This confirms collection, not network access or share permissions.
+
+**Local Software increment (Windows validation pending):** Shared local inventory reads machine-wide uninstall entries from both native and 32-bit registry views. GUI and Classic now include Software in explicit local collection; `Test-LocalDiagnostics.ps1` defaults to Software. Installation changes are not performed. Windows collector/UI/HTML and edge-case validation remain pending.
