@@ -1,8 +1,8 @@
 # IT Toolkit
 
-**Development version 1.27 (v1.27A completed)** · Windows PowerShell 5.1 · Windows administration and diagnostics
+**Development version 1.27 (in progress)** · Windows PowerShell 5.1 · Windows administration and diagnostics
 
-> **Release status:** `develop/v1.27` is the active development branch. **v1.26 on `main` remains the stable production release.** The v1.27 GUI refinements have been tested on Windows; later v1.27 milestones are still planned and are not included yet.
+> **Release status:** `develop/v1.27` is the active development branch. **v1.26 on `main` remains the stable production release.** v1.27 includes implemented GUI refinements, interface switching, and shared direct-local diagnostic collectors. Final privileged GUI/Classic report tests and broader regression checks are pending; see [ROADMAP.md](ROADMAP.md).
 
 The **IT Toolkit** is a portable, PowerShell-based utility for IT technicians who troubleshoot and document Windows workstations and servers. It provides a graphical interface and a Classic console menu for remote diagnostics, access checks, reporting, and system inventory comparisons.
 
