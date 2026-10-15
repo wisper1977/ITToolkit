@@ -315,6 +315,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
       <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="12" Margin="0,10,0,0" CornerRadius="5">
        <StackPanel>
         <DockPanel LastChildFill="False">
+         <Button Name="CopyDiagnosticReport" DockPanel.Dock="Left" Content="Copy Report" Width="138" Height="34" IsEnabled="False" Background="#E7EEF7" Foreground="#17365D" FontWeight="SemiBold" Margin="0,0,14,0" ToolTip="Copy displayed diagnostic report to clipboard"/>
          <Button Name="SaveDiagnosticReport" DockPanel.Dock="Right" Content="Save Report" Width="138" Height="34" IsEnabled="False" Background="#17365D" Foreground="White" FontWeight="SemiBold" Margin="14,0,0,0"/>
          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
           <TextBlock Text="Format" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="#42566D"/>
@@ -453,7 +454,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $ui = @{}
-foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
+foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
 $window.Title = "$displayName - Graphical Interface"
 $ui.Heading.Text = $displayName
 $ui.Subtitle.Text = "Graphical Interface  |  Toolkit v$version"
@@ -1141,6 +1142,7 @@ for ($i = 0; $i -lt $ui.DiagnosticReportFormat.Items.Count; $i++) {
 function Clear-GUIReportState {
     $script:LastGUIReport = $null
     $ui.SaveDiagnosticReport.IsEnabled = $false
+    $ui.CopyDiagnosticReport.IsEnabled = $false
     $ui.DiagnosticSaveStatus.Text = 'Run a diagnostic to enable Save Report.'
 }
 $script:DiagnosticPS = $null
@@ -1173,6 +1175,7 @@ $script:DiagnosticTimer.Add_Tick({
             Results = [string]$ui.DiagnosticOutput.Text
         }
         $ui.SaveDiagnosticReport.IsEnabled = $true
+        $ui.CopyDiagnosticReport.IsEnabled = $true
         $ui.DiagnosticSaveStatus.Text = 'Results ready. Choose a format and click Save Report.'
         $script:LastDiagnosticSummary = if ($script:LastGUIReport.Sections.Count -eq 1) { [string]$script:LastGUIReport.Sections[0] } else { "All $($script:LastGUIReport.Sections.Count) checks" }
         $script:LastDiagnosticSummary += ' - ' + (Get-Date).ToString('g')
@@ -1464,6 +1467,25 @@ Get-ToolkitGUISnapshot -Target $target -Mode $mode -Credential $credential -Tool
 })
 
 # Save only the completed diagnostic text already displayed in the GUI.
+$ui.CopyDiagnosticReport.Add_Click({
+    if ($null -eq $script:LastGUIReport -or $null -ne $script:DiagnosticPS) { return }
+    $captured = $script:LastGUIReport
+    $currentMode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $currentIdentity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+    if ($captured.Target -ine $script:TargetComputer -or $captured.Mode -ne $currentMode -or
+        $captured.Identity -ine $currentIdentity -or $ui.DiagnosticOutput.Text -cne $captured.Results) {
+        Clear-GUIReportState
+        $ui.DiagnosticSaveStatus.Text = 'Report context changed. Run the diagnostic again before copying.'
+        return
+    }
+    try {
+        [Windows.Clipboard]::SetText([string]$captured.Results)
+        $ui.DiagnosticSaveStatus.Text = 'Displayed report copied to clipboard.'
+        $ui.Status.Text = 'Diagnostic report copied.'
+    } catch {
+        $ui.DiagnosticSaveStatus.Text = "Could not copy report: $($_.Exception.Message)"
+    }
+})
 $ui.SaveDiagnosticReport.Add_Click({
     if ($null -eq $script:LastGUIReport -or $null -ne $script:DiagnosticPS) { return }
     $captured = $script:LastGUIReport
