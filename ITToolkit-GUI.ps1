@@ -516,6 +516,12 @@ function Update-TargetInfo {
     $ui.TargetLastDiagnostic.Text = [string]$script:LastDiagnosticSummary
 }
 function Update-TargetView {
+    # Do not display another target's prior health observations as current.
+    if ($script:DashboardHealthTarget -and
+        (-not $script:LocalTargetMode -or $script:DashboardHealthTarget -ine $script:TargetComputer)) {
+        $script:DashboardHealthTarget = $null
+        $ui.DashboardHealthSummary.Text = 'Run the local Quick health check to populate an evidence-based summary.'
+    }
     $label = if ($script:TargetComputer) { $script:TargetComputer } else { 'Not selected' }
     $ipText = if ($script:TargetIPv4) { [string]$script:TargetIPv4 } else { '(not selected)' }
     $statusText = [string]$script:AdminStatus
@@ -1203,6 +1209,7 @@ $script:DiagnosticTimer.Add_Tick({
             throw 'Target or credentials changed during collection. Results discarded; run diagnostics again.'
         }
         if ($completed.Mode -eq 'Local' -and 'Health' -in @($completed.Sections)) {
+            $script:DashboardHealthTarget = [string]$completed.Target
             $summary = [regex]::Match($ui.DiagnosticOutput.Text, 'Review: (\d+) \| Available: (\d+) \| Unavailable: (\d+)')
             if ($summary.Success) {
                 $ui.DashboardHealthSummary.Text = ("{0}: {1} review findings, {2} available checks, {3} unavailable checks. Collection initiated by {4}; see Diagnostics for evidence and next steps." -f
