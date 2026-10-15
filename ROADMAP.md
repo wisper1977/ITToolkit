@@ -116,3 +116,5 @@ These have no assigned milestone or implementation commitment:
 **GUI switch positioning validation (2026-10-14):** Technician confirmed the bottom-aligned Switch to Classic control beneath Target Computer works on Windows. Layout and basic switch behavior passed; unrelated regressions remain outstanding.
 
 **Local Services report-saving confirmation (2026-10-14):** Technician reported that saving a Local Services report works. Specific GUI/Classic and HTML/CSV/TXT combinations were not identified; retain explicit per-format coverage and remote regression as pending.
+
+**Local Storage increment (implementation; Windows test pending):** The shared direct-local collector and GUI/Classic local section allowlists now support Storage (fixed logical disks, size/free GB, free percentage). Zero or unknown capacity yields no free percentage; zero returned disks produces `NoData`. Remote diagnostics remain unchanged. Windows test, GUI/Classic reports, report saving and remote regression are outstanding.
