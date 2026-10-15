@@ -69,6 +69,12 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 - Updated the **Open Reports Folder** handler to wait briefly for the child PowerShell process, capture its exit code and standard-error details, and distinguish a completed child (which does not prove a visible Explorer window) from launch failure or timeout. Existing Copy Folder Path remains the workaround. No credentials, ACLs, or execution policies are modified.
 - **Windows GUI test pending:** reproduce the failure using the instrumented handler and report the resulting status or error for diagnosis.
 
+### Report Archive folder visibility diagnostics (2026-10-15)
+
+- Added exit-code and stderr reporting for the same-identity child PowerShell that requests `explorer.exe` from GUI Report Archive. Process creation alone is not treated as confirmed folder visibility.
+- **Windows technician observation:** the GUI reported `Explorer child completed (exit 0, PID 34660); window visibility not verified`, but the Reports folder did **not** appear. Direct and nested administrative PowerShell launches worked outside the GUI. Thus the GUI Open Folder issue remains unresolved; investigate Explorer desktop session and process ownership before another launcher change.
+- **Copy Folder Path** remains functional. No execution-policy, account, ACL, or production-branch changes were made.
+
 ### Remaining release checks and limitations
 
 - Validate unavailable/denied and partial Health paths, negative pending-restart indicators, and alternate remote authentication **provenance** where observable. Check latest saved seven-check output in the relevant HTML/CSV/TXT workflows.
