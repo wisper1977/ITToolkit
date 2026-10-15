@@ -8,7 +8,7 @@ This roadmap tracks **current capabilities, remaining validation, and planned wo
 
 | Milestone | Scope | Status |
 | --- | --- | --- |
-| **v1.27 — Current development build** | GUI usability, Classic/GUI navigation, consistent diagnostic results, direct-local diagnostics, and scoped privileged checks | **In progress — implemented; final integration, security and regression validation pending** |
+| **v1.27 — Current development build** | GUI usability, Classic/GUI navigation, consistent diagnostic results, direct-local diagnostics, and scoped privileged checks | **Release candidate — technician reports workplace checklist completed; release approval pending** |
 | **Future — Evidence-based health analysis** | Interpret confirmed diagnostic evidence without treating unavailable data as healthy | Planned |
 | **Future — Technician-confirmed Quick Fix** | Explicit, authorized repairs with a preview, consent and verification | Planned; version unassigned |
 | **Future — NIST / Best Practices Computer Check** | Read-only, versioned Windows configuration/security posture checks | Planned; version unassigned |
@@ -38,7 +38,15 @@ This roadmap tracks **current capabilities, remaining validation, and planned wo
 
 Results above describe **tested behavior, not a completed release**. Historical test-by-test evidence is maintained in [CHANGELOG.md](CHANGELOG.md).
 
-### Remaining v1.27 release checks
+### Workplace test completion reported (October 15, 2026)
+
+The technician confirmed completion of the agreed workplace checklist after successfully validating GUI cross-account BitLocker and Classic/GUI switching. This confirmation covers the previously requested Classic BitLocker UAC path, honest Policy access-denied reporting, UAC cancellation, GUI HTML save/reopen and Recent Reports/Archive, Copy Report, CSV/TXT, Default/Alternate remote authentication, identity/target isolation, GUI preferences, local independence from WinRM/ADMIN$, and endpoint-security compatibility. These are **technician-reported results**, not an automated test suite or independent reproduction; individual logs were not supplied for every check.
+
+**Known limitation remains:** computer-policy `gpresult /SCOPE COMPUTER /R` returns `ACCESS DENIED` even in the authorized elevated administrator console on the tested workstation. The toolkit should preserve this error rather than mark the underlying Policy evidence as successful.
+
+**Release gate:** v1.27 may be considered a release candidate based on reported workplace tests. Do not modify production `main` before explicit approval and a final branch/version review.
+
+### Release-candidate review and historical test checklist
 
 
 **Validated October 15, 2026:** Separate-account GUI BitLocker UAC collected actual C: encryption data successfully on workplace computer IT-7PY1M84. It correctly distinguished initiating and elevated identities and did not repeat the previously approved RemoteSigned change. Still pending: saved reports, Classic elevation, cancellation and broader regression tests. Computer-policy retrieval separately returns Access Denied even when gpresult runs in an elevated administrator console.
