@@ -43,6 +43,12 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 - **Seven-check Health GUI:** Technician screenshots showed **7 Checked / 3 Review / 0 Unknown** for local `IT-7PY1M84` and remote `ML-PCSCALE` under Default credentials, with distinct storage/services/system evidence. Both displayed a pending-file-rename review indicator. Technician also reported a successful remote Alternate-mode run on `ML-PCSCALE`; the screenshot verifies populated results but does not independently identify the executing remote security token.
 - **Seven-check Health Classic:** Technician confirmed Classic Health reports run and show the expected readings under Local, remote Default and remote Alternate account modes. Classic remains intentionally report-based rather than adding a persistent dashboard.
 
+### Scope decision — diagnostic detail audit assigned to v1.28 (2026-10-15)
+
+- Reserved **v1.28** for a systematic review of completeness and technician usefulness across all 20 diagnostic categories, starting with local-versus-remote Network evidence (`ipconfig` compared with `ipconfig /all`).
+- Current remote Network attempts `ipconfig /all` through selected-identity WinRM; local Network currently returns a narrower set of structured adapter fields. This is a planned future audit and **no v1.28 collector code has been implemented** in this change.
+- Kept v1.27 focused on remaining health-analysis quality and final release validation; see [ROADMAP.md](ROADMAP.md).
+
 ### Remaining release checks and limitations
 
 - Validate unavailable/denied and partial Health paths, negative pending-restart indicators, and alternate remote authentication **provenance** where observable. Check latest saved seven-check output in the relevant HTML/CSV/TXT workflows.
