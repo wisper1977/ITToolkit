@@ -105,6 +105,8 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 
 **Planned v1.28 focus:** Following v1.27 stabilization, review all 20 diagnostic collectors for complete, actionable technician evidence. Network is first: compare local structured adapter inventory against remote `ipconfig /all`, then harmonize useful fields while preserving GUI/Classic behavior, authentication boundaries, and saved-report compatibility. See [ROADMAP.md](ROADMAP.md). This is planned work, not yet implemented.
 
+**v1.27 Report Archive compatibility (2026-10-15; Windows retest pending):** The Open Reports Folder button now invokes Windows Explorer directly instead of passing the directory path to a shell open verb after a separately authorized administrative GUI launch produced `Access is denied`. Copy Folder Path continues to work. A same-target local two-snapshot HTML comparison has been reviewed with nine verified service-property changes and no reported changes in the other six categories; further remote and error-path tests remain open.
+
 ## Version history
 
 ### v1.27 (in development)
