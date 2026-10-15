@@ -26,6 +26,8 @@ $prefsRoot = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'C
 $prefsPath = Join-Path $prefsRoot 'GUISettings.json'
 $script:FavoriteIds = @('powershell','eventvwr','services')
 $script:RecentTargets = @()
+$script:LastGUIPage = 'Dashboard'
+$script:GUIWindowPlacement = $null
 if (Test-Path -LiteralPath $prefsPath -PathType Leaf) {
     try {
         $saved = Get-Content -LiteralPath $prefsPath -Raw | ConvertFrom-Json
@@ -34,6 +36,10 @@ if (Test-Path -LiteralPath $prefsPath -PathType Leaf) {
         if ($null -ne $saved.DashboardPins) {
             $script:FavoriteIds = @(@($saved.DashboardPins) + @($script:FavoriteIds) | Where-Object { $_ -is [string] } | Select-Object -Unique | Select-Object -First 10)
         } else { $script:FavoriteIds = @($script:FavoriteIds | Select-Object -First 10) }
+        if ([string]$saved.LastPage -in @('Dashboard','Diagnostics','Tools','Reports','Settings')) {
+            $script:LastGUIPage = [string]$saved.LastPage
+        }
+        if ($saved.WindowPlacement) { $script:GUIWindowPlacement = $saved.WindowPlacement }
         if ($null -ne $saved.RecentTargets) {
             $script:RecentTargets = @($saved.RecentTargets | Where-Object { $_ -and $_.Name -and $_.Name -match '^[a-zA-Z0-9_.-]+$' } | Select-Object -First 8)
         }
@@ -42,7 +48,12 @@ if (Test-Path -LiteralPath $prefsPath -PathType Leaf) {
 function Save-GUIPreferences {
     try {
         if (-not (Test-Path -LiteralPath $prefsRoot -PathType Container)) { New-Item -ItemType Directory -Path $prefsRoot -Force | Out-Null }
-        $preferences = [ordered]@{ Favorites = @($script:FavoriteIds); RecentTargets = @($script:RecentTargets) }
+        $preferences = [ordered]@{
+            Favorites = @($script:FavoriteIds)
+            RecentTargets = @($script:RecentTargets)
+            LastPage = $script:LastGUIPage
+            WindowPlacement = $script:GUIWindowPlacement
+        }
         $json = ConvertTo-Json -InputObject $preferences -Depth 4
         [IO.File]::WriteAllText($prefsPath, $json + [Environment]::NewLine, (New-Object Text.UTF8Encoding($false)))
     } catch { [System.Windows.MessageBox]::Show("Could not save GUI preferences: $($_.Exception.Message)", 'IT Toolkit') | Out-Null }
@@ -694,7 +705,67 @@ function Resolve-GUITarget {
     Update-GUIRecentTargetStatus
     $ui.Status.Text = "Target selected: $value"
 }
+# Window placement is read/written only when opening or closing the main GUI.
+# Normal restore bounds are preserved when maximized, so unmaximizing works.
+function Save-GUIWindowPlacement {
+    $bounds = if ($window.WindowState -eq [Windows.WindowState]::Maximized) {
+        $window.RestoreBounds
+    } else {
+        [Windows.Rect]::new($window.Left, $window.Top, $window.Width, $window.Height)
+    }
+    $script:GUIWindowPlacement = [ordered]@{
+        Left = [double]$bounds.Left
+        Top = [double]$bounds.Top
+        Width = [double]$bounds.Width
+        Height = [double]$bounds.Height
+        Maximized = ($window.WindowState -eq [Windows.WindowState]::Maximized)
+    }
+}
+function Restore-GUIWindowPlacement {
+    $saved = $script:GUIWindowPlacement
+    if ($null -eq $saved) { return }
+    try {
+        $left = [double]$saved.Left; $top = [double]$saved.Top
+        $width = [double]$saved.Width; $height = [double]$saved.Height
+        foreach ($number in @($left,$top,$width,$height)) {
+            if ([double]::IsNaN($number) -or [double]::IsInfinity($number)) { return }
+        }
+        if ($width -lt $window.MinWidth -or $height -lt $window.MinHeight -or
+            $width -gt 10000 -or $height -gt 10000) { return }
+
+        # Ensure at least a meaningful portion remains on a connected monitor.
+        # Screen bounds use device pixels; WPF coordinates use device-independent units.
+        Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+        $source = [Windows.PresentationSource]::FromVisual($window)
+        $scaleX = 1.0; $scaleY = 1.0
+        if ($null -ne $source -and $null -ne $source.CompositionTarget) {
+            $scaleX = $source.CompositionTarget.TransformToDevice.M11
+            $scaleY = $source.CompositionTarget.TransformToDevice.M22
+        }
+        $visible = $false
+        foreach ($screen in [System.Windows.Forms.Screen]::AllScreens) {
+            $work = $screen.WorkingArea
+            $screenLeft = $work.Left / $scaleX; $screenTop = $work.Top / $scaleY
+            $screenRight = $work.Right / $scaleX; $screenBottom = $work.Bottom / $scaleY
+            if ([math]::Min($left + $width,$screenRight) - [math]::Max($left,$screenLeft) -ge 100 -and
+                [math]::Min($top + $height,$screenBottom) - [math]::Max($top,$screenTop) -ge 80) {
+                $visible = $true; break
+            }
+        }
+        if (-not $visible) { return }
+        $window.WindowStartupLocation = [Windows.WindowStartupLocation]::Manual
+        $window.Width = $width; $window.Height = $height
+        $window.Left = $left; $window.Top = $top
+        if ($saved.Maximized -eq $true) {
+            $window.WindowState = [Windows.WindowState]::Maximized
+        }
+    } catch {
+        # Malformed preferences or unavailable display APIs use XAML defaults.
+    }
+}
 function Show-GUIPage([string]$name) {
+    if ($name -notin @('Dashboard','Diagnostics','Tools','Reports','Settings')) { return }
+    $script:LastGUIPage = $name
     foreach ($page in @('Dashboard','Diagnostics','Tools','Reports','Settings')) { $ui["Page$page"].Visibility = if ($page -eq $name) { 'Visible' } else { 'Collapsed' } }
     $ui.Status.Text = "$name - Ready"
 }
@@ -1393,6 +1464,7 @@ $ui.RunAllDiagnostics.Add_Click({
     Start-GUIDiagnostics @($script:DiagnosticSections | ForEach-Object { [string]$_.Id })
 })
 $window.Add_Closing({
+    try { Save-GUIWindowPlacement; Save-GUIPreferences } catch { }
     Clear-GUIAlternateContext
     $script:DiagnosticTimer.Stop()
     if ($null -ne $script:DiagnosticPS) {
@@ -1755,6 +1827,15 @@ Refresh-DashboardPins
 Refresh-Tools
 Refresh-RecentTargets
 Refresh-RecentReports
+# Restore the last page without connecting to any remembered target.
+switch ($script:LastGUIPage) {
+    'Tools' { Refresh-Tools; Show-GUIPage 'Tools' }
+    'Reports' { Refresh-Archive; Refresh-SnapshotArchive; Show-GUIPage 'Reports' }
+    'Settings' { Show-GUIPage 'Settings' }
+    'Diagnostics' { Show-GUIPage 'Diagnostics' }
+    default { Show-GUIPage 'Dashboard' }
+}
+Restore-GUIWindowPlacement
 # Hide only the console owned by this PowerShell process, after WPF is visible.
 # Keep this separate from the launcher so Classic mode remains unchanged.
 $window.Add_ContentRendered({
