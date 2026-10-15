@@ -107,6 +107,9 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 
 ### v1.27 (in development)
 
+**Development documentation:** [ROADMAP.md](ROADMAP.md) now tracks only outstanding work and future proposals. Completed v1.27 functionality and technician-confirmed Windows results are consolidated in [CHANGELOG.md](CHANGELOG.md). Local/remote snapshot capture, seven-evidence GUI Health presentation and Windows PowerShell (Administrator) launcher are implemented; important edge-case and release validation still remain. No production release of v1.27 has occurred.
+
+
 **v1.27A — GUI refinement (completed and Windows-tested)**
 
 - Updated the Tools page and Dashboard Favorite Shortcuts to display long tool names on multiple lines with centered labels.
