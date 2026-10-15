@@ -897,6 +897,25 @@ function Refresh-RecentTargets {
         [void]$ui.RecentTargetRows.Children.Add($row)
     }
 }
+function Open-GUISavedReport {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) { throw "Report file not found: $fullPath" }
+    if ([IO.Path]::GetExtension($fullPath).Equals('.html', [StringComparison]::OrdinalIgnoreCase)) {
+        # Explicit Edge launch avoids silent shell association failures in alternate-credential sessions.
+        $edgePaths = @(
+            (Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'),
+            (Join-Path $env:ProgramFiles 'Microsoft\Edge\Application\msedge.exe')
+        )
+        $edge = $edgePaths | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -First 1
+        if ($edge) {
+            $uri = ([System.Uri]::new($fullPath)).AbsoluteUri
+            Start-Process -FilePath $edge -ArgumentList ('--new-window "' + $uri + '"') -ErrorAction Stop | Out-Null
+            return
+        }
+    }
+    Start-Process -FilePath $fullPath -Verb Open -ErrorAction Stop | Out-Null
+}
 function Refresh-RecentReports {
     $ui.RecentReportRows.Children.Clear()
     $folder = Get-GUIArchiveFolder
@@ -918,7 +937,7 @@ function Refresh-RecentReports {
         $button.ToolTip = 'Open saved report: ' + $file.FullName
         $button.MaxWidth = 185; $button.MinHeight = 36; $button.Margin = '0,0,8,0'
         $button.Add_Click({
-            try { Start-Process -FilePath ([string]$this.Tag) -Verb Open -ErrorAction Stop | Out-Null }
+            try { Open-GUISavedReport -Path ([string]$this.Tag) }
             catch { [Windows.MessageBox]::Show("Unable to open report: $($_.Exception.Message)", 'Report Archive') | Out-Null }
         })
         [Windows.Controls.DockPanel]::SetDock($button, 'Left')
@@ -1793,7 +1812,7 @@ $ui.ArchiveOpen.Add_Click({
         $path = [IO.Path]::GetFullPath([string]$item.Path)
         if (-not $path.StartsWith($root,[StringComparison]::OrdinalIgnoreCase)) { throw 'Report path is outside the configured archive.' }
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'The selected report no longer exists. Refresh the archive.' }
-        Start-Process -FilePath $path -Verb Open -ErrorAction Stop | Out-Null
+        Open-GUISavedReport -Path $path
     } catch { [Windows.MessageBox]::Show($_.Exception.Message,'Unable to open report') | Out-Null }
 })
 $ui.ArchiveFolder.Add_Click({
