@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, and Network validated locally; Hardware newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network and Hardware validated locally; Users newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -128,3 +128,7 @@ These have no assigned milestone or implementation commitment:
 **Network GUI/Classic validation (2026-10-15):** Technician confirmed both local interfaces display Network successfully and HTML reports save and open. Remaining CSV/TXT and remote regression validation is pending.
 
 **Local Hardware implementation (Windows validation pending):** Shared local CIM collector includes computer, BIOS, CPU, and physical-disk inventory. GUI and Classic local allowlists include Hardware, and `Test-LocalDiagnostics.ps1` defaults to Hardware. Hardware Windows collector and interface validation, saving, and regression are pending.
+
+**Hardware Windows validation (2026-10-15):** Hardware ran and HTML reports saved/opened in GUI and Classic; physical-disk coverage remains an item for later inventory comparisons.
+
+**Local Users implementation (Windows validation pending):** Shared local account inventory using `Win32_UserAccount` with a local-account filter is now wired to both interfaces; the single-command smoke test defaults to Users. User collector and report testing still required.
