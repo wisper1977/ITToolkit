@@ -1,6 +1,6 @@
 # IT Toolkit v1.27C - direct local diagnostic collector foundation.
 # Windows PowerShell 5.1; dot-source when local collection is explicitly selected.
-# This module is not yet wired into GUI or Classic target selection.
+# Used by explicit local mode in both GUI and Classic.
 # Local collection runs with the current process token. It does not elevate,
 # accept alternate credentials, open WinRM, or establish SMB sessions.
 
@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall')]
+        [ValidateSet('System','Firewall','Services')]
         [string]$Section
     )
 
@@ -43,6 +43,39 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Services' {
+                # Match the existing remote Services report: automatic-start
+                # services whose current state is not Running. Read only.
+                # An empty finding list is still a successful query, not NoData.
+                $services = @(Get-CimInstance -ClassName Win32_Service -ErrorAction Stop)
+                if ($services.Count -eq 0) {
+                    throw 'The local service query returned no service records; collection cannot be verified.'
+                }
+                $stopped = @($services | Where-Object {
+                    $_.StartMode -eq 'Auto' -and $_.State -ne 'Running'
+                } | Sort-Object Name)
+                $records = New-Object System.Collections.Generic.List[object]
+                $records.Add([pscustomobject]@{
+                    RecordType = 'Summary'
+                    ServicesQueried = $services.Count
+                    AutomaticNotRunning = $stopped.Count
+                    Note = if ($stopped.Count -eq 0) {
+                        'No nonrunning automatic-start services found. Collection success does not establish overall health.'
+                    } else {
+                        'Automatic-start services not currently running; some may be trigger-start or intentionally stopped.'
+                    }
+                })
+                foreach ($svc in $stopped) {
+                    $records.Add([pscustomobject]@{
+                        RecordType = 'Service'
+                        Name = [string]$svc.Name
+                        DisplayName = [string]$svc.DisplayName
+                        State = [string]$svc.State
+                        StartMode = [string]$svc.StartMode
+                    })
+                }
+                $result.Data = @($records.ToArray())
             }
             'Firewall' {
                 # A disabled firewall profile is observable configuration data,
