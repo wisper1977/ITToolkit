@@ -68,6 +68,19 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - **Windows validation passed (current-user success paths):** On Windows 11 Pro, local System and Firewall returned `SUCCESS` / `Success`, populated data, and empty `Error` values, using the current identity while WinRM was stopped. Firewall showed enabled Domain, Private, and Public profiles. The results confirm direct collection without a responding WinRM endpoint.
 - **Validation still pending:** permission-denied and collection-failure paths, GUI/Classic integration, snapshots/reports, and alternate-administrator execution.
 
+### v1.27C — Local target selection and reporting (second increment; Windows testing pending)
+
+#### Added
+- GUI Dashboard **Use Local Computer** selection and Classic main menu option **13** to choose the machine running IT Toolkit.
+- Shared direct-local System and Firewall collection in the GUI asynchronous diagnostic worker and Classic reports. Local output includes status/category, identity context, evidence, and error details.
+- Explicit `NOT TESTED` results for local diagnostic sections that do not yet have collectors, instead of silently using remote collection.
+
+#### Safeguards and limitations
+- Existing remote target selection remains available. GUI target switches are blocked during diagnostic/snapshot collection; Classic remote tool categories cannot run under explicit local mode.
+- The GUI prevents ADMIN$ checks for local selection, and both modes decline local snapshot capture rather than running remote snapshot collectors.
+- Current-user token only. Secure alternate-administrator local execution, remaining local collectors, and structured local snapshots are not yet implemented.
+- Windows GUI/Classic integration, report saving, and remote regression testing pending; do **not** mark v1.27C complete.
+
 ### Documentation organization
 
 - Added [ROADMAP.md](ROADMAP.md) as the dedicated plan for pending v1.27B validation, v1.27C local diagnostics, v1.27D health analysis, the proposed Quick Fix menu, NIST/best-practices checks, and later enhancements.
