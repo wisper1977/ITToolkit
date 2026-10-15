@@ -10,7 +10,7 @@ The **IT Toolkit** is a portable, PowerShell-based utility for IT technicians wh
 
 ## Features
 
-- **Two interfaces:** Windows GUI and numbered Classic PowerShell menus.
+- **Two interfaces:** Windows GUI and numbered Classic PowerShell menus. On the v1.27 development branch, the Classic main menu numbers are grouped sequentially and both interfaces offer a switch to the other under the current Windows process identity (Windows validation pending). No target selection or alternate credential is transferred.
 - **v1.27A GUI refinements (development branch):** Multiline labels on Tools and Dashboard favorite buttons; improved display of long target names, recent reports, and footer text in narrower windows.
 - **v1.27A window preferences (development branch; Windows-tested):** Remembers main GUI size, position, maximized state, and last open page per technician. Off-screen or invalid saved layouts fall back to default placement; previously selected targets are not automatically reconnected.
 - **Remote access checks:** DNS resolution, ICMP reachability, WMI, WinRM, and `ADMIN$` accessibility.
@@ -166,3 +166,5 @@ See the [LICENSE](LICENSE) file for the full license text.
 **v1.27C Local Services collector validation (Windows-tested independently; interface tests pending):** The direct-local `Win32_Service` collector returned `SUCCESS`/`Success` with no errors on Windows workstation `DESKTOP-8EHGAPD`, querying 324 services and identifying seven automatic-start services that were not running. Findings are evidence for review, not confirmed service faults. Local GUI and Classic Services execution, report formatting/saving, and remote regression checks remain to be validated.
 
 **v1.27C GUI Local Services display validation (Windows-tested):** GUI local Services report on `DESKTOP-8EHGAPD` displayed `SUCCESS` / `Success`, 324 queried services and seven automatic-start services not running, matching the direct collector test. GUI report save/reopen for Services, Classic Services validation, and remote regression tests are still pending.
+
+**v1.27C Classic Services and interface navigation (Windows validation partial):** Classic local Services collection and output were confirmed working by the technician. Classic main-menu numbering is now sequential (1–14), with Local Computer at option 10, Settings/Tools/Credentials at 11–13 and Switch to GUI at 14. GUI sidebar offers **Switch to Classic**. Switching starts the other interface as the currently signed-in Windows process identity; it does not reauthenticate through the launcher, transfer alternate credentials, or restore a target. Windows switch testing and remaining report regression tests are pending.
