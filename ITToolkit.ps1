@@ -61,6 +61,9 @@ if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missin
 $componentPath = Join-Path $componentFolder 'ITToolkit-LocalDiagnostics.ps1'
 if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missing toolkit component: $componentPath" }
 . $componentPath
+$componentPath = Join-Path $componentFolder 'ITToolkit-HealthAnalysis.ps1'
+if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missing toolkit component: $componentPath" }
+. $componentPath
 $componentPath = Join-Path $componentFolder 'ITToolkit-ClassicAuthentication.ps1'
 if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missing toolkit component: $componentPath" }
 . $componentPath
