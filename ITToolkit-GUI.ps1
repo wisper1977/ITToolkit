@@ -1245,9 +1245,11 @@ foreach ($section in $requested) {
         $lines.Add("Status category: $(Get-ToolkitDiagnosticStatusCategory -Status $status)")
         $lines.Add($content)
     } catch {
-        $lines.Add('STATUS: UNAVAILABLE')
-        $lines.Add('Status category: Unavailable')
-        $lines.Add("UNAVAILABLE / ACCESS DENIED / ERROR: $($_.Exception.Message)")
+        $failureMessage = [string]$_.Exception.Message
+        $failureStatus = Get-ToolkitDiagnosticExceptionStatus -Message $failureMessage
+        $lines.Add("STATUS: $failureStatus")
+        $lines.Add("Status category: $(Get-ToolkitDiagnosticStatusCategory -Status $failureStatus)")
+        $lines.Add("ERROR: $failureMessage")
     }
 }
 return ($lines -join "`r`n")
@@ -1280,9 +1282,11 @@ foreach ($section in $requested) {
         $lines.Add("STATUS: $($result.Status)")
         $lines.Add((Convert-ClassicDispatcherResult -Result $result))
     } catch {
-        $lines.Add('STATUS: UNAVAILABLE')
-        $lines.Add('Status category: Unavailable')
-        $lines.Add("UNAVAILABLE / ACCESS DENIED / ERROR: $($_.Exception.Message)")
+        $failureMessage = [string]$_.Exception.Message
+        $failureStatus = Get-ToolkitDiagnosticExceptionStatus -Message $failureMessage
+        $lines.Add("STATUS: $failureStatus")
+        $lines.Add("Status category: $(Get-ToolkitDiagnosticStatusCategory -Status $failureStatus)")
+        $lines.Add("ERROR: $failureMessage")
     }
 }
 $context = $null
