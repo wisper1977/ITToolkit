@@ -8,8 +8,7 @@ This roadmap tracks **current capabilities, remaining validation, and planned wo
 
 | Milestone | Scope | Status |
 | --- | --- | --- |
-| **v1.27 — Current development build** | GUI usability, Classic/GUI navigation, consistent diagnostic results, direct-local diagnostics, and scoped privileged checks | **In progress — local snapshot workflow implemented, Windows tests pending** |
-| **Future — Evidence-based health analysis** | Interpret confirmed diagnostic evidence without treating unavailable data as healthy | Planned |
+| **v1.27 — Current development build** | GUI/Classic parity, direct-local diagnostics and snapshots, scoped UAC, and evidence-based health dashboard | **In progress — first health analysis increment implemented, Windows validation pending** |
 | **Future — Technician-confirmed Quick Fix** | Explicit, authorized repairs with a preview, consent and verification | Planned; version unassigned |
 | **Future — NIST / Best Practices Computer Check** | Read-only, versioned Windows configuration/security posture checks | Planned; version unassigned |
 
@@ -64,7 +63,7 @@ The technician confirmed completion of the agreed workplace checklist after succ
 - Keep diagnostics read-only. Local failures, skipped checks and partial data are not evidence of a healthy system; observed findings (such as stopped services, event errors, or unencrypted volumes) need context before interpretation.
 - Preserve working GUI/Classic functionality, remote support and report provenance during incremental changes.
 
-## Future — Evidence-based health analysis
+## v1.27 — Evidence-based health dashboard
 
 **Goal:** Give useful, defensible interpretations of successfully collected evidence rather than a simplistic health score.
 
@@ -72,7 +71,8 @@ The technician confirmed completion of the agreed workplace checklist after succ
 - Keep unavailable, failed, no-data and not-applicable checks separate from confirmed normal observations.
 - Explain what warrants review and provide practical next investigative steps without overstating severity or certainty.
 - Integrate results into Diagnostics and reports, with any Dashboard summary optional and unobtrusive.
-- **Not yet implemented:** The existing local Health section is a read-only evidence summary, not this planned analysis capability.
+- **First implementation committed (Windows validation pending):** Shared local Health interpretation for system-drive capacity, automatic-start service observations, and bounded System event counts. Both GUI and Classic append explanatory findings to local Health reports, with a last-analysis summary on the GUI Dashboard.
+- **Remaining v1.27 work:** Validate local GUI and Classic display, saved reports, partial/unavailable cases, target and identity changes. Extend analysis carefully into other 20 local sections and compatible remote evidence without mistaking status `SUCCESS` for healthy configuration. Provide richer category grouping and drill-down evidence before release.
 
 ## Future — Technician-confirmed Quick Fix
 
