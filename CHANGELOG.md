@@ -24,8 +24,19 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - The subsequent dashboard and footer layout refinements were reviewed in Windows and accepted.
 - Tool launching, favorites, report opening, and authentication behaviors were intended to remain unchanged; no comprehensive regression test of these areas is claimed.
 
+### v1.27B — Shared status classification (first increment; awaiting Windows testing)
+
+#### Added
+- A common `Get-ToolkitDiagnosticStatusCategory` classifier with explicit categories for success, no data, review, partial, unavailable, access denied, not tested, and unknown outcomes.
+- Additive `StatusCategory` output from the shared diagnostic dispatcher, while preserving original `Status`, `Error`, and collected records.
+- Status category display in the Classic alternate-credential report formatter and GUI diagnostic output (including Default mode).
+
+#### Validation pending
+- Confirm GUI Default and Alternate runs, Classic alternate-credential reports, and representative SUCCESS / NO RESULTS / UNAVAILABLE / ACCESS DENIED statuses on Windows.
+- Confirm report saving, snapshots, and existing diagnostics remain operational; **v1.27B is not yet marked complete**.
+
 ### Planned (not yet implemented)
-- **v1.27B:** Shared diagnostic result handling and more consistent status/error reporting across GUI and Classic.
+- **v1.27B continuation:** Cross-interface verification and further status/error consistency.
 - Later proposals: evidence-based Health Analysis, expanded network diagnostics, snapshot enhancements, and clearer ticket/report summaries.
 
 ## [1.26] — 2026-10-14
