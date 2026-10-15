@@ -59,7 +59,7 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
     foreach ($section in $Sections) {
         Write-Host "Collecting $section ..." -ForegroundColor Cyan
         if ($script:LocalTargetMode) {
-            if ($section -notin @('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates')) {
+            if ($section -notin @('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks')) {
                 $status = 'NOT TESTED'
                 $content = 'Error details: Direct-local collection is not implemented for this section yet.'
             } else {
