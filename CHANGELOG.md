@@ -6,6 +6,13 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### v1.27C — Scheduled Tasks validated; Events implementation (2026-10-15)
+
+- **Windows technician confirmed:** Local Scheduled Tasks worked in GUI and Classic and HTML reports saved and reopened. Task Scheduler statuses, last/next runs and result codes were reported; nonzero codes and placeholder timestamps have not been labeled system failures.
+- Implemented read-only direct-local Events collection for System and Application errors in the previous seven days, at most 25 records per log. Per-log summaries distinguish data, no matching events, and query failure; an inaccessible log yields PARTIAL rather than misleading overall SUCCESS. Captured fields include event time, ID, provider, level, and shortened message.
+- Enabled Events in local GUI/Classic and updated the reusable test's default to Events. **Pending:** Windows collector/UI, no-error or restricted-log behavior, HTML save/reopen, and remote regression. Existing remote event functionality remains unchanged.
+
+
 ### v1.27C — Updates validated; local Scheduled Tasks implementation (2026-10-15)
 
 - **Windows technician confirmed:** Local Updates worked in both GUI and Classic, including HTML saving/opening. Six installed QFE records were displayed; one missing installation date/installer was preserved without a fabricated value.
