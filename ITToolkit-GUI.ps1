@@ -1310,7 +1310,7 @@ $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("Target: $target")
 $lines.Add('Collection mode: Local (current Windows identity)')
 $lines.Add("Collected: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
-$lines.Add('Read-only diagnostics; a successful query does not establish system health.')
+$lines.Add('Diagnostic queries are read-only; separately approved PowerShell policy changes are identified below. Query success does not establish system health.')
 foreach ($section in $requested) {
     $lines.Add('')
     $lines.Add(('=' * 65))
