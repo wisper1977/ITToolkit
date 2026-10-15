@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | Planned |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — collector foundation added; integration pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -25,6 +25,9 @@ This document describes proposed work, design requirements, dependencies, and de
 - Record tests in [CHANGELOG.md](CHANGELOG.md). Partial GUI Default validation has been completed; v1.27B is **not yet complete**.
 
 ## v1.27C — Local Computer Diagnostics
+
+**Implementation progress:** Initial shared direct-local System and Firewall collector added in `Modules/ITToolkit-LocalDiagnostics.ps1` (current-user only; Windows validation pending). Still outstanding: GUI/Classic selection and dispatch, remaining collectors, secure alternate-admin process, reports/snapshots, and full regression testing.
+
 
 **Goal:** Diagnose the machine running IT Toolkit without requiring its remote WinRM or `ADMIN$` endpoints. Use a **shared implementation** in GUI and Classic.
 
