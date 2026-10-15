@@ -6,6 +6,14 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### v1.27C — Shares Windows verification; Local Software implementation (2026-10-15)
+
+- **Windows technician confirmed:** Local Shares ran successfully in GUI and Classic, including saved/reopened HTML. Four shares were listed: ADMIN$, C$, E$, IPC$. Reported share presence does not verify SMB access or NTFS/share permissions.
+- Implemented read-only HKLM uninstall registry collection in both 64-bit and 32-bit registry views on supported OS versions, returning application name, version and publisher, with duplicate records removed. This deliberately matches the machine-wide remote Software report scope and does not invoke `Win32_Product` or change software.
+- Enabled Software in GUI and Classic local routing; updated `Test-LocalDiagnostics.ps1` default to Software.
+- **Pending Windows validation:** collector, both interfaces, HTML saving/reopening, registry missing/permission cases, report size, remote regression; CSV/TXT format verification remains open.
+
+
 ### v1.27C — Administrators verified; Local Shares implementation (2026-10-15)
 
 - **Windows technician confirmed:** Local Administrators returned `SUCCESS` in GUI and Classic, and HTML reports saved and opened. It listed two direct members: built-in local Administrator (previously reported disabled) and a Microsoft-account-backed local user. Membership is not proof of successful sign-in or effective elevated token.
