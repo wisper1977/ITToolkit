@@ -233,6 +233,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
        <TextBlock Name="HealthSystemDetail" Text="System: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
        <TextBlock Name="HealthSecurityDetail" Text="Security: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
        <TextBlock Name="HealthUpdatesDetail" Text="Updates: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+       <TextBlock Name="HealthRestartDetail" Text="Restart: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
        <TextBlock Text="Review is not a confirmed fault. Installed QFEs do not establish patch compliance. Full findings: Diagnostics." TextWrapping="Wrap" FontSize="10" Foreground="#60738A"/>
       </StackPanel>
      </Border>
@@ -477,7 +478,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $ui = @{}
-foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','DashboardHealthSummary','HealthReviewCount','HealthAvailableCount','HealthUnavailableCount','HealthStorageDetail','HealthServicesDetail','HealthEventsDetail','HealthSystemDetail','HealthSecurityDetail','HealthUpdatesDetail','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
+foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','DashboardHealthSummary','HealthReviewCount','HealthAvailableCount','HealthUnavailableCount','HealthStorageDetail','HealthServicesDetail','HealthEventsDetail','HealthSystemDetail','HealthSecurityDetail','HealthUpdatesDetail','HealthRestartDetail','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
 $window.Title = "$displayName - Graphical Interface"
 $ui.Heading.Text = $displayName
 $ui.Subtitle.Text = "Graphical Interface  |  Toolkit v$version"
@@ -540,6 +541,7 @@ function Clear-DashboardHealthDetails {
     $ui.HealthSystemDetail.Text = 'System: Not assessed'
     $ui.HealthSecurityDetail.Text = 'Security: Not assessed'
     $ui.HealthUpdatesDetail.Text = 'Updates: Not assessed'
+    $ui.HealthRestartDetail.Text = 'Restart: Not assessed'
 }
 function Update-TargetView {
     # Do not display another target's prior health observations as current.
@@ -1253,7 +1255,8 @@ $script:DiagnosticTimer.Add_Tick({
                     @{Name='HealthEventsDetail'; Check='RecentSystemEvents'; Title='Events'},
                     @{Name='HealthSystemDetail'; Check='SystemUptime'; Title='System'},
                     @{Name='HealthSecurityDetail'; Check='FirewallProfiles'; Title='Security'},
-                    @{Name='HealthUpdatesDetail'; Check='InstalledHotfixes'; Title='Updates'}
+                    @{Name='HealthUpdatesDetail'; Check='InstalledHotfixes'; Title='Updates'},
+                    @{Name='HealthRestartDetail'; Check='PendingRestart'; Title='Restart'}
                 )) {
                     $pattern = '(?m)^\[(Review|Observed|Unavailable)\] ' + [regex]::Escape($entry.Check) + ': ([^\r\n]*)'
                     $finding = [regex]::Match($ui.DiagnosticOutput.Text, $pattern)
