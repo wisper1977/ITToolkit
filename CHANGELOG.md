@@ -6,6 +6,12 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development (health analysis and final validation remaining)
 
+### Classic seven-check Health reports verified — technician confirmation (2026-10-15)
+
+- Technician confirms that Classic Health reports run correctly and read the expected evidence across the tested Local, remote Default, and remote Alternate account modes.
+- This closes the functional **Classic seven-check report parity** item; Classic remains intentionally text-report-oriented without a permanent health dashboard.
+- Confirmation covers successful report execution and readable evidence. It does not independently establish negative-indicator or access-denied simulation, actual remote authentication-token provenance, or every saved report format.
+
 ### Completed v1.27 implementation and technician-verified Windows work — consolidated (2026-10-15)
 
 The entries below consolidate completed development and workplace checks previously duplicated throughout ROADMAP.md. Detailed incremental implementation notes, test qualifications, and original development history remain in this changelog; this summary does **not** mean the unreleased v1.27 milestone is fully validated or ready for production.
