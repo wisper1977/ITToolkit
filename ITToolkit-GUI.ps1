@@ -193,13 +193,15 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
   </Border>
   <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
    <Border Background="#E6EDF5" BorderBrush="#CED9E6" BorderThickness="0,0,1,0" Padding="12,18">
-    <StackPanel>
+    <Grid>
+     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <StackPanel Grid.Row="0">
      <Button Name="NavDashboard" Content="Dashboard" Height="41"/>
      <Button Name="NavDiagnostics" Content="Diagnostics" Height="41"/>
      <Button Name="NavTools" Content="Tools" Height="41"/>
      <Button Name="NavReports" Content="Reports" Height="41"/>
      <Button Name="NavSettings" Content="Settings" Height="41"/>
-     <Button Name="SwitchClassic" Content="Switch to Classic" Height="41" ToolTip="Start Classic with this Windows identity; targets and alternate credentials do not transfer."/>
+
      <Border Height="1" Background="#CAD5E1" Margin="0,12"/>
      <TextBlock Text="TARGET COMPUTER" FontWeight="SemiBold" FontSize="11" Foreground="#61748B" Margin="4,0,0,9"/>
      <Border Name="SideStatusCard" Background="#F1F5FA" BorderBrush="#CBD7E5" BorderThickness="1,1,1,1" CornerRadius="5" Padding="10,10,8,10">
@@ -211,7 +213,9 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
        </Border>
       </StackPanel>
      </Border>
-    </StackPanel>
+     </StackPanel>
+     <Button Grid.Row="2" Name="SwitchClassic" Content="Switch to Classic" Height="41" Margin="0" ToolTip="Start Classic with this Windows identity; targets and alternate credentials do not transfer."/>
+    </Grid>
    </Border>
    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="26,22,26,22">
