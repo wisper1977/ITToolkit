@@ -1157,6 +1157,7 @@ $script:ToolkitRoot = $root
 . (Join-Path $root 'Modules\ITToolkit-Config.ps1')
 . (Join-Path $root 'Modules\ITToolkit-Core.ps1')
 . (Join-Path $root 'Modules\ITToolkit-Reports.ps1')
+. (Join-Path $root 'Modules\ITToolkit-DiagnosticDispatcher.ps1')
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("Target: $target")
 $lines.Add("Collected: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
@@ -1170,6 +1171,7 @@ foreach ($section in $requested) {
         $content = [string](Get-ReportSection $section $target)
         $status = Get-SectionStatus $section $content
         $lines.Add("STATUS: $status")
+        $lines.Add("Status category: $(Get-ToolkitDiagnosticStatusCategory -Status $status)")
         $lines.Add($content)
     } catch {
         $lines.Add('STATUS: UNAVAILABLE')
