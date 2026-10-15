@@ -1971,10 +1971,33 @@ $ui.ArchiveFolder.Add_Click({
         # no input is interpreted as PowerShell code from the path itself.
         $quotedExplorer = "'" + $explorer.Replace("'", "''") + "'"
         $quotedFolder = "'" + $fullFolder.Replace("'", "''") + "'"
-        $launchScript = "Start-Process -FilePath $quotedExplorer -ArgumentList ('/n,' + [char]34 + $quotedFolder + [char]34) -ErrorAction Stop"
+        $launchScript = "try { Start-Process -FilePath $quotedExplorer -ArgumentList ('/n,' + [char]34 + $quotedFolder + [char]34) -ErrorAction Stop | Out-Null; exit 0 } catch { [Console]::Error.WriteLine(\u0024_.Exception.Message); exit 1 }"
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($launchScript))
-        Start-Process -FilePath $powerShell -ArgumentList @('-NoLogo','-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -ErrorAction Stop | Out-Null
-        $ui.ArchiveStatus.Text = "Explorer launch requested via separate PowerShell: $fullFolder (if Explorer doesn't appear, use Copy Folder Path)."
+        # Capture the child PowerShell result rather than interpreting process
+        # creation alone as an Explorer launch success. No temporary log files,
+        # background credentials, or permission changes are required.
+        $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+        $startInfo.FileName = $powerShell
+        $startInfo.Arguments = "-NoLogo -NoProfile -NonInteractive -EncodedCommand $encoded"
+        $startInfo.UseShellExecute = $false
+        $startInfo.CreateNoWindow = $true
+        $startInfo.RedirectStandardError = $true
+        $child = [System.Diagnostics.Process]::Start($startInfo)
+        if ($null -eq $child) { throw 'Windows PowerShell child process did not start.' }
+        try {
+            if (-not $child.WaitForExit(5000)) {
+                $ui.ArchiveStatus.Text = "Explorer child PowerShell is still running (PID $($child.Id)). If no folder appears, use Copy Folder Path."
+                return
+            }
+            $childError = $child.StandardError.ReadToEnd().Trim()
+            if ($child.ExitCode -ne 0) {
+                if ([string]::IsNullOrWhiteSpace($childError)) { $childError = 'No error text was returned.' }
+                throw "Explorer child PowerShell exited with code $($child.ExitCode): $childError"
+            }
+            $ui.ArchiveStatus.Text = "Explorer child completed (exit 0, PID $($child.Id)); window visibility not verified. If the folder does not appear, use Copy Folder Path."
+        } finally {
+            $child.Dispose()
+        }
     } catch {
         $ui.ArchiveStatus.Text = "Explorer could not open this directory. Use Copy Folder Path: $folder"
         [Windows.MessageBox]::Show("Unable to open the reports folder in Explorer.`n$folder`n`n$($_.Exception.Message)`n`nYou can use Copy Folder Path and paste it in Explorer.", 'Report Archive') | Out-Null
