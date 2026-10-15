@@ -83,6 +83,11 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - **GUI report-save regression fix:** The Save Report handler now recognizes `Local` alongside `Default` and `Alternate`, without weakening its target/identity checks. Saved local reports use a `LOCAL DIAGNOSTIC REPORT` heading instead of `REMOTE`.
 - **Windows GUI Local save regression retest passed:** A Services diagnostic was collected and its report saved successfully. This validates saving under Local mode, **not** local Services data collection (still unsupported and expected to be `NOT TESTED`). The user subsequently confirmed that all saved reports tested opened successfully; exact per-format coverage remains unspecified. Additional GUI/Classic scenarios and remote regression testing remain pending; do **not** mark v1.27C complete.
 
+### Core PowerShell verb naming cleanup (Windows retest pending)
+
+- Renamed the function definitions `Pause-Toolkit` to `Wait-ToolkitContinue` and `Change-Target` to `Set-ToolkitTarget` in `Modules/ITToolkit-Core.ps1` to address VS Code/PSScriptAnalyzer `PSUseApprovedVerbs` warnings.
+- Kept aliases for both previous names so existing module and Classic menu calls continue to resolve. No change intended to target authentication or collection behavior; Windows validation and a PSScriptAnalyzer rerun are pending.
+
 ### v1.27C — Direct-local Services diagnostic (third increment; Windows validation pending)
 
 #### Added
