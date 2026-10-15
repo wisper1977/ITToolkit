@@ -609,3 +609,10 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Workplace UAC now reaches the explicitly entered administrator identity, but the elevated Windows PowerShell process rejected toolkit module loading because script execution was disabled. The failure occurs before BitLocker or Policy collection.
 - Updated the shared UAC helper to distinguish script execution-policy restrictions from a failed collector and provide an actionable message recommending authorized inspection of effective policies and an organization-approved signing/deployment approach. No execution-policy bypass, settings changes or silent account fallback were introduced.
 - **Pending:** Resolve authorization through workplace policy, then repeat GUI and Classic positive-path/HTML tests and security regressions. No Windows success is claimed for this new scenario.
+
+### v1.27 — Workplace cross-account UAC success; Policy access denied (2026-10-15)
+
+- On `IT-7PY1M84`, Windows GUI's selected Policy UAC flow completed using separate standard and admin identities. The elevated account's `CurrentUser` execution policy changed from `Restricted` to `RemoteSigned` with approval; the diagnostic module loaded and returned a structured result.
+- The underlying computer-scope `gpresult` query returned `ACCESS DENIED`. This is **not** a passed Policy data collection, and does not prove an implementation defect; verify gpresult permissions/RSoP behavior under the elevated token.
+- Clarified the GUI Local report banner: diagnostic queries are read-only, but a separately approved persistent PowerShell execution-policy configuration change may have occurred and is disclosed in the report.
+- GUI HTML save/open, workplace BitLocker UAC, Classic parity, and broader remote/security regression still require validation.
