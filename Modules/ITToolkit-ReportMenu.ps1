@@ -68,8 +68,10 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
                     Write-Host "Local $section requires administrative authorization." -ForegroundColor Yellow
                     $consent = (Read-Host 'Request Windows UAC approval for this check only? (Y/N)').Trim().ToUpperInvariant()
                     if ($consent -eq 'Y') {
+                        Write-Host 'Optional persistent change: for a Restricted UAC account, set only that account''s CurrentUser PowerShell policy to RemoteSigned.' -ForegroundColor Yellow
+                        $policyConsent = (Read-Host 'Approve this account-level policy change if needed? (Y/N)').Trim().ToUpperInvariant() -eq 'Y'
                         try {
-                            $localResult = Invoke-ToolkitElevatedLocalDiagnostic -Section $section
+                            $localResult = Invoke-ToolkitElevatedLocalDiagnostic -Section $section -AllowCurrentUserRemoteSigned:$policyConsent
                             Write-Host "Elevated $section collection returned: $($localResult.Status)" -ForegroundColor Cyan
                         } catch {
                             $localResult = [pscustomobject]@{
@@ -88,6 +90,8 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
                     $parts.Add('Collection authorization: Windows UAC (explicit administrator approval).')
                     $parts.Add("Initiating technician: $($localResult.InitiatingIdentity)")
                     $parts.Add("Actual collection identity: $($localResult.CollectionIdentity)")
+                    $parts.Add("PowerShell execution policy: $($localResult.ExecutionPolicyBefore) -> $($localResult.ExecutionPolicyAfter)")
+                    $parts.Add("CurrentUser policy changed for elevated account: $([bool]$localResult.ExecutionPolicyChanged)")
                 }
                 if ($localResult.Error) { $parts.Add("Error details: $($localResult.Error)") }
                 foreach ($record in @($localResult.Data)) { $parts.Add(($record | Format-List * | Out-String -Width 200).TrimEnd()) }
