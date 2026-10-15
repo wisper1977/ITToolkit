@@ -520,3 +520,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Direct local BitLocker test returned ACCESS DENIED / AccessDenied on Windows. This confirms the negative path, not successful encryption inventory; positive-path validation remains outstanding.
 - Implemented read-only local Sessions enumeration via local `quser.exe`, preserving output lines and checking the process exit code. Added local support in GUI/Classic and updated the test script default to Sessions.
 - Windows Sessions and report testing, authorized BitLocker positive-path test, and remote regressions remain pending.
+
+### v1.27C — Policy denied case; local Share Permissions implemented (2026-10-15)
+
+- Local Policy returned ACCESS DENIED on Windows, validating the permission-failure path only; applied-policy positive path remains unverified.
+- Added read-only ordinary local SMB share inventory, share permission entries, and root NTFS ACL entries. Excludes administrative shares and does not evaluate effective access or change access control lists. Individual ACL failures are shown as PARTIAL.
+- Enabled SharePermissions in GUI and Classic local routes; smoke-test default now SharePermissions. Windows UI, collector, HTML and remote regression remain pending. BitLocker positive path is also outstanding.
