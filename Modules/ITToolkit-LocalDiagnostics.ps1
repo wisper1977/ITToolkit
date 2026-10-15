@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users')]
         [string]$Section
     )
 
@@ -43,6 +43,21 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Users' {
+                # Read-only local SAM account inventory, matching the remote Users scope.
+                # Do not expose password material or attempt local/domain account changes.
+                $accounts = @(Get-CimInstance -ClassName Win32_UserAccount -Filter 'LocalAccount=True' -ErrorAction Stop)
+                $result.Data = @($accounts | Sort-Object Name | ForEach-Object {
+                    [pscustomobject]@{
+                        Domain = [string]$_.Domain
+                        Name = [string]$_.Name
+                        Disabled = [bool]$_.Disabled
+                        Lockout = [bool]$_.Lockout
+                        SID = [string]$_.SID
+                    }
+                })
+                # Zero local accounts returned is NoData; query success alone is not account-health assessment.
             }
             'Hardware' {
                 # Read-only direct CIM inventory. Preserve type per record for report clarity.
