@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — collector foundation added; integration pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — GUI/Classic System + Firewall paths implemented; Windows integration test pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -26,7 +26,7 @@ This document describes proposed work, design requirements, dependencies, and de
 
 ## v1.27C — Local Computer Diagnostics
 
-**Implementation progress:** Initial shared direct-local System and Firewall collector added in `Modules/ITToolkit-LocalDiagnostics.ps1` (current-user only; Windows System and Firewall success paths validated on Windows 11 Pro with WinRM stopped). Still outstanding: GUI/Classic selection and dispatch, remaining collectors, secure alternate-admin process, reports/snapshots, and full regression testing.
+**Implementation progress:** Initial shared direct-local System and Firewall collector added in `Modules/ITToolkit-LocalDiagnostics.ps1` (current-user only; Windows collector success paths validated on Windows 11 Pro with WinRM stopped). The second increment adds explicit local target selection in GUI and Classic and routes System/Firewall diagnostic reports to the local collector; unsupported local sections are reported as `NOT TESTED` and local snapshot capture is blocked. **Windows integration testing remains pending.** Still outstanding: remaining local collectors, secure alternate-admin process, full snapshot integration, and regression testing.
 
 
 **Goal:** Diagnose the machine running IT Toolkit without requiring its remote WinRM or `ADMIN$` endpoints. Use a **shared implementation** in GUI and Classic.
