@@ -87,3 +87,5 @@ Unscheduled possibilities include expanded DNS/routing and multi-NIC diagnostics
 - Favor focused shared implementations and equivalent GUI/Classic behavior; preserve existing functions and credentials.
 - Keep [README.md](README.md), [CHANGELOG.md](CHANGELOG.md) and this roadmap synchronized. Use the changelog for detailed dated implementation and verification history instead of repeating it here.
 - Do not declare Windows-specific functionality fully validated until it has actually been tested on Windows; report commit references and outstanding tests after changes.
+
+**v1.27 GUI usability addition (Windows validation pending):** Added a far-left **Copy Report** action to Diagnostics for copying the exact displayed result without running or saving again. Existing Save Report and format controls remain on the right. Verify layout, clipboard paste, disabled/stale-report handling, privileged-result copying, and save regression on Windows before signing off.
