@@ -7,6 +7,7 @@
 | Milestone | Outstanding goal | State |
 | --- | --- | --- |
 | **v1.27 — Health analysis and release validation** | Validate edge cases, finish evidence interpretation and release checks without breaking GUI or Classic | In development |
+| **v1.28 — Diagnostic completeness review** | Audit all 20 diagnostic categories for actionable detail, local/remote coverage and report parity | Planned after v1.27 release |
 | **Technician-confirmed Quick Fix** | Explicitly authorized, previewed repairs with post-action verification | Proposed; version unassigned |
 | **NIST / Best Practices Computer Check** | Versioned, evidence-backed Windows configuration/security posture assessment | Proposed; version unassigned |
 
@@ -30,6 +31,18 @@
 
 - Record Windows test evidence and outstanding limitations in [CHANGELOG.md](CHANGELOG.md), update [README.md](README.md) where functionality or usage changes, and resolve significant regressions.
 - Obtain **explicit release approval** before version promotion or any changes to production `main`.
+
+## v1.28 — Diagnostic completeness and quality audit
+
+**Goal:** Ensure every diagnostic delivers the information an IT technician needs to investigate the target, rather than merely completing a successful collection.
+
+- **Inventory all 20 diagnostics:** For each category, document the current GUI and Classic output, direct-local and remote Default/Alternate sources, missing fields, permissions, error cases, and differences between local and remote results. Prioritize technician usefulness and actionable context.
+- **Network first — `ipconfig` versus `ipconfig /all`:** Audit IPv4/IPv6, adapter identity and status, per-adapter DNS and connection suffixes, domain/DNS suffix search lists, gateways, DHCP state and servers, lease obtained/expiry, MAC, routing-related indicators, and meaningful disabled/disconnected-adapter evidence. Existing remote Network already attempts `ipconfig /all` via credential-scoped WinRM; local Network currently emits a smaller structured CIM/WMI inventory. Design a consistent, readable schema and document any unavoidable source differences.
+- **Then audit each remaining diagnostic:** Confirm that System, Hardware, Storage, Services, Events, Policy, Users, Groups, Administrators, Shares, SharePermissions, Software, Updates, Tasks, Sessions, Startup, Firewall, BitLocker and Health expose sufficient details for practical troubleshooting. Record any desired additional evidence without assuming it can be read from every target.
+- **Output and parity:** Decide where structured values, concise summaries, and full command output are most useful. Avoid walls of irrelevant data or duplicating the same evidence. Preserve GUI/Classic parity, report formats, snapshot compatibility, provenance and the ability to distinguish query success from a healthy system.
+- **Authentication, safety and testing:** Maintain read-only collection, least privilege, selected target and credential context, and honest NoData/Unavailable/AccessDenied statuses. Do not silently fall back to local/default credentials if a remote request fails. Implement improvements incrementally and validate each local, remote Default and remote Alternate path on Windows.
+
+This is a **planned v1.28 audit**, not an implementation or Windows-validated feature. Do not expand v1.27 scope to cover the audit unless a release-blocking defect is identified.
 
 ## Future — Technician-confirmed Quick Fix
 
