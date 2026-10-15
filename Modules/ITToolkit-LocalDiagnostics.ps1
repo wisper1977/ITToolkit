@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup','BitLocker')]
         [string]$Section
     )
 
@@ -43,6 +43,25 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'BitLocker' {
+                # Read-only BitLocker volume states. Never read, expand, or return
+                # KeyProtector/RecoveryPassword/RecoveryKey data.
+                $volumes = @(Get-BitLockerVolume -ErrorAction Stop)
+                $result.Data = @($volumes | Sort-Object MountPoint | ForEach-Object {
+                    [pscustomobject]@{
+                        MountPoint = [string]$_.MountPoint
+                        VolumeType = [string]$_.VolumeType
+                        VolumeStatus = [string]$_.VolumeStatus
+                        ProtectionStatus = [string]$_.ProtectionStatus
+                        EncryptionPercentage = if ($null -ne $_.EncryptionPercentage) {
+                            [double]$_.EncryptionPercentage
+                        } else { $null }
+                        EncryptionMethod = [string]$_.EncryptionMethod
+                        LockStatus = [string]$_.LockStatus
+                    }
+                })
+                # Query success reports observed volume status, not security compliance.
             }
             'Startup' {
                 # Direct-local read-only startup command inventory. Mirrors the
