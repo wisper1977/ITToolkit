@@ -57,6 +57,12 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 - **Reports-folder Explorer launch follow-up (2026-10-15):** The prior direct `explorer.exe` invocation returned successfully in GUI but displayed no folder in the separately authorized admin workflow. Technician tested the identical PowerShell command with Explorer's `/n,"C:\GitHub\ITToolkit\Reports"` argument and confirmed it opened the folder. GUI Report Archive → Open Reports Folder now uses that tested `/n` form, without altering credentials, directory permissions or the Copy Folder Path fallback. **GUI Windows retest still required**; success in standalone PowerShell does not prove the WPF button path works.
 
+### Reports folder Explorer GUI follow-up — child-process launch (2026-10-15)
+
+- Direct `explorer.exe` launch with `/n` from the Reports button returned without error but still did **not** display a folder in the GUI, although the same command worked interactively under the administrator account. A separate PowerShell process launched from an administrator PowerShell session also opened the folder successfully.
+- Changed only the GUI **Open Reports Folder** handler to start an independent, same-identity Windows PowerShell process, which launches Explorer with the tested `/n` argument. The launch command is supplied using Unicode `-EncodedCommand` to retain path quoting, not to bypass execution policy. No credentials, UAC elevation, ACLs, or security policy are changed.
+- **Windows GUI validation is pending.** Starting the child process is not proof that the Explorer window appeared. **Copy Folder Path** remains available. Production `main` unchanged.
+
 ### Remaining release checks and limitations
 
 - Validate unavailable/denied and partial Health paths, negative pending-restart indicators, and alternate remote authentication **provenance** where observable. Check latest saved seven-check output in the relevant HTML/CSV/TXT workflows.
