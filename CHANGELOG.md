@@ -6,6 +6,12 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### GUI report opening compatibility (2026-10-15)
+
+- Updated the GUI's recent-report buttons and Reports archive Open Report action to explicitly use the Windows shell `Open` verb when launching saved files.
+- On the affected workstation, a report opened with `Start-Process -Verb Open` under `runas` while the implicit launch did not. The revised GUI behavior still requires Windows testing through the normal credential launcher; production and Classic code are unchanged.
+
+
 ### Documentation — Consolidated v1.27 roadmap (2026-10-15)
 
 - Reorganized `ROADMAP.md` into one unified v1.27 development milestone rather than separate lettered sub-milestones; consolidated repetitive collector-by-collector notes into implemented capabilities, confirmed Windows validation, open tests, and later planned features.
