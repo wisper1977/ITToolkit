@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup','BitLocker','Sessions')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup','BitLocker','Sessions','Policy')]
         [string]$Section
     )
 
@@ -43,6 +43,25 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Policy' {
+                # Read-only effective COMPUTER policy summary, consistent with
+                # remote Policy's computer scope. No gpupdate or policy mutation.
+                $gpresultPath = Join-Path $env:SystemRoot 'System32\gpresult.exe'
+                if (-not (Test-Path -LiteralPath $gpresultPath -PathType Leaf)) {
+                    throw 'The local gpresult.exe utility is unavailable.'
+                }
+                $policyLines = @(& $gpresultPath /SCOPE COMPUTER /R 2>&1 | ForEach-Object { [string]$_ })
+                $exitCode = $LASTEXITCODE
+                if ($exitCode -ne 0) {
+                    throw ("Local computer policy query failed (exit code {0}): {1}" -f
+                        $exitCode, ($policyLines -join ' '))
+                }
+                $content = @($policyLines | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+                $result.Data = @($content | ForEach-Object {
+                    [pscustomobject]@{ RecordType = 'PolicyLine'; Text = $_ }
+                })
+                # Successful process with no text is NoData; not a valid GPO verdict.
             }
             'Sessions' {
                 # Query local interactive/terminal sessions only, under the current
