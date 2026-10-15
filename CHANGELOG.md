@@ -4,7 +4,21 @@ Documented changes to **IT Toolkit** are recorded here. This file distinguishes 
 
 The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentation Foundation (WPF); the Classic interface uses a text menu.
 
-## [1.27] — In development (started 2026-10-14)
+## [1.27] — In development
+
+### v1.27C — Local Storage (implementation; Windows testing pending)
+
+- Added read-only fixed logical disk capacity/free-space enumeration to the shared local collector using `Win32_LogicalDisk` (`DriveType=3`), without remote WinRM or `ADMIN# Changelog
+
+Documented changes to **IT Toolkit** are recorded here. This file distinguishes confirmed release changes from development milestones. Dates are included only where established; historical versions have not been assigned speculative dates.
+
+The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentation Foundation (WPF); the Classic interface uses a text menu.
+
+.
+- Included DeviceID, volume label, size GB, free GB and free percent, with null for unavailable/zero-capacity percentage rather than reporting a misleading 0%.
+- Wired the existing Storage choice into both GUI and Classic local paths while leaving remote adapters unchanged. An empty fixed-drive result is `NO RESULTS` / `NoData`; collection exceptions retain their error and status category.
+- **Pending:** Windows PowerShell 5.1 direct collector test, GUI/Classic output and report-save tests, negative/empty cases, and remote regression. This increment is not yet Windows-validated.
+ (started 2026-10-14)
 
 **Development branch:** `develop/v1.27`. Version 1.26 on `main` remains the stable production release. The entries below describe implemented development work, not a published v1.27 release.
 
