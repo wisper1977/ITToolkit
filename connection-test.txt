@@ -1,2 +1,0 @@
-GitHub connector write-permission test for ITToolkit v1.27 development.
-Created 2026-10-14. This file contains no credentials or sensitive information.
