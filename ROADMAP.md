@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks, Events, Startup and Sessions validated locally; BitLocker permission path verified; Policy permission path verified; SharePermissions newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks, Events, Startup and Sessions validated locally; BitLocker permission path verified; Policy permission path verified; SharePermissions validated; Health newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -180,3 +180,7 @@ These have no assigned milestone or implementation commitment:
 **Policy permission-path result (2026-10-15):** ACCESS DENIED returned correctly. Successful policy enumeration remains pending; 16 sections fully validated.
 
 **SharePermissions implementation (Windows validation pending):** Read-only ordinary SMB share access and NTFS root ACL details now collected in GUI and Classic; smoke test defaults to SharePermissions. No ACL changes or effective-access interpretation. Windows GUI/Classic HTML and error-path checks pending.
+
+**SharePermissions Windows validation (2026-10-15):** One ordinary share was successfully inventoried with SMB and NTFS access entries. GUI, Classic and HTML save/open confirmed. This brings fully validated direct-local sections to 17 of 20.
+
+**Local Health evidence collector (Windows validation pending):** Added direct-local, read-only disk, service and recent System event evidence for both interfaces. No health verdict or score is issued; that remains the planned v1.27D work. Test harness defaults to Health. BitLocker and Policy are implemented with confirmed access-denied paths but still require positive-path validation.
