@@ -177,7 +177,7 @@ See the [LICENSE](LICENSE) file for the full license text.
 
 ### Developer smoke test: local diagnostics
 
-On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **Policy**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
+On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **SharePermissions**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
 
 **Local Storage direct collector validation (technician-confirmed, 2026-10-14):** Windows PowerShell returned `SUCCESS`/`Success` with no error and two fixed logical drives (C: and E:), including size, free GB, and percentage. GUI/Classic Storage output and report-save checks remain pending.
 
@@ -236,3 +236,7 @@ On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiag
 **Local Sessions Windows validation (2026-10-15):** Technician confirmed local session collection in GUI and Classic and HTML report save/open. Output correctly identified the active console session for `wispe` using `quser.exe` under the current Windows identity. Additional remote regression and CSV/TXT testing remain pending.
 
 **v1.27C Local Computer Policy implementation (Windows validation pending):** The shared local collector now runs `gpresult.exe /SCOPE COMPUTER /R` without a remote computer parameter, preserves report lines and checks its exit code. Failures (including insufficient rights or unavailable RSoP data) are visible; no gpupdate, elevation or policy modification occurs. Both GUI and Classic local paths include Policy. The reusable script defaults to Policy. Windows collector, interface display, HTML save/open and error-path validation remain pending.
+
+**Policy negative-path test (2026-10-15):** Windows returned ACCESS DENIED; error handling is verified, but successful policy collection remains pending.
+
+**Local Share Permissions (Windows verification pending):** Read-only collection for ordinary local SMB shares now includes share ACLs and NTFS root ACL entries. Special/admin shares excluded, no ACL mutation or effective-access claim. A zero-share summary is valid; individual read errors are reported as PARTIAL. Both interfaces are enabled and the test harness defaults to SharePermissions.
