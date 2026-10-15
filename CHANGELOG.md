@@ -588,3 +588,10 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Technician observed correct non-elevated `ACCESS DENIED` for local BitLocker and Policy on workplace computer `IT-7PY1M84`. Both explicit GUI UAC attempts instead failed without a returned result. This is a **regression/compatibility issue under investigation**, not a successful privileged report test.
 - Updated shared UAC helper to report cancelled consent separately, explain process launch exceptions, and include the child exit code when no accessible result exists. It explicitly identifies different-account UAC and endpoint controls as possibilities, not confirmed causes.
 - Copy Report was used to share the displayed failure; the workplace test did not establish elevated HTML save/reopen or successful UAC. No workaround to administrative identity protections or endpoint security controls was added. Retesting on authorized Windows environment required.
+
+### v1.27 — Explicit separate-administrator UAC collection (Windows test pending)
+
+- Updated scoped read-only local BitLocker/Policy UAC handoff to accept administrator credentials entered into Windows UAC when they differ from the normally signed-in technician. The elevated child validates its administrator token, and returned data identify **initiating technician** separately from **actual collection identity**.
+- Kept a restricted transfer folder, request nonce and section/target/mode validation. Added best-effort child error reporting and rejected results that lack elevation or request provenance. Normal non-elevated behavior, remote authentication and other collectors remain unchanged.
+- GUI and Classic now visibly distinguish UAC collection identity without automatically relabeling it as the toolkit's user. No password storage or manual identity fallback added.
+- **Pending:** authorized two-account Windows UAC success or actionable failure on a domain workstation, read/write access for the elevated administrator to the child module and temporary folder, HTML report and Copy Report, UAC cancel, endpoint protection compatibility, Classic parity and remote regression. Not promoted to stable.
