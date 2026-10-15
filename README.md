@@ -177,7 +177,7 @@ See the [LICENSE](LICENSE) file for the full license text.
 
 ### Developer smoke test: local diagnostics
 
-On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **Startup**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
+On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **BitLocker**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
 
 **Local Storage direct collector validation (technician-confirmed, 2026-10-14):** Windows PowerShell returned `SUCCESS`/`Success` with no error and two fixed logical drives (C: and E:), including size, free GB, and percentage. GUI/Classic Storage output and report-save checks remain pending.
 
@@ -224,3 +224,7 @@ On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiag
 **Local Events Windows validation (2026-10-15):** Technician confirmed Events executes in GUI and Classic and the report saves and opens in HTML. System log reported 13 error events and Application reported `NoData` (zero matching error events) in the seven-day query window, while the overall collection succeeded. Observed DCOM failures connecting to `WisperPC` and WindowsUpdateClient app install failures (0x80073D02) are diagnostic evidence for later review, not collector failures.
 
 **v1.27C Local Startup increment (Windows test pending):** Shared direct-local collector now uses read-only `Win32_StartupCommand` to inventory startup entry name, location, user, and command. It matches the remote Startup scope but is not a comprehensive inventory of all Windows autostart mechanisms. Both interfaces route Startup through the local collector, and the test harness defaults to Startup. HTML save/open and Windows validation remain pending.
+
+**Local Startup validation (2026-10-15):** GUI and Classic ran successfully and HTML reports saved/opened; Run registry and Common Startup entries were shown.
+
+**Local BitLocker (Windows validation pending):** Shared read-only volume status inspection via `Get-BitLockerVolume` now works through both local interface routes. Reports volume protection/encryption/lock state and percentage but does not access or export recovery secrets or key protectors. The test harness defaults to BitLocker. Windows validation pending.
