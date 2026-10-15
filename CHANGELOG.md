@@ -436,3 +436,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Added `Test-LocalDiagnostics.ps1` at the repository root: reloads the checked-out collector on each run to avoid stale functions, validates the selected section, clears stale-output ambiguity using a fresh scoped result, prints status and records, and returns a nonzero process exit code on collection failure. Defaults to Storage and supports `-Section` for other implemented sections. Does not modify host state or write reports.
 - **Windows collector test passed (technician-confirmed):** Direct local Storage returned `SUCCESS` / `Success` with no errors on `DESKTOP-8EHGAPD`; fixed volumes C: and E: were enumerated with capacity, free GB, and free percent.
 - **Still pending:** Windows testing of the new test harness, Storage GUI and Classic integration, report saving and remote regression. A `SUCCESS` query does not establish healthy storage.
+
+### v1.27C — Hardware validated and Local Users implemented (2026-10-15)
+
+- Windows technician confirmed Hardware works in GUI and Classic, with HTML reports saving and reopening successfully. The reported CPU was an Intel i7-10700K (8 cores, 16 logical processors), with 31.9 GB RAM and one Samsung SSD listed. Inventory scope will be reviewed against the E: logical volume later.
+- Added read-only local Users collector based on `Win32_UserAccount` with `LocalAccount=True` and fields Domain, Name, Disabled, Lockout and SID; enabled it in both local interfaces, leaving remote behavior unchanged.
+- Updated the reusable local smoke-test script to default to Users. Windows Users testing, saved-report checks, negative paths and remote regression remain pending.
