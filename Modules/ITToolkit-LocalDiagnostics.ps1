@@ -174,6 +174,42 @@ function Get-ToolkitLocalDiagnostic {
                     $failures.Add('InstalledHotfixes')
                     $records.Add([pscustomobject]@{Check='InstalledHotfixes';QueryStatus='Unavailable';Error=[string]$_.Exception.Message})
                 }
+                try {
+                    # Narrow read-only reboot indicators. This is not a Windows
+                    # Update scan and absence does not prove the host is current.
+                    $reasons = New-Object System.Collections.Generic.List[string]
+                    $cbs = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending'
+                    $wua = 'SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired'
+                    $registry = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
+                        [Microsoft.Win32.RegistryHive]::LocalMachine,
+                        [Microsoft.Win32.RegistryView]::Default)
+                    try {
+                        foreach ($check in @(@('Component servicing',$cbs),@('Windows Update',$wua))) {
+                            $key = $registry.OpenSubKey([string]$check[1],$false)
+                            if ($null -ne $key) {
+                                $reasons.Add([string]$check[0])
+                                $key.Dispose()
+                            }
+                        }
+                        $sm = $registry.OpenSubKey('SYSTEM\CurrentControlSet\Control\Session Manager',$false)
+                        if ($null -eq $sm) { throw 'Session Manager registry key unavailable.' }
+                        try {
+                            $pending = @($sm.GetValue('PendingFileRenameOperations',$null) | Where-Object { $null -ne $_ })
+                            if ($pending.Count -gt 0 -and @($pending[0]).Count -gt 0) {
+                                $reasons.Add('Pending file rename operations')
+                            }
+                        } finally { $sm.Dispose() }
+                    } finally { $registry.Dispose() }
+                    $records.Add([pscustomobject]@{
+                        Check='PendingRestart';QueryStatus='Available'
+                        IndicatorCount=$reasons.Count
+                        Indicators=($reasons -join ', ')
+                        Note='Selected registry indicators only; absence is not a comprehensive reboot assessment.'
+                    })
+                } catch {
+                    $failures.Add('PendingRestart')
+                    $records.Add([pscustomobject]@{Check='PendingRestart';QueryStatus='Unavailable';Error=[string]$_.Exception.Message})
+                }
                 $result.Data = @($records.ToArray())
                 if ($failures.Count -gt 0) {
                     $result.Status = 'PARTIAL'
