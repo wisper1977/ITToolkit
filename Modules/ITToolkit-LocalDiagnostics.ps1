@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup','BitLocker','Sessions','Policy')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup','BitLocker','Sessions','Policy','SharePermissions')]
         [string]$Section
     )
 
@@ -42,6 +42,78 @@ function Get-ToolkitLocalDiagnostic {
                         LastBootUpTime = $os.LastBootUpTime
                         OSArchitecture = [string]$os.OSArchitecture
                     })
+                }
+            }
+            'SharePermissions' {
+                # Read-only ordinary filesystem share ACL inspection, scoped to
+                # the local computer. Administrative and IPC shares are excluded.
+                $shares = @(Get-SmbShare -ErrorAction Stop | Where-Object {
+                    -not $_.Special -and [string]$_.Path -ne ''
+                } | Sort-Object Name)
+                $records = New-Object System.Collections.Generic.List[object]
+                $failed = New-Object System.Collections.Generic.List[string]
+                $records.Add([pscustomobject]@{
+                    RecordType = 'Summary'
+                    OrdinarySharesFound = $shares.Count
+                    Note = if ($shares.Count -eq 0) {
+                        'No ordinary disk shares were found. Administrative shares are excluded.'
+                    } else {
+                        'Read-only share permissions and root NTFS access entries; effective access is not calculated.'
+                    }
+                })
+                foreach ($share in $shares) {
+                    $records.Add([pscustomobject]@{
+                        RecordType = 'Share'
+                        ShareName = [string]$share.Name
+                        Path = [string]$share.Path
+                    })
+                    try {
+                        $shareEntries = @(Get-SmbShareAccess -Name $share.Name -ErrorAction Stop)
+                        foreach ($entry in $shareEntries) {
+                            $records.Add([pscustomobject]@{
+                                RecordType = 'ShareAccess'
+                                ShareName = [string]$share.Name
+                                Account = [string]$entry.AccountName
+                                AccessControlType = [string]$entry.AccessControlType
+                                AccessRight = [string]$entry.AccessRight
+                            })
+                        }
+                    } catch {
+                        $failed.Add([string]$share.Name + ' share ACL')
+                        $records.Add([pscustomobject]@{
+                            RecordType = 'QueryError'
+                            ShareName = [string]$share.Name
+                            Scope = 'Share'
+                            Error = [string]$_.Exception.Message
+                        })
+                    }
+                    try {
+                        $acl = Get-Acl -LiteralPath ([string]$share.Path) -ErrorAction Stop
+                        foreach ($entry in @($acl.Access)) {
+                            $records.Add([pscustomobject]@{
+                                RecordType = 'NTFSAccess'
+                                ShareName = [string]$share.Name
+                                Account = [string]$entry.IdentityReference
+                                FileSystemRights = [string]$entry.FileSystemRights
+                                AccessControlType = [string]$entry.AccessControlType
+                                IsInherited = [bool]$entry.IsInherited
+                            })
+                        }
+                    } catch {
+                        $failed.Add([string]$share.Name + ' NTFS ACL')
+                        $records.Add([pscustomobject]@{
+                            RecordType = 'QueryError'
+                            ShareName = [string]$share.Name
+                            Scope = 'NTFS'
+                            Error = [string]$_.Exception.Message
+                        })
+                    }
+                }
+                $result.Data = @($records.ToArray())
+                if ($failed.Count -gt 0) {
+                    $result.Status = 'PARTIAL'
+                    $result.StatusCategory = 'Partial'
+                    $result.Error = 'Could not read: ' + ($failed -join ', ')
                 }
             }
             'Policy' {
