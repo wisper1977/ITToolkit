@@ -1971,7 +1971,7 @@ $ui.ArchiveFolder.Add_Click({
         # no input is interpreted as PowerShell code from the path itself.
         $quotedExplorer = "'" + $explorer.Replace("'", "''") + "'"
         $quotedFolder = "'" + $fullFolder.Replace("'", "''") + "'"
-        $launchScript = "try { Start-Process -FilePath $quotedExplorer -ArgumentList ('/n,' + [char]34 + $quotedFolder + [char]34) -ErrorAction Stop | Out-Null; exit 0 } catch { [Console]::Error.WriteLine(\u0024_.Exception.Message); exit 1 }"
+        $launchScript = "try { Start-Process -FilePath $quotedExplorer -ArgumentList ('/n,' + [char]34 + $quotedFolder + [char]34) -ErrorAction Stop | Out-Null; exit 0 } catch { [Console]::Error.WriteLine(`$_.Exception.Message); exit 1 }"
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($launchScript))
         # Capture the child PowerShell result rather than interpreting process
         # creation alone as an Explorer launch success. No temporary log files,
