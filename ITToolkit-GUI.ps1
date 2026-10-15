@@ -918,7 +918,7 @@ function Refresh-RecentReports {
         $button.ToolTip = 'Open saved report: ' + $file.FullName
         $button.MaxWidth = 185; $button.MinHeight = 36; $button.Margin = '0,0,8,0'
         $button.Add_Click({
-            try { Start-Process -FilePath ([string]$this.Tag) -ErrorAction Stop | Out-Null }
+            try { Start-Process -FilePath ([string]$this.Tag) -Verb Open -ErrorAction Stop | Out-Null }
             catch { [Windows.MessageBox]::Show("Unable to open report: $($_.Exception.Message)", 'Report Archive') | Out-Null }
         })
         [Windows.Controls.DockPanel]::SetDock($button, 'Left')
@@ -1793,7 +1793,7 @@ $ui.ArchiveOpen.Add_Click({
         $path = [IO.Path]::GetFullPath([string]$item.Path)
         if (-not $path.StartsWith($root,[StringComparison]::OrdinalIgnoreCase)) { throw 'Report path is outside the configured archive.' }
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'The selected report no longer exists. Refresh the archive.' }
-        Start-Process -FilePath $path -ErrorAction Stop | Out-Null
+        Start-Process -FilePath $path -Verb Open -ErrorAction Stop | Out-Null
     } catch { [Windows.MessageBox]::Show($_.Exception.Message,'Unable to open report') | Out-Null }
 })
 $ui.ArchiveFolder.Add_Click({
