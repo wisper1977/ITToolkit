@@ -194,15 +194,16 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
   <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="255"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
    <Border Background="#E6EDF5" BorderBrush="#CED9E6" BorderThickness="0,0,1,0" Padding="12,18">
     <Grid>
-     <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-     <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-      <StackPanel>
+     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*" MinHeight="0"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <StackPanel Grid.Row="0">
      <Button Name="NavDashboard" Content="Dashboard" Height="41"/>
      <Button Name="NavDiagnostics" Content="Diagnostics" Height="41"/>
      <Button Name="NavTools" Content="Tools" Height="41"/>
      <Button Name="NavReports" Content="Reports" Height="41"/>
      <Button Name="NavSettings" Content="Settings" Height="41"/>
 
+     </StackPanel>
+     <StackPanel Grid.Row="1">
      <Border Height="1" Background="#CAD5E1" Margin="0,12"/>
      <TextBlock Text="TARGET COMPUTER" FontWeight="SemiBold" FontSize="11" Foreground="#61748B" Margin="4,0,0,9"/>
      <Border Name="SideStatusCard" Background="#F1F5FA" BorderBrush="#CBD7E5" BorderThickness="1,1,1,1" CornerRadius="5" Padding="10,10,8,10">
@@ -214,7 +215,9 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
        </Border>
       </StackPanel>
      </Border>
-     <Border Background="#F4F8FD" BorderBrush="#C7D7E8" BorderThickness="1" CornerRadius="5" Padding="9" Margin="0,12,0,0">
+     </StackPanel>
+     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,10,0,8">
+     <Border Background="#F4F8FD" BorderBrush="#C7D7E8" BorderThickness="1" CornerRadius="5" Padding="9" Margin="0">
       <StackPanel>
        <TextBlock Text="COMPUTER HEALTH" FontWeight="SemiBold" FontSize="11" Foreground="#17365D" Margin="0,0,0,5"/>
        <TextBlock Name="DashboardHealthSummary" Text="Run Health Check for the selected computer." FontSize="11" TextWrapping="Wrap" Foreground="#53677E" Margin="0,0,0,9"/>
@@ -231,9 +234,8 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
        <TextBlock Text="Review is not a confirmed fault. Unknown is not healthy. Full findings: Diagnostics." TextWrapping="Wrap" FontSize="10" Foreground="#60738A"/>
       </StackPanel>
      </Border>
-      </StackPanel>
      </ScrollViewer>
-     <Button Grid.Row="1" Name="SwitchClassic" Content="Switch to Classic" Height="41" Margin="0" ToolTip="Start Classic with this Windows identity; targets and alternate credentials do not transfer."/>
+     <Button Grid.Row="3" Name="SwitchClassic" Content="Switch to Classic" Height="41" Margin="0" ToolTip="Start Classic with this Windows identity; targets and alternate credentials do not transfer."/>
     </Grid>
    </Border>
    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
