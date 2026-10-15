@@ -1419,7 +1419,7 @@ $script:SnapshotTimer.Add_Tick({
         $snapshot = $items | Where-Object { $_ -and $_.PSObject.Properties['SchemaVersion'] } | Select-Object -Last 1
         if ($null -eq $snapshot) { throw 'Snapshot collector returned no structured snapshot.' }
         $request = $script:SnapshotRequested
-        $mode = if ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+        $mode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
         $identity = if ($mode -eq 'Alternate') { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
         if (-not $request -or $request.Target -ine $script:TargetComputer -or $request.Mode -ne $mode -or $request.Identity -ine $identity) {
             throw 'Target or credentials changed during capture. Snapshot discarded.'
@@ -1457,9 +1457,8 @@ $script:SnapshotTimer.Add_Tick({
 $ui.CreateSnapshotGUI.Add_Click({
     if ($null -ne $script:SnapshotPS) { return }
     $target = [string]$script:TargetComputer
-    if ($script:LocalTargetMode) { [Windows.MessageBox]::Show('Local snapshots are not implemented yet. Choose a remote target for snapshot capture.','Snapshot not supported') | Out-Null; return }
     if ([string]::IsNullOrWhiteSpace($target)) { [Windows.MessageBox]::Show('Select a target on Dashboard first.','Snapshot') | Out-Null; return }
-    $mode = if ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $mode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
     $identity = if ($mode -eq 'Alternate') { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
     $credential = $null
     if ($mode -eq 'Alternate') {
@@ -1474,6 +1473,9 @@ $ui.CreateSnapshotGUI.Add_Click({
     }
     $module = Join-Path (Join-Path $script:ToolkitRoot 'Modules') 'ITToolkit-GUISnapshotCollector.ps1'
     if (-not (Test-Path -LiteralPath $module -PathType Leaf)) { [Windows.MessageBox]::Show("Missing snapshot collector: $module",'Snapshot') | Out-Null; return }
+    if ($mode -eq 'Local' -and $target -ine $env:COMPUTERNAME) {
+        [Windows.MessageBox]::Show('Local snapshot target does not match the current computer.','Snapshot') | Out-Null; return
+    }
     $script:SnapshotRequested = [pscustomobject]@{ Target=$target; Mode=$mode; Identity=$identity }
     $ui.CreateSnapshotGUI.IsEnabled = $false
     $ui.DiagnosticProgress.Text = "Capturing snapshot for $target ($mode). Please wait ..."
