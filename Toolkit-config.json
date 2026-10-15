@@ -4,7 +4,7 @@
     "PortQryPath":  "C:\\PortQryV2\\portqry.exe",
     "ReportFolder":  "Reports",
     "ReportFormat":  "HTML",
-    "AuthenticationDomain":  "YOURDOMAIN",
+    "AuthenticationDomain":  "",
     "Branding":  {
                      "OrganizationName":  "Your Organization",
                      "ApplicationName":  "IT Toolkit",
