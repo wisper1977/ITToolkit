@@ -272,6 +272,13 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
        </StackPanel>
       </Border>
       <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="19" CornerRadius="5" Margin="0,0,0,15">
+       <StackPanel>
+        <TextBlock Text="LAST LOCAL HEALTH ANALYSIS" FontWeight="SemiBold" Foreground="#17365D" Margin="0,0,0,8"/>
+        <TextBlock Name="DashboardHealthSummary" Text="Run the local Quick health check to populate an evidence-based summary." TextWrapping="Wrap" Foreground="#53677E"/>
+        <TextBlock Text="Unavailable evidence is not a pass. Review findings are not a system health score." FontSize="11" Foreground="#60738A" TextWrapping="Wrap" Margin="0,8,0,0"/>
+       </StackPanel>
+      </Border>
+      <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="19" CornerRadius="5" Margin="0,0,0,15">
        <StackPanel><DockPanel Margin="0,0,0,12"><Button Name="EditPins" Content="Edit favorites" DockPanel.Dock="Right" Margin="0"/><TextBlock Text="FAVORITE SHORTCUTS" FontWeight="SemiBold" Foreground="#17365D" VerticalAlignment="Center"/></DockPanel>
         <UniformGrid Name="DashboardPins" Columns="10" Rows="0"/>
         <TextBlock Name="PinHint" Foreground="#60738A" FontSize="12" TextWrapping="Wrap"/>
@@ -454,7 +461,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $ui = @{}
-foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
+foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','DashboardHealthSummary','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
 $window.Title = "$displayName - Graphical Interface"
 $ui.Heading.Text = $displayName
 $ui.Subtitle.Text = "Graphical Interface  |  Toolkit v$version"
@@ -1195,6 +1202,15 @@ $script:DiagnosticTimer.Add_Tick({
             $completed.Mode -ne $activeMode -or $completed.Identity -ine $activeIdentity) {
             throw 'Target or credentials changed during collection. Results discarded; run diagnostics again.'
         }
+        if ($completed.Mode -eq 'Local' -and 'Health' -in @($completed.Sections)) {
+            $summary = [regex]::Match($ui.DiagnosticOutput.Text, 'Review: (\d+) \| Available: (\d+) \| Unavailable: (\d+)')
+            if ($summary.Success) {
+                $ui.DashboardHealthSummary.Text = ("{0}: {1} review findings, {2} available checks, {3} unavailable checks. Collection initiated by {4}; see Diagnostics for evidence and next steps." -f
+                    $completed.Target,$summary.Groups[1].Value,$summary.Groups[2].Value,$summary.Groups[3].Value,$completed.Identity)
+            } else {
+                $ui.DashboardHealthSummary.Text = 'Health analysis unavailable. See the Diagnostics report for details.'
+            }
+        }
         # Keep exactly the completed, displayed output; no collection occurs when saving.
         $script:LastGUIReport = [pscustomobject]@{
             Mode = $script:PendingGUIReport.Mode
@@ -1317,6 +1333,7 @@ return ($lines -join "`r`n")
 param([string]$root,[string]$target,[string[]]$requested,[bool]$elevated,[bool]$policyConsent)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $root 'Modules\ITToolkit-LocalDiagnostics.ps1')
+. (Join-Path $root 'Modules\ITToolkit-HealthAnalysis.ps1')
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("Target: $target")
 $lines.Add('Collection mode: Local (current Windows identity)')
@@ -1350,6 +1367,10 @@ foreach ($section in $requested) {
     if ($result.Error) { $lines.Add("Error details: $($result.Error)") }
     foreach ($record in @($result.Data)) {
         $lines.Add(($record | Format-List * | Out-String -Width 200).TrimEnd())
+    }
+    if ($section -eq 'Health') {
+        $lines.Add('')
+        $lines.Add((Format-ToolkitHealthAnalysis -Analysis (Get-ToolkitLocalHealthAnalysis -Result $result)))
     }
 }
 return ($lines -join "`r`n")
