@@ -84,6 +84,11 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
                 $status = [string]$localResult.Status
                 $parts = New-Object System.Collections.Generic.List[string]
                 $parts.Add("Status category: $($localResult.StatusCategory)")
+                if ($localResult.Authorization -eq 'Windows UAC') {
+                    $parts.Add('Collection authorization: Windows UAC (explicit administrator approval).')
+                    $parts.Add("Initiating technician: $($localResult.InitiatingIdentity)")
+                    $parts.Add("Actual collection identity: $($localResult.CollectionIdentity)")
+                }
                 if ($localResult.Error) { $parts.Add("Error details: $($localResult.Error)") }
                 foreach ($record in @($localResult.Data)) { $parts.Add(($record | Format-List * | Out-String -Width 200).TrimEnd()) }
                 $content = $parts -join "`r`n"
