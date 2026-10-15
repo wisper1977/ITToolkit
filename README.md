@@ -133,7 +133,14 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 - The existing Classic Default diagnostics continue using their established `Get-SectionStatus` logic; a full cross-mode parity test is still pending.
 - Existing diagnostic collection methods, authentication selection, and saved report formats remain in place. **The change needs Windows regression testing before v1.27B can be considered complete.**
 
-**Planned next:** Continue v1.27B with cross-interface verification and error/status consistency. Health analysis, network diagnostics, snapshot enhancements, and report improvements remain proposals, **not yet implemented**.
+**Development roadmap (planned, not yet implemented):**
+- **v1.27B completion:** Cross-interface status/error consistency and remaining credential/access-denied regression tests.
+- **v1.27C — Local Computer Diagnostics:** Shared direct-local collection for both GUI and Classic, without requiring remote WinRM/ADMIN$; local reporting and snapshots should use the same results and distinguish inapplicable checks.
+- **v1.27D — Health Analysis:** Evidence-based findings grounded in successful collections, with unavailable checks kept separate.
+- **Quick Fix menu (candidate after local diagnostics/health analysis; version assignment provisional):** An explicitly technician-initiated, confirm-before-run repair menu in **both GUI and Classic** using a shared implementation. Candidates include DNS cache flush, print spooler restart, selective service restart, Windows Update service recovery, optional SFC/DISM checks, and WinRM service/configuration repair. Local actions use local management; remote actions require explicit authorization, prerequisite and transport checks, and a supported alternate channel when WinRM is disabled. DNS cache flushing on a remote target requires remote execution; flushing the technician's local resolver does not flush the remote resolver. WinRM must never be bootstrapped via WinRM itself. Warn/disable high-disruption remote tasks (network reset, DHCP renewal, reboot), avoid silent credential fallback, log what ran and verify outcomes; never auto-repair from a diagnostic.
+- Additional proposals: expanded network diagnostics, snapshot enhancements, and clearer ticket/report summaries.
+
+These items are roadmap proposals, **not shipped features**.
 
 ### v1.26
 
