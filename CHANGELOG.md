@@ -698,3 +698,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Shared Health analyzer now distinguishes observed uptime and installed-hotfix counts from disabled-firewall-profile review findings and unavailable checks. Hotfix counts explicitly **do not identify missing Windows Updates** or establish patch compliance.
 - Compact GUI sidebar now presents System, Security and Updates alongside Storage, Services and Events. Classic automatically displays all six through its existing shared Health formatter; no extra user action is needed.
 - **Required validation:** Windows local/remote Default/Alternate GUI and Classic health reports, firewall profile state, empty QFE inventory, WinRM failure, per-check denied/partial evidence, scroll sizing, report saving, and target/identity isolation. Production `main` unchanged.
+
+### v1.27 — Six-category GUI Health panel validated on local and remote Windows targets (2026-10-15)
+
+- Technician-provided screenshots verify `IT-7PY1M84` (Local) and `ML-PCSCALE` (Default remote) each display **2 review findings, 6 available checks, 0 unavailable checks** in the compact sidebar, including System uptime, firewall profiles and installed QFE inventory.
+- Local evidence: system uptime 3.2 days, 7 automatic-start services not running among 306 queried and 3 enabled firewall profiles. Remote evidence: uptime 6.9 days, 3 stopped automatic-start services and 3 enabled firewall profiles. Results differ by target as expected.
+- The pictured panels retain independent scrolling and fixed target/nav/Classic controls. This validates the GUI successful-results path only. **Still pending:** Classic six-category report check, remote Alternate mode, individual access/transport failures, saved report validation and any broader security or patch compliance claims.
