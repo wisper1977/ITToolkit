@@ -9,7 +9,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 ### GUI direct Edge report-opening compatibility (2026-10-15)
 
 - Follow-up to the shell `Open` verb attempt: that change did not resolve the reported GUI symptom on the affected workstation. HTML reports now use an explicit Edge executable and file URI when Edge is installed; otherwise the Windows `Open` verb remains the fallback. Recent reports and the Reports archive share this implementation.
-- CSV/TXT continue using the Windows shell. Workstation validation of the updated GUI, and browser availability/other-format regressions, remain pending.
+- CSV/TXT continue using the Windows shell. **Windows technician validation:** The direct Edge change resolved the original Open Report failure when launching the development GUI with administrative credentials on the affected workstation. Dashboard versus archive coverage, browser availability, other-format regressions and Classic parity remain to be confirmed.
 
 ### GUI report opening compatibility (2026-10-15)
 
