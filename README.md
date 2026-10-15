@@ -103,6 +103,8 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 - An access check succeeding does not guarantee that every diagnostic collector will succeed.
 - Snapshot collection and comparison are designed for the supported inventory categories; they do not represent a complete forensic record.
 
+**Planned v1.28 focus:** Following v1.27 stabilization, review all 20 diagnostic collectors for complete, actionable technician evidence. Network is first: compare local structured adapter inventory against remote `ipconfig /all`, then harmonize useful fields while preserving GUI/Classic behavior, authentication boundaries, and saved-report compatibility. See [ROADMAP.md](ROADMAP.md). This is planned work, not yet implemented.
+
 ## Version history
 
 ### v1.27 (in development)
