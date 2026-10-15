@@ -449,3 +449,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Windows technician confirmed Hardware works in GUI and Classic, with HTML reports saving and reopening successfully. The reported CPU was an Intel i7-10700K (8 cores, 16 logical processors), with 31.9 GB RAM and one Samsung SSD listed. Inventory scope will be reviewed against the E: logical volume later.
 - Added read-only local Users collector based on `Win32_UserAccount` with `LocalAccount=True` and fields Domain, Name, Disabled, Lockout and SID; enabled it in both local interfaces, leaving remote behavior unchanged.
 - Updated the reusable local smoke-test script to default to Users. Windows Users testing, saved-report checks, negative paths and remote regression remain pending.
+
+### v1.27C — Groups verified; Administrators added (2026-10-15)
+
+- Windows technician confirmed Local Groups in GUI and Classic, including successful HTML report save and reopening.
+- Added read-only direct membership inventory for the built-in Administrators group (SID S-1-5-32-544) to the shared local collector, including name, class, principal source, SID and summary. Nested group membership is not expanded.
+- Connected GUI and Classic local Administrators sections; updated single-file smoke test default to Administrators. Windows collector, interface and saved-report validation, edge cases and remote regression remain pending.
