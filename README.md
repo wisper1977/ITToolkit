@@ -177,7 +177,7 @@ See the [LICENSE](LICENSE) file for the full license text.
 
 ### Developer smoke test: local diagnostics
 
-On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **Users**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
+On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **Groups**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
 
 **Local Storage direct collector validation (technician-confirmed, 2026-10-14):** Windows PowerShell returned `SUCCESS`/`Success` with no error and two fixed logical drives (C: and E:), including size, free GB, and percentage. GUI/Classic Storage output and report-save checks remain pending.
 
@@ -192,3 +192,7 @@ On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiag
 **2026-10-15 Windows validation:** Local Hardware ran successfully in GUI and Classic, and HTML reports saved and opened. The report showed ASUS system information, 31.9 GB RAM, AMI BIOS 2301, Intel i7-10700K (8 cores/16 threads), and a Samsung SSD. Physical disk listing can be cross-checked against the separately observed E: logical volume in later testing.
 
 **Local Users (Windows test pending):** Implemented read-only local account inventory (name, domain, SID, disabled and lockout state) with shared GUI/Classic collection. Test-LocalDiagnostics.ps1 now defaults to Users. Report and error-path verification are pending.
+
+**2026-10-15 Local Users Windows confirmation:** Technician confirmed the Users report ran in GUI and Classic and saved/opened as HTML. It enumerated seven local accounts, including enabled and disabled records; disabled status is observed data, not inherently a fault. CSV/TXT and remote regression tests remain pending.
+
+**v1.27C Local Groups (implemented, Windows validation pending):** The shared read-only collector now queries local `Win32_Group` records, reporting group domain, name, SID and description. Both interfaces use the local collector without WinRM. Group membership enumeration remains a separate enhancement; this increment does not claim to inventory members. `Test-LocalDiagnostics.ps1` defaults to Groups.
