@@ -45,9 +45,11 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Status category display in the Classic alternate-credential report formatter and GUI diagnostic output (including Default mode).
 - **Second increment:** Propagated `StatusCategory` from the Classic alternate-credential report bridge as a structured property alongside the existing `Status` and `Content` fields.
 - Added explicit `Status category: Unavailable` lines to both GUI diagnostic worker exception paths while keeping existing exception detail text unchanged.
+- **Third increment:** Replaced the GUI workers' blanket `UNAVAILABLE` exception label with shared classification that reports `ACCESS DENIED` only for explicit authorization-related errors, while retaining `UNAVAILABLE` for other failures. The shared dispatcher uses the same classification in its exception path, and detailed error messages remain visible.
 
 #### Validation pending
-- Confirm GUI Default and Alternate runs, Classic alternate-credential reports, and representative SUCCESS / NO RESULTS / UNAVAILABLE / ACCESS DENIED statuses on Windows.
+- GUI Default mode and status display received initial Windows confirmation; GUI Alternate and Classic alternate credentials remain untested pending access to an authorized remote target.
+- Regression-test this increment with a nonexistent target (expected `UNAVAILABLE`) and, later, a real explicit permission rejection (expected `ACCESS DENIED`). Other collector-reported statuses remain unchanged.
 - Confirm report saving, snapshots, and existing diagnostics remain operational; **v1.27B is not yet marked complete**.
 
 ### Planned (not yet implemented)
