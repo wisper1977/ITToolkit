@@ -303,6 +303,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
         <ComboBox Name="DiagnosticSection" Height="34" Margin="0,0,0,10" ToolTip="Choose one of the twenty existing reporting checks."/>
         <WrapPanel>
          <Button Name="RunDiagnostic" Content="Run selected check"/>
+          <Button Name="RunElevatedLocalDiagnostic" Content="Run selected with UAC" ToolTip="Explicit administrator consent for local BitLocker or Policy only"/>
          <Button Name="RunAllDiagnostics" Content="Run all 20 checks"/>
          <Button Name="CreateSnapshotGUI" Content="Create Snapshot" ToolTip="Capture structured inventory for later comparison"/>
         </WrapPanel>
@@ -452,7 +453,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $ui = @{}
-foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
+foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
 $window.Title = "$displayName - Graphical Interface"
 $ui.Heading.Text = $displayName
 $ui.Subtitle.Text = "Graphical Interface  |  Toolkit v$version"
@@ -1189,10 +1190,15 @@ $script:DiagnosticTimer.Add_Tick({
         $script:DiagnosticAsync = $null
         $script:PendingGUIReport = $null
         $ui.RunDiagnostic.IsEnabled = $true
+        $ui.RunElevatedLocalDiagnostic.IsEnabled = $true
         $ui.RunAllDiagnostics.IsEnabled = $true
     }
 })
-function Start-GUIDiagnostics([string[]]$sections) {
+function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false) {
+    if ($elevatedLocal -and (-not $script:LocalTargetMode -or $sections.Count -ne 1 -or $sections[0] -notin @('BitLocker','Policy'))) {
+        [Windows.MessageBox]::Show('UAC handoff is available only for one local BitLocker or Policy check.','Invalid elevation request') | Out-Null
+        return
+    }
     $mode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
     $identity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
     $alternateCredential = $null
@@ -1224,6 +1230,7 @@ function Start-GUIDiagnostics([string[]]$sections) {
         }
     }
     $script:PendingGUIReport = [pscustomobject]@{
+        Elevated = $elevatedLocal
         Mode = $mode
         Identity = $identity
         Target = [string]$script:TargetComputer
@@ -1234,6 +1241,7 @@ function Start-GUIDiagnostics([string[]]$sections) {
     $ui.DiagnosticProgress.Text = "Running $($sections.Count) check(s) against $($script:TargetComputer) ..."
     $ui.Status.Text = 'Collecting diagnostic information ...'
     $ui.RunDiagnostic.IsEnabled = $false
+    $ui.RunElevatedLocalDiagnostic.IsEnabled = $false
     $ui.RunAllDiagnostics.IsEnabled = $false
     $worker = @'
 param([string]$root,[string]$target,[string[]]$requested)
@@ -1271,7 +1279,7 @@ return ($lines -join "`r`n")
     if ($mode -eq 'Local') {
         # Direct-local collection only; no remote fallback and no credential elevation.
         $worker = @'
-param([string]$root,[string]$target,[string[]]$requested)
+param([string]$root,[string]$target,[string[]]$requested,[bool]$elevated)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $root 'Modules\ITToolkit-LocalDiagnostics.ps1')
 $lines = New-Object System.Collections.Generic.List[string]
@@ -1290,7 +1298,12 @@ foreach ($section in $requested) {
         $lines.Add('Error details: Direct-local collection is not implemented for this section yet.')
         continue
     }
-    $result = Get-ToolkitLocalDiagnostic -Section $section
+    $result = if ($elevated -and $section -in @('BitLocker','Policy')) {
+        Invoke-ToolkitElevatedLocalDiagnostic -Section $section
+    } else {
+        Get-ToolkitLocalDiagnostic -Section $section
+    }
+    if ($elevated) { $lines.Add('Collection authorization: UAC-approved elevated local query (same Windows identity required).') }
     $lines.Add("STATUS: $($result.Status)")
     $lines.Add("Status category: $($result.StatusCategory)")
     if ($result.Error) { $lines.Add("Error details: $($result.Error)") }
@@ -1345,6 +1358,7 @@ return ($lines -join "`r`n")
         $script:DiagnosticPS = [PowerShell]::Create()
         $pipeline = $script:DiagnosticPS.AddScript($worker).AddArgument($script:ToolkitRoot).AddArgument([string]$script:TargetComputer).AddArgument([string[]]$sections)
         if ($mode -eq 'Alternate') { [void]$pipeline.AddArgument($alternateCredential) }
+        elseif ($mode -eq 'Local') { [void]$pipeline.AddArgument([bool]$elevatedLocal) }
         $script:DiagnosticAsync = $script:DiagnosticPS.BeginInvoke()
         $script:DiagnosticTimer.Start()
     } catch {
@@ -1512,6 +1526,22 @@ $ui.SaveDiagnosticReport.Add_Click({
 $ui.RunDiagnostic.Add_Click({
     if ($null -eq $ui.DiagnosticSection.SelectedItem) { return }
     Start-GUIDiagnostics @([string]$ui.DiagnosticSection.SelectedItem.Tag)
+})
+$ui.RunElevatedLocalDiagnostic.Add_Click({
+    if ($null -eq $ui.DiagnosticSection.SelectedItem) { return }
+    $section = [string]$ui.DiagnosticSection.SelectedItem.Tag
+    if (-not $script:LocalTargetMode -or $section -notin @('BitLocker','Policy')) {
+        [Windows.MessageBox]::Show('Select the local computer and BitLocker or Policy first.','Elevation scope') | Out-Null
+        return
+    }
+    $approval = [Windows.MessageBox]::Show(
+        "Windows will request administrator approval to collect local $section data. Only this diagnostic is elevated; the GUI remains unchanged. Continue?",
+        'Authorize diagnostic elevation',
+        [Windows.MessageBoxButton]::YesNo,
+        [Windows.MessageBoxImage]::Question)
+    if ($approval -eq [Windows.MessageBoxResult]::Yes) {
+        Start-GUIDiagnostics @($section) $true
+    }
 })
 $ui.RunAllDiagnostics.Add_Click({
     Start-GUIDiagnostics @($script:DiagnosticSections | ForEach-Object { [string]$_.Id })
