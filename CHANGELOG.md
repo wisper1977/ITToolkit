@@ -81,7 +81,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Current-user token only. Secure alternate-administrator local execution, remaining local collectors, and structured local snapshots are not yet implemented.
 - Windows validation confirmed GUI local Firewall `SUCCESS` and local Users `NOT TESTED`; the user confirmed Classic local reports save successfully.
 - **GUI report-save regression fix:** The Save Report handler now recognizes `Local` alongside `Default` and `Alternate`, without weakening its target/identity checks. Saved local reports use a `LOCAL DIAGNOSTIC REPORT` heading instead of `REMOTE`.
-- GUI local report-saving retest, additional GUI/Classic scenarios, and remote regression testing are pending; do **not** mark v1.27C complete.
+- **Windows GUI Local save regression retest passed:** A Services diagnostic was collected and its report saved successfully. This validates saving under Local mode, **not** local Services data collection (still unsupported and expected to be `NOT TESTED`). Report opening, other formats, additional GUI/Classic scenarios, and remote regression testing remain pending; do **not** mark v1.27C complete.
 
 ### Documentation organization
 
