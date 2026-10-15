@@ -49,6 +49,12 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 - Current remote Network attempts `ipconfig /all` through selected-identity WinRM; local Network currently returns a narrower set of structured adapter fields. This is a planned future audit and **no v1.28 collector code has been implemented** in this change.
 - Kept v1.27 focused on remaining health-analysis quality and final release validation; see [ROADMAP.md](ROADMAP.md).
 
+### Report Archive Explorer launch and local snapshot comparison verification (2026-10-15)
+
+- **Fixed in development:** Report Archive **Open Reports Folder** now starts the Windows `explorer.exe` executable with the validated full reports-folder path instead of invoking the folder's shell `open` verb. This addresses the technician-observed `Access is denied` on `C:\GitHub\ITToolkit\Reports` under the alternate-administrator launch context. **Windows retest pending**; the existing Copy Folder Path fallback remains.
+- **Verified local snapshot comparison artifacts:** Two uploaded v1.27 SchemaVersion 1 snapshots of `IT-7PY1M84`, Local mode under the same collection identity, have all seven inventory categories present. Their uploaded HTML comparison lists **9 service-property changes** across Services (including BITS State Running→Stopped and StartMode Auto→Manual) and no differences for Software, Updates, Users, Groups, Administrators or Shares. These observations agree with the supplied snapshot values and validate this local baseline/newer comparison and HTML-output case; they do not establish remote, missing/failed inventory, or archive reload edge cases.
+- No permissions, user identity, Explorer policy, collector, or production changes were made.
+
 ### Remaining release checks and limitations
 
 - Validate unavailable/denied and partial Health paths, negative pending-restart indicators, and alternate remote authentication **provenance** where observable. Check latest saved seven-check output in the relevant HTML/CSV/TXT workflows.
