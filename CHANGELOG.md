@@ -4,7 +4,23 @@ Documented changes to **IT Toolkit** are recorded here. This file distinguishes 
 
 The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentation Foundation (WPF); the Classic interface uses a text menu.
 
-## [1.27] — In development (local snapshot Windows testing pending)
+## [1.27] — In development (health analysis and final validation remaining)
+
+### Completed v1.27 implementation and technician-verified Windows work — consolidated (2026-10-15)
+
+The entries below consolidate completed development and workplace checks previously duplicated throughout ROADMAP.md. Detailed incremental implementation notes, test qualifications, and original development history remain in this changelog; this summary does **not** mean the unreleased v1.27 milestone is fully validated or ready for production.
+
+- **GUI and Classic usability:** refined GUI Dashboard and Tools, persisted window/page preferences, compact Computer Health sidebar with independently scrollable findings, fixed navigation/target/Classic-switch layout, and GUI ↔ Classic switching. Technician screenshots validated compact-sidebar behavior and intentional independent scrolling; an unnecessary scroll-reset experiment was reverted.
+- **Direct-local reporting:** implemented all **20** local diagnostic collectors alongside existing remote diagnostics. Windows tests included the normal collectors, explicit BitLocker UAC under a separately authorized administrative account, report copying/opening and the technician-confirmed workplace regression checklist. Computer Group Policy `gpresult` still returns Access Denied independently of IT Toolkit on the tested workstation; do not claim successful Policy evidence collection there.
+- **Least-privilege UAC and Tools:** explicit consent for narrowly scoped elevated BitLocker/Policy checks, distinct initiating/collecting identities and a separately approved admin-account CurrentUser RemoteSigned policy adjustment when authorized. Added Windows PowerShell (Administrator) to both GUI/Classic Tools with explicit UAC; technician confirmed the launcher works. Toolkit itself remains at its original identity.
+- **Snapshots:** implemented direct-local seven-category snapshot capture and Classic local report sidecars using the existing comparison schema; technician confirmed local and remote **snapshot capture** work on Windows. Snapshot comparison, archive reload, partial-category and sidecar edge cases are **not yet independently confirmed**.
+- **Evidence-based health analysis:** shared read-only interpretation in GUI and Classic, with seven observations: system-drive capacity, nonrunning automatic-start services, critical/error System events, uptime, firewall profile status, installed QFE inventory, and selected pending-restart registry indicators. The GUI sidebar displays Review/Checked/Unknown and per-category evidence; Classic provides report output without a persistent dashboard, per user preference.
+- **GUI Health Windows verification:** technician screenshots confirmed seven checked, three review, zero unknown for local `IT-7PY1M84` and remote `ML-PCSCALE` with Default credentials. Separate technician confirmation plus screenshot established the remote Alternate credentials GUI success path. Both machines showed the pending-file-rename indicator. The Alternate screenshot does **not** independently verify the actual remote authentication token/account; retain that test distinction.
+- **Assessment boundaries:** an observed status is not an overall health verdict. Installed QFE count cannot establish missing updates, enabled firewall profiles cannot establish security compliance, and pending file renames do not alone prove Windows Update requires a reboot. Unavailable evidence must not be scored as passing.
+
+**Still outstanding for v1.27:** Classic seven-check path confirmation, negative/denied/partial Health evidence cases, Alternate identity-provenance verification, latest report save/reopen and snapshot comparison/archive edge cases, reconciled capacity thresholds and final Windows regression/release review. See [ROADMAP.md](ROADMAP.md). Production `main` remains unchanged.
+
+
 
 ### Workplace validation checklist completion — technician confirmation (2026-10-15)
 
