@@ -107,13 +107,13 @@ while ($true) {
     Write-Host ''
     $choice=(Read-Host 'Choose').Trim().ToUpperInvariant()
     switch ($choice) {
-        '1' { if (Assert-ClassicDefaultAuthentication) { Menu-Sysinternals } }
-        '2' { if (Assert-ClassicDefaultAuthentication) { Menu-Network } }
-        '3' { if (Assert-ClassicDefaultAuthentication) { Menu-Windows } }
-        '4' { if (Assert-ClassicDefaultAuthentication) { Menu-AD } }
+        '1' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-Sysinternals } }
+        '2' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-Network } }
+        '3' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-Windows } }
+        '4' { if ($script:LocalTargetMode) { Write-Host 'This menu currently uses remote-management methods. Switch to a remote target, or use option 5 for local System/Firewall reports.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (Assert-ClassicDefaultAuthentication) { Menu-AD } }
         '5' { Menu-Reports }
         '6' { Menu-Comparison } # offline file comparison; no remote identity required
-        '7' { Reset-ClassicAlternateCredential; $script:LocalTargetMode=$false; Change-Target }
+        '7' { Reset-ClassicAlternateCredential; Change-Target }
         '8' { Reset-ClassicAlternateCredential; $script:LocalTargetMode=$false; $script:TargetComputer=$null; $script:TargetIPv4='(not selected)'; $script:AdminStatus='Not checked'; $script:AdminDetail='Select a target to run an access check.'; $script:AdminCheckedAt=$null }
         '9' { if ($script:LocalTargetMode) { Write-Host 'ADMIN$ check does not apply to direct-local collection.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (-not (Assert-ClassicDefaultAuthentication)) { continue }; if ($script:TargetComputer) { Test-RemoteAdminAccess; Write-Host $script:AdminDetail; Pause-Toolkit } else { Write-Host 'Select a target first.' -ForegroundColor Yellow; Pause-Toolkit } }
         '10' { Menu-Settings }
