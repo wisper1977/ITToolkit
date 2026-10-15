@@ -6,6 +6,15 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### v1.27C — Network validated; Hardware implementation (2026-10-15)
+
+- **Windows technician confirmed:** Local Network works in GUI and Classic and its HTML report saves and opens. Two IP-enabled adapters were reported; an Ethernet adapter had a 169.254.x.x link-local address and Wi-Fi had a routable private address and gateway. These are observed configurations, not health verdicts.
+- Added read-only Hardware collection using direct local CIM: computer manufacturer/model and installed RAM, BIOS manufacturer/version/serial, processor name and core/logical-processor counts, and physical drive model/type/capacity. No remote-management transport, credential substitution, or system changes.
+- Enabled Hardware in both local interface paths and changed the reusable test script default to Hardware.
+- **Pending:** Hardware direct Windows collector test, GUI/Classic output, HTML save/reopen, negative cases and remote regressions. Network CSV/TXT formats and remote regressions remain pending.
+
+
+
 ### v1.27C — Storage interface validation and Local Network increment (2026-10-14)
 
 - **Windows technician confirmed:** Local Storage works in GUI and Classic, and its HTML report saves and opens. CSV/TXT and remote regressions remain pending.
@@ -22,12 +31,31 @@ Documented changes to **IT Toolkit** are recorded here. This file distinguishes 
 
 The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentation Foundation (WPF); the Classic interface uses a text menu.
 
+## [1.27] — In development
+
+### v1.27C — Network validated; Hardware implementation (2026-10-15)
+
+- **Windows technician confirmed:** Local Network works in GUI and Classic and its HTML report saves and opens. Two IP-enabled adapters were reported; an Ethernet adapter had a 169.254.x.x link-local address and Wi-Fi had a routable private address and gateway. These are observed configurations, not health verdicts.
+- Added read-only Hardware collection using direct local CIM: computer manufacturer/model and installed RAM, BIOS manufacturer/version/serial, processor name and core/logical-processor counts, and physical drive model/type/capacity. No remote-management transport, credential substitution, or system changes.
+- Enabled Hardware in both local interface paths and changed the reusable test script default to Hardware.
+- **Pending:** Hardware direct Windows collector test, GUI/Classic output, HTML save/reopen, negative cases and remote regressions. Network CSV/TXT formats and remote regressions remain pending.
+
+
+
+### v1.27C — Storage interface validation and Local Network increment (2026-10-14)
+
+- **Windows technician confirmed:** Local Storage works in GUI and Classic, and its HTML report saves and opens. CSV/TXT and remote regressions remain pending.
+- Implemented direct-local Network collection through read-only `Win32_NetworkAdapterConfiguration` for IP-enabled adapters, including adapter identity, IP/subnet, default gateways, DNS servers, MAC and DHCP state. Does not attempt network changes, remote WinRM, or remote-target ping/traceroute.
+- Enabled Network in the GUI and Classic local collection allowlists. Updated `Test-LocalDiagnostics.ps1` to default to Network; the same `-Section` parameter remains available.
+- **Pending Windows validation:** Network direct collector, GUI/Classic display and report save, no-adapter and error paths, and remote regression. No claim of Network completion yet.
+
+
+### v1.27C — Local Storage (implementation; Windows testing pending)
+
 .
 - Included DeviceID, volume label, size GB, free GB and free percent, with null for unavailable/zero-capacity percentage rather than reporting a misleading 0%.
 - Wired the existing Storage choice into both GUI and Classic local paths while leaving remote adapters unchanged. An empty fixed-drive result is `NO RESULTS` / `NoData`; collection exceptions retain their error and status category.
 - **Pending:** Windows PowerShell 5.1 direct collector test, GUI/Classic output and report-save tests, negative/empty cases, and remote regression. This increment is not yet Windows-validated.
- (started 2026-10-14)
-
 **Development branch:** `develop/v1.27`. Version 1.26 on `main` remains the stable production release. The entries below describe implemented development work, not a published v1.27 release.
 
 ### v1.27A — GUI refinements (completed; Windows-tested)
