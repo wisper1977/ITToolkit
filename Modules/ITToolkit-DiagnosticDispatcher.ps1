@@ -13,6 +13,7 @@ function Get-ToolkitDiagnosticStatusCategory {
         'REVIEW'                { return 'Review' }
         'PARTIAL'               { return 'Partial' }
         'PARTIAL / UNAVAILABLE' { return 'Partial' }
+        'ACCESS DENIED'         { return 'AccessDenied' }
         'UNAVAILABLE'           { return 'Unavailable' }
         'NOT TESTED'            { return 'NotTested' }
         'NOT INTEGRATED'        { return 'NotTested' }
