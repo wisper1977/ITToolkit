@@ -1216,7 +1216,8 @@ $script:DiagnosticTimer.Add_Tick({
         $ui.RunAllDiagnostics.IsEnabled = $true
     }
 })
-function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false) {
+function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,[bool]$allowRemoteSigned = $false) {
+    if ($allowRemoteSigned -and -not $elevatedLocal) { throw 'Execution-policy consent requires a selected elevated local diagnostic.' }
     if ($elevatedLocal -and (-not $script:LocalTargetMode -or $sections.Count -ne 1 -or $sections[0] -notin @('BitLocker','Policy'))) {
         [Windows.MessageBox]::Show('UAC handoff is available only for one local BitLocker or Policy check.','Invalid elevation request') | Out-Null
         return
@@ -1253,6 +1254,7 @@ function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false)
     }
     $script:PendingGUIReport = [pscustomobject]@{
         Elevated = $elevatedLocal
+        PolicyConsent = $allowRemoteSigned
         Mode = $mode
         Identity = $identity
         Target = [string]$script:TargetComputer
@@ -1301,7 +1303,7 @@ return ($lines -join "`r`n")
     if ($mode -eq 'Local') {
         # Direct-local collection only; no remote fallback and no credential elevation.
         $worker = @'
-param([string]$root,[string]$target,[string[]]$requested,[bool]$elevated)
+param([string]$root,[string]$target,[string[]]$requested,[bool]$elevated,[bool]$policyConsent)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $root 'Modules\ITToolkit-LocalDiagnostics.ps1')
 $lines = New-Object System.Collections.Generic.List[string]
@@ -1321,7 +1323,7 @@ foreach ($section in $requested) {
         continue
     }
     $result = if ($elevated -and $section -in @('BitLocker','Policy')) {
-        Invoke-ToolkitElevatedLocalDiagnostic -Section $section
+        Invoke-ToolkitElevatedLocalDiagnostic -Section $section -AllowCurrentUserRemoteSigned:$policyConsent
     } else {
         Get-ToolkitLocalDiagnostic -Section $section
     }
@@ -1329,6 +1331,8 @@ foreach ($section in $requested) {
         $lines.Add('Collection authorization: Windows UAC (explicit administrator approval).')
         $lines.Add("Initiating technician: $($result.InitiatingIdentity)")
         $lines.Add("Actual collection identity: $($result.CollectionIdentity)")
+        $lines.Add("PowerShell execution policy: $($result.ExecutionPolicyBefore) -> $($result.ExecutionPolicyAfter)")
+        $lines.Add("CurrentUser policy changed for elevated account: $([bool]$result.ExecutionPolicyChanged)")
     }
     $lines.Add("STATUS: $($result.Status)")
     $lines.Add("Status category: $($result.StatusCategory)")
@@ -1384,7 +1388,10 @@ return ($lines -join "`r`n")
         $script:DiagnosticPS = [PowerShell]::Create()
         $pipeline = $script:DiagnosticPS.AddScript($worker).AddArgument($script:ToolkitRoot).AddArgument([string]$script:TargetComputer).AddArgument([string[]]$sections)
         if ($mode -eq 'Alternate') { [void]$pipeline.AddArgument($alternateCredential) }
-        elseif ($mode -eq 'Local') { [void]$pipeline.AddArgument([bool]$elevatedLocal) }
+        elseif ($mode -eq 'Local') {
+            [void]$pipeline.AddArgument([bool]$elevatedLocal)
+            [void]$pipeline.AddArgument([bool]$allowRemoteSigned)
+        }
         $script:DiagnosticAsync = $script:DiagnosticPS.BeginInvoke()
         $script:DiagnosticTimer.Start()
     } catch {
@@ -1580,13 +1587,21 @@ $ui.RunElevatedLocalDiagnostic.Add_Click({
         return
     }
     $approval = [Windows.MessageBox]::Show(
-        "Windows will request administrator approval to collect local $section data. Only this diagnostic is elevated; the GUI remains unchanged. Continue?",
+        "Windows will request administrator credentials for this local $section check. The GUI will remain non-elevated. Continue?",
         'Authorize diagnostic elevation',
         [Windows.MessageBoxButton]::YesNo,
         [Windows.MessageBoxImage]::Question)
-    if ($approval -eq [Windows.MessageBoxResult]::Yes) {
-        Start-GUIDiagnostics @($section) $true
-    }
+    if ($approval -ne [Windows.MessageBoxResult]::Yes) { return }
+    $policyChoice = [Windows.MessageBox]::Show(
+        'If the UAC administrator account has Restricted PowerShell execution policy, allow IT Toolkit to permanently change only that account''s CurrentUser policy to RemoteSigned? This is a separate persistent configuration change.' + [Environment]::NewLine +
+        'YES = approve that account-level change if needed.' + [Environment]::NewLine +
+        'NO = run UAC diagnostic without changing execution policy.' + [Environment]::NewLine +
+        'CANCEL = do not run.',
+        'Authorize optional PowerShell policy change',
+        [Windows.MessageBoxButton]::YesNoCancel,
+        [Windows.MessageBoxImage]::Warning)
+    if ($policyChoice -eq [Windows.MessageBoxResult]::Cancel) { return }
+    Start-GUIDiagnostics @($section) $true ($policyChoice -eq [Windows.MessageBoxResult]::Yes)
 })
 $ui.RunAllDiagnostics.Add_Click({
     Start-GUIDiagnostics @($script:DiagnosticSections | ForEach-Object { [string]$_.Id })
