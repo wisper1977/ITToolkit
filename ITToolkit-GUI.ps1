@@ -707,6 +707,20 @@ function Start-GUITool([string]$id) {
         $ui.Status.Text = "Launched: $($app.Name)"
     } catch { [Windows.MessageBox]::Show($_.Exception.Message, 'Unable to launch tool') | Out-Null }
 }
+# Shared multiline labels for dynamically generated Tools and Dashboard buttons.
+# A bounded TextBlock width is needed because UniformGrid/WrapPanel content can
+# otherwise measure wider than its button, defeating TextWrapping.
+function New-GUIToolButtonLabel([string]$text, [double]$maxWidth) {
+    $label = New-Object Windows.Controls.TextBlock
+    $label.Text = $text
+    $label.TextWrapping = [Windows.TextWrapping]::Wrap
+    $label.TextAlignment = [Windows.TextAlignment]::Center
+    $label.VerticalAlignment = [Windows.VerticalAlignment]::Center
+    $label.HorizontalAlignment = [Windows.HorizontalAlignment]::Center
+    $label.MaxWidth = $maxWidth
+    $label.FontSize = 12
+    return $label
+}
 function Update-FavoriteColumns {
     $width = $ui.DashboardPins.ActualWidth
     if ($width -le 0) { $width = $window.ActualWidth - 260 }
@@ -720,7 +734,7 @@ function Refresh-DashboardPins {
         $item = $script:Apps | Where-Object { $_.Id -eq $id } | Select-Object -First 1
         if (-not $item) { continue }
         $button = New-Object Windows.Controls.Button
-        $button.Content = $item.Name; $button.MinWidth = 0; $button.Height = 55; $button.HorizontalAlignment = [Windows.HorizontalAlignment]::Stretch
+        $button.Content = New-GUIToolButtonLabel ([string]$item.Name) 110; $button.MinWidth = 0; $button.MinHeight = 70; $button.HorizontalAlignment = [Windows.HorizontalAlignment]::Stretch
         $button.ToolTip = $item.Description
         $button.Margin = [Windows.Thickness]::new(0,0,7,7)
         $button.IsEnabled = [bool]$script:ResolvedApps[$id]
@@ -928,9 +942,9 @@ function Refresh-Tools {
         if ($filter -eq 'Favorites' -and -not $favorite) { continue }
         $visible++
         $row = New-Object Windows.Controls.WrapPanel
-        $row.Margin = '0,0,0,8'; $row.Orientation = [Windows.Controls.Orientation]::Horizontal
+        $row.Margin = '0,0,0,8'; $row.Orientation = [Windows.Controls.Orientation]::Horizontal; $row.VerticalAlignment = [Windows.VerticalAlignment]::Center
         $launch = New-Object Windows.Controls.Button
-        $launch.Width = 205; $launch.Height = 36; $launch.Content = $app.Name; $launch.ToolTip = $app.Description
+        $launch.Width = 205; $launch.MinHeight = 54; $launch.Content = New-GUIToolButtonLabel ([string]$app.Name) 177; $launch.ToolTip = $app.Description
         $launch.IsEnabled = $available; $launch.Tag = $app.Id
         $launch.Add_Click({ Start-GUITool ([string]$this.Tag) })
         [void]$row.Children.Add($launch)
