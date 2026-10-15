@@ -1957,12 +1957,14 @@ $ui.ArchiveFolder.Add_Click({
         # this GUI was started with a separately authorized admin account.
         # Invoke Windows Explorer itself, without changing identity, elevating,
         # changing ACLs or relying on the folder's shell "open" association.
+        # /n requests a new Explorer window; this argument was successfully
+        # tested from the same administrator PowerShell context.
         $fullFolder = [IO.Path]::GetFullPath($folder)
         $explorer = Join-Path $env:WINDIR 'explorer.exe'
         if (-not (Test-Path -LiteralPath $explorer -PathType Leaf)) {
             throw "Windows Explorer executable not found: $explorer"
         }
-        Start-Process -FilePath $explorer -ArgumentList ('"' + $fullFolder + '"') -ErrorAction Stop | Out-Null
+        Start-Process -FilePath $explorer -ArgumentList ('/n,"' + $fullFolder + '"') -ErrorAction Stop | Out-Null
         $ui.ArchiveStatus.Text = "Explorer launch requested: $fullFolder (if Explorer doesn't appear, use Copy Folder Path)."
     } catch {
         $ui.ArchiveStatus.Text = "Explorer could not open this directory. Use Copy Folder Path: $folder"
