@@ -4,7 +4,7 @@ Documented changes to **IT Toolkit** are recorded here. This file distinguishes 
 
 The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentation Foundation (WPF); the Classic interface uses a text menu.
 
-## [1.27] — Release candidate (awaiting approval)
+## [1.27] — In development (local snapshot Windows testing pending)
 
 ### Workplace validation checklist completion — technician confirmation (2026-10-15)
 
@@ -631,3 +631,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - **Windows tested, SUCCESS:** `IT-7PY1M84` GUI BitLocker, initiated by standard `COCHISE\ccollins` and collected after Windows UAC authorization under `COCHISE\CCollinsadm`. Report preserved both account identities, collection status `SUCCESS` and volume findings (C: 100% encrypted, protection on, XTS-AES-256).
 - Confirmed persistent administrator `CurrentUser` execution policy needed no repeat modification: RemoteSigned → RemoteSigned, changed False.
 - **Still pending:** GUI Save HTML/reopen for this elevated report, Classic elevated reporting, cancellations, regression/security checks. Policy's `gpresult` query returns Access Denied even in a separately elevated administrator PowerShell session; preserve accurate failure rather than claim successful Policy data collection.
+
+### v1.27 — Local snapshot support implemented (2026-10-15; Windows validation pending)
+
+- Removed the local snapshot block in GUI and Classic. Expanded the shared seven-category structured GUI collector to support `Local`, keeping existing Default/Alternate remote paths unchanged. Local captures query WMI on the current system and enumerate installed software through the local registry.
+- Classic Create Snapshot now uses the same schema-compatible collector and archive naming; its optional saved-report snapshot sidecar also supports Local Computer. Target and identity checks prevent labeling a different computer or administrator identity as the local collector. Failed categories remain unavailable/NOT COMPARABLE, and all-failed collection is not saved.
+- **Release candidate revoked:** workplace checklist previously completed did not include successful local snapshot creation/comparison. Must validate GUI and Classic local snapshot creation, save/reload, two-snapshot comparison, partial failures, permissions and remote snapshot regression on Windows before promoting to production `main`.
