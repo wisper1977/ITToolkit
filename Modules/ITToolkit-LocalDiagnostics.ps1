@@ -700,12 +700,12 @@ $diagnosticResult = Get-ToolkitLocalDiagnostic -Section __SECTION__
         }
         $hasOutput = Test-Path -LiteralPath $outputFile -PathType Leaf
         if (-not $hasOutput) {
-            throw ("Elevated diagnostic process ended without an accessible result (exit code: {0}). " +
+            $detail = ("Elevated diagnostic process ended without an accessible result (exit code: {0}). " +
                 "Possible causes include endpoint security restrictions, process launch failure, or " +
                 "UAC running under a different administrator account. The result folder is restricted " +
                 "to the requesting user, Administrators and SYSTEM. No alternate identity was used " +
-                "or accepted by IT Toolkit. Review Windows/endpoint security logs; do not disable protection." -f
-                $process.ExitCode)
+                "or accepted by IT Toolkit. Review Windows/endpoint security logs; do not disable protection.")
+            throw ($detail -f $process.ExitCode)
         }
         $payload = Import-Clixml -LiteralPath $outputFile -ErrorAction Stop
         if ($process.ExitCode -ne 0) {
