@@ -107,6 +107,8 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 
 **v1.27 Report Archive compatibility (2026-10-15; Windows retest pending):** The Open Reports Folder button now invokes Windows Explorer directly instead of passing the directory path to a shell open verb after a separately authorized administrative GUI launch produced `Access is denied`. Copy Folder Path continues to work. A same-target local two-snapshot HTML comparison has been reviewed with nine verified service-property changes and no reported changes in the other six categories; further remote and error-path tests remain open.
 
+**Report Archive folder launch compatibility:** The Reports → Open Reports Folder action now invokes `explorer.exe` with the explicitly tested `/n` new-window argument. The technician confirmed this command opens `C:\GitHub\ITToolkit\Reports` from the administrative PowerShell session; the revised GUI button still requires Windows verification. Copy Folder Path remains available.
+
 ## Version history
 
 ### v1.27 (in development)
