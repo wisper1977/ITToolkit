@@ -1175,6 +1175,7 @@ foreach ($section in $requested) {
         $lines.Add($content)
     } catch {
         $lines.Add('STATUS: UNAVAILABLE')
+        $lines.Add('Status category: Unavailable')
         $lines.Add("UNAVAILABLE / ACCESS DENIED / ERROR: $($_.Exception.Message)")
     }
 }
@@ -1209,6 +1210,7 @@ foreach ($section in $requested) {
         $lines.Add((Convert-ClassicDispatcherResult -Result $result))
     } catch {
         $lines.Add('STATUS: UNAVAILABLE')
+        $lines.Add('Status category: Unavailable')
         $lines.Add("UNAVAILABLE / ACCESS DENIED / ERROR: $($_.Exception.Message)")
     }
 }
