@@ -1953,19 +1953,28 @@ $ui.ArchiveFolder.Add_Click({
         return
     }
     try {
-        # A folder path passed to ShellExecute can return Access Denied when
-        # this GUI was started with a separately authorized admin account.
-        # Invoke Windows Explorer itself, without changing identity, elevating,
-        # changing ACLs or relying on the folder's shell "open" association.
-        # /n requests a new Explorer window; this argument was successfully
-        # tested from the same administrator PowerShell context.
+        # Direct Explorer launches return without error from the GUI but do
+        # not display a window in the tested alternate-admin desktop context.
+        # A separate Windows PowerShell process launching Explorer with /n
+        # opened the folder in a technician test. Preserve the same identity,
+        # with no elevated handoff, credentials, ACL changes or policy override.
         $fullFolder = [IO.Path]::GetFullPath($folder)
         $explorer = Join-Path $env:WINDIR 'explorer.exe'
+        $powerShell = Join-Path $PSHOME 'powershell.exe'
         if (-not (Test-Path -LiteralPath $explorer -PathType Leaf)) {
             throw "Windows Explorer executable not found: $explorer"
         }
-        Start-Process -FilePath $explorer -ArgumentList ('/n,"' + $fullFolder + '"') -ErrorAction Stop | Out-Null
-        $ui.ArchiveStatus.Text = "Explorer launch requested: $fullFolder (if Explorer doesn't appear, use Copy Folder Path)."
+        if (-not (Test-Path -LiteralPath $powerShell -PathType Leaf)) {
+            throw "Windows PowerShell executable not found: $powerShell"
+        }
+        # Encode only the validated absolute path in a literal child command;
+        # no input is interpreted as PowerShell code from the path itself.
+        $quotedExplorer = "'" + $explorer.Replace("'", "''") + "'"
+        $quotedFolder = "'" + $fullFolder.Replace("'", "''") + "'"
+        $launchScript = "Start-Process -FilePath $quotedExplorer -ArgumentList ('/n,' + [char]34 + $quotedFolder.Trim([char]39) + [char]34) -ErrorAction Stop"
+        $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($launchScript))
+        Start-Process -FilePath $powerShell -ArgumentList @('-NoLogo','-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -ErrorAction Stop | Out-Null
+        $ui.ArchiveStatus.Text = "Explorer launch requested via separate PowerShell: $fullFolder (if Explorer doesn't appear, use Copy Folder Path)."
     } catch {
         $ui.ArchiveStatus.Text = "Explorer could not open this directory. Use Copy Folder Path: $folder"
         [Windows.MessageBox]::Show("Unable to open the reports folder in Explorer.`n$folder`n`n$($_.Exception.Message)`n`nYou can use Copy Folder Path and paste it in Explorer.", 'Report Archive') | Out-Null
