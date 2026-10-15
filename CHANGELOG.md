@@ -538,3 +538,10 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Technician confirmed GUI and Classic Health collection, plus HTML report save/open. C: free space 31.4% (145.72 GB), 324 services inspected with 6 automatic not running, and 8 System critical/error events in 24 hours.
 - 18/20 local diagnostic sections now have successful Windows positive-path validation. BitLocker and Policy have only access-denied negative-path verification, not successful inventory.
 - Health evidence does not establish system health. Other Windows environments, CSV/TXT formats, remote regression and authorized BitLocker/Policy positive-path tests remain outstanding. The v1.27D analysis milestone is not complete.
+
+### v1.27C — Elevated BitLocker and Policy collector tests (2026-10-15)
+
+- Windows PowerShell 5.1 elevated under the existing `wispe` identity (`IsInRole(Administrator) = True`) produced `SUCCESS` in the read-only test harness for both BitLocker and Policy, whereas prior unelevated tests returned ACCESS DENIED.
+- BitLocker returned two volumes, C: and E:, both FullyDecrypted, protection Off, 0% encrypted, encryption method None and Unlocked. No recovery secrets collected.
+- Policy returned 37 result lines for the standalone workstation's computer scope; Local Group Policy was reported Not Applied (Empty).
+- **Validation remains open:** GUI and Classic elevated collection and saved/reopened HTML for BitLocker and Policy have not been reported. Existing 18 sections have GUI/Classic HTML confirmation; no promotion of v1.27C completion yet. Additional regression and output-format checks are outstanding.
