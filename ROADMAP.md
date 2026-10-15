@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users and Groups validated locally; Administrators newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups and Administrators validated locally; Shares newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -140,3 +140,7 @@ These have no assigned milestone or implementation commitment:
 **Groups verified (2026-10-15):** Local GUI and Classic reports succeeded, and HTML report save/open succeeded.
 
 **Local Administrators next increment:** Shared direct member inventory of built-in Administrators is implemented for GUI and Classic; nested domain groups are not expanded. Test script defaults to Administrators. Windows validation pending.
+
+**Local Administrators validation (2026-10-15):** Both Windows interfaces worked with a successful HTML report save/open. Two direct Administrators members reported; nested membership not expanded.
+
+**Local Shares implementation (Windows validation pending):** Shared local `Win32_Share` inventory now returns share name, path, description and type in GUI and Classic. Test harness defaults to Shares. Permissions and share accessibility are out of scope; Windows collector, UI, report saving and regression testing remain pending.
