@@ -552,3 +552,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - In Classic, when one of those two local checks returns ACCESS DENIED, offer a Y/N retry through Windows UAC for that section only. A declined prompt keeps the original status.
 - Added shared `Invoke-ToolkitElevatedLocalDiagnostic` UAC helper. Child PowerShell runs only the selected read-only local check, with temporary ACL-restricted CLIXML output and cleanup. Results are discarded if UAC runs under a different Windows identity. No passwords, elevation tokens, BitLocker key protectors, or recovery secrets are persisted.
 - Elevated results enter existing GUI/Classic report formatting and saving rather than a separate report implementation. **Windows verification pending:** positive, denied, cancel, different identity, saved HTML, GUI responsiveness, and Classic/remote regression. No release completion claimed.
+
+### v1.27C — GUI targeted BitLocker UAC test (2026-10-15)
+
+- **Windows technician confirmation:** Normal GUI's explicit UAC BitLocker action returned SUCCESS with C: and E: volume records under the original Windows identity, establishing successful elevated data return to the GUI without elevating the parent process.
+- **Security compatibility observation:** Avast repeatedly attempted to block this UAC handoff; collection nevertheless succeeded. The precise alert/detection has not yet been supplied or assessed. No security exclusions or bypasses are recommended or implemented.
+- **Still pending:** GUI Policy UAC, Classic BitLocker/Policy retry, HTML save/reopen for newly elevated results, UAC declined/different-account scenarios, antivirus review, and regression validation. v1.27C is not complete.
