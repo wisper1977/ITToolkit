@@ -595,3 +595,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Kept a restricted transfer folder, request nonce and section/target/mode validation. Added best-effort child error reporting and rejected results that lack elevation or request provenance. Normal non-elevated behavior, remote authentication and other collectors remain unchanged.
 - GUI and Classic now visibly distinguish UAC collection identity without automatically relabeling it as the toolkit's user. No password storage or manual identity fallback added.
 - **Pending:** authorized two-account Windows UAC success or actionable failure on a domain workstation, read/write access for the elevated administrator to the child module and temporary folder, HTML report and Copy Report, UAC cancel, endpoint protection compatibility, Classic parity and remote regression. Not promoted to stable.
+
+### v1.27 — Elevated administrator execution-policy detection (2026-10-15)
+
+- Workplace UAC now reaches the explicitly entered administrator identity, but the elevated Windows PowerShell process rejected toolkit module loading because script execution was disabled. The failure occurs before BitLocker or Policy collection.
+- Updated the shared UAC helper to distinguish script execution-policy restrictions from a failed collector and provide an actionable message recommending authorized inspection of effective policies and an organization-approved signing/deployment approach. No execution-policy bypass, settings changes or silent account fallback were introduced.
+- **Pending:** Resolve authorization through workplace policy, then repeat GUI and Classic positive-path/HTML tests and security regressions. No Windows success is claimed for this new scenario.
