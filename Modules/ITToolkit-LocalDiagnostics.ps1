@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup','BitLocker')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup','BitLocker','Sessions')]
         [string]$Section
     )
 
@@ -43,6 +43,27 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Sessions' {
+                # Query local interactive/terminal sessions only, under the current
+                # identity. Preserve quser text rather than guessing column breaks.
+                $quserPath = Join-Path $env:SystemRoot 'System32\quser.exe'
+                if (-not (Test-Path -LiteralPath $quserPath -PathType Leaf)) {
+                    throw 'The local quser.exe utility is unavailable.'
+                }
+                $sessionLines = @(& $quserPath 2>&1 | ForEach-Object { [string]$_ })
+                $exitCode = $LASTEXITCODE
+                if ($exitCode -ne 0) {
+                    throw ("Local session query failed (exit code {0}): {1}" -f
+                        $exitCode, ($sessionLines -join ' '))
+                }
+                $content = @($sessionLines | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+                if ($content.Count -gt 0) {
+                    $result.Data = @($content | ForEach-Object {
+                        [pscustomobject]@{ RecordType = 'SessionLine'; Text = $_ }
+                    })
+                }
+                # A successful but empty response remains NoData.
             }
             'BitLocker' {
                 # Read-only BitLocker volume states. Never read, expand, or return
