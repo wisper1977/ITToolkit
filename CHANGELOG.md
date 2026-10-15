@@ -657,3 +657,10 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - GUI local Health report includes formatted analysis, and Dashboard now displays a last-local-health review/available/unavailable summary. Classic local Health reports use the same analysis engine.
 - Coverage in this increment is limited to system-drive capacity, automatic-start services, and last-day System critical/error events. Other collector categories and remote analysis are not yet analyzed. **Windows validation required** for local GUI/Classic presentation, report save/open, missing evidence and regression paths. v1.27 is **not ready for release** until the dashboard work is completed and verified.
 - Separately, technician confirmed the Windows PowerShell (Administrator) launcher works as intended in Windows; no claim of exhaustive cancellation/favorite tests.
+
+### v1.27 — Dashboard health category presentation and local-mode text (Windows validation pending)
+
+- Replaced the single-line-only health presentation with Dashboard counters for review, available and unavailable local Health checks, plus evidence-specific Storage, Services and Events category details from the completed report.
+- Labeled System, Security and Updates explicitly **Not assessed** pending expanded evidence collection; avoids presenting uncollected evidence as passing. Health detail counters and category findings clear on target change.
+- Updated the stale local-mode detail in GUI and Classic: all 20 direct-local diagnostics and local snapshots are implemented; selected privileged checks may require explicit UAC.
+- Reused the shared Health report in both interfaces without changing remote diagnostic collection. **New GUI layout and displayed category extraction await Windows verification.**
