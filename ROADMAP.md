@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks, Events, Startup and Sessions validated locally; BitLocker permission path verified; Policy newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks, Events, Startup and Sessions validated locally; BitLocker permission path verified; Policy permission path verified; SharePermissions newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -176,3 +176,7 @@ These have no assigned milestone or implementation commitment:
 **Sessions Windows validation (2026-10-15):** GUI and Classic local session output and HTML save/open confirmed, showing active console session under current identity.
 
 **Local Policy increment (Windows validation pending):** Shared local collector invokes `gpresult.exe /SCOPE COMPUTER /R` and preserves exit-code failure reporting. Both interfaces now route Policy locally and the smoke-test defaults to Policy. No Group Policy refresh or change is performed. Windows collector, UI, saved HTML, restricted/no-RSoP and remote regression tests remain pending.
+
+**Policy permission-path result (2026-10-15):** ACCESS DENIED returned correctly. Successful policy enumeration remains pending; 16 sections fully validated.
+
+**SharePermissions implementation (Windows validation pending):** Read-only ordinary SMB share access and NTFS root ACL details now collected in GUI and Classic; smoke test defaults to SharePermissions. No ACL changes or effective-access interpretation. Windows GUI/Classic HTML and error-path checks pending.
