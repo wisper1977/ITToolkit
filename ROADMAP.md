@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware and Users validated locally; Groups newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users and Groups validated locally; Administrators newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -136,3 +136,7 @@ These have no assigned milestone or implementation commitment:
 **Local Users Windows validation (2026-10-15):** Both interfaces ran successfully and HTML reports saved and reopened. Additional format and regression tests remain outstanding.
 
 **Local Groups increment (Windows validation pending):** Added shared direct-local group inventory via `Win32_Group`, returning domain, name, SID and description. Both interfaces now support Groups locally, and the one-command test defaults to Groups. Membership, GUI/Classic Windows testing, report formats and negative-path checks remain outstanding.
+
+**Groups verified (2026-10-15):** Local GUI and Classic reports succeeded, and HTML report save/open succeeded.
+
+**Local Administrators next increment:** Shared direct member inventory of built-in Administrators is implemented for GUI and Classic; nested domain groups are not expanded. Test script defaults to Administrators. Windows validation pending.
