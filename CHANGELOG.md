@@ -582,3 +582,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Added a far-left **Copy Report** button on the Diagnostics report action row, visually separated from the right-side save format and **Save Report** controls.
 - Copies the currently displayed diagnostic output into the Windows clipboard without recollection or a file write. The button is enabled only after a valid report completes and disabled when report state is invalidated; copying checks current target, mode, identity and exact displayed text before proceeding. Clipboard failure is reported without disrupting save functionality.
 - Windows GUI positioning, non-elevated and UAC report copying, clipboard/paste, stale-report handling and Save Report regressions remain to be tested. No change to Classic or collection logic.
+
+### v1.27 — Workplace targeted-UAC failure reporting (2026-10-15)
+
+- Technician observed correct non-elevated `ACCESS DENIED` for local BitLocker and Policy on workplace computer `IT-7PY1M84`. Both explicit GUI UAC attempts instead failed without a returned result. This is a **regression/compatibility issue under investigation**, not a successful privileged report test.
+- Updated shared UAC helper to report cancelled consent separately, explain process launch exceptions, and include the child exit code when no accessible result exists. It explicitly identifies different-account UAC and endpoint controls as possibilities, not confirmed causes.
+- Copy Report was used to share the displayed failure; the workplace test did not establish elevated HTML save/reopen or successful UAC. No workaround to administrative identity protections or endpoint security controls was added. Retesting on authorized Windows environment required.
