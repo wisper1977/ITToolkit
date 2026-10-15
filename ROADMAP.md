@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks and Events validated locally; Startup newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks, Events and Startup validated locally; BitLocker newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -164,3 +164,7 @@ These have no assigned milestone or implementation commitment:
 **Events Windows confirmation (2026-10-15):** Both interfaces and HTML report save/open passed. System log found 13 errors; Application had no matching errors within the bounded window. DCOM and Windows Update installation findings reserved for evidence-based review.
 
 **Local Startup implementation (Windows validation pending):** Shared read-only `Win32_StartupCommand` collector and GUI/Classic local routing now support Startup; single-command test defaults to Startup. Windows and report regression testing still needed.
+
+**Local Startup confirmed (2026-10-15):** GUI and Classic completed, with successful HTML save/open.
+
+**Local BitLocker next (Windows validation pending):** Shared collector now reports read-only volume protection and encryption state in both interfaces, without retrieving key material; the single-command test defaults to BitLocker. Windows and saved-report tests remain pending.
