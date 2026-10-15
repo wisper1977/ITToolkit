@@ -26,7 +26,7 @@ This document describes proposed work, design requirements, dependencies, and de
 
 ## v1.27C — Local Computer Diagnostics
 
-**Implementation progress:** Initial shared direct-local System and Firewall collector added in `Modules/ITToolkit-LocalDiagnostics.ps1` (current-user only; Windows validation pending). Still outstanding: GUI/Classic selection and dispatch, remaining collectors, secure alternate-admin process, reports/snapshots, and full regression testing.
+**Implementation progress:** Initial shared direct-local System and Firewall collector added in `Modules/ITToolkit-LocalDiagnostics.ps1` (current-user only; Windows System and Firewall success paths validated on Windows 11 Pro with WinRM stopped). Still outstanding: GUI/Classic selection and dispatch, remaining collectors, secure alternate-admin process, reports/snapshots, and full regression testing.
 
 
 **Goal:** Diagnose the machine running IT Toolkit without requiring its remote WinRM or `ADMIN$` endpoints. Use a **shared implementation** in GUI and Classic.
