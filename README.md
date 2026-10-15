@@ -109,6 +109,8 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 
 **Report Archive folder launch compatibility:** The Reports → Open Reports Folder action now invokes `explorer.exe` with the explicitly tested `/n` new-window argument. The technician confirmed this command opens `C:\GitHub\ITToolkit\Reports` from the administrative PowerShell session; the revised GUI button still requires Windows verification. Copy Folder Path remains available.
 
+**Reports folder launch — latest v1.27 development fix (GUI retest pending):** Because direct Explorer launches from the GUI returned without displaying a window in the tested separate-admin environment, the Report Archive folder button now starts a separate same-identity PowerShell child to request Explorer's `/n` new window. This was based on a technician-confirmed working nested PowerShell test. No execution policy or identity is changed; GUI validation is still required and Copy Folder Path remains usable.
+
 ## Version history
 
 ### v1.27 (in development)
