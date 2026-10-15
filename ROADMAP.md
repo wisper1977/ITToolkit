@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software and Updates validated locally; Tasks newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates and Tasks validated locally; Events newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -156,3 +156,7 @@ These have no assigned milestone or implementation commitment:
 **Local Updates validated (2026-10-15):** Windows GUI and Classic checks and HTML report save/open passed. Six installed hotfix records returned; no compliance or missing-update claim.
 
 **Local Tasks increment (Windows validation pending):** Shared read-only Scheduled Task inventory and individual task-info collection wired into both interfaces; smoke test defaults to Tasks. Windows output, runtime, HTML, permissions and regression checks remain outstanding.
+
+**Local Tasks Windows validation (2026-10-15):** GUI and Classic checks plus HTML report saving/opening passed. Placeholder dates and nonzero scheduler result codes remain raw evidence without automatic health interpretation.
+
+**Local Events implementation (Windows verification pending):** Shared collector now queries last-seven-day System and Application errors, maximum 25 each, and reports per-log status. Both interfaces support Events locally; test harness defaults to Events. Windows report, partial/error behavior, HTML saving, and remote regression remain pending.
