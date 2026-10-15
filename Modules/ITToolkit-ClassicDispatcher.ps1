@@ -85,5 +85,5 @@ function Get-ClassicAlternateReportSection {
     param([Parameter(Mandatory=$true)][string]$Section)
     $null = Test-ClassicAlternateReportContext
     $result = Invoke-ToolkitDiagnostic -Context $script:ToolkitAuthContext -Section $Section
-    return [pscustomobject]@{Section=$Section;Status=[string]$result.Status;Content=(Convert-ClassicDispatcherResult $result)}
+    return [pscustomobject]@{Section=$Section;Status=[string]$result.Status;StatusCategory=[string]$result.StatusCategory;Content=(Convert-ClassicDispatcherResult $result)}
 }
