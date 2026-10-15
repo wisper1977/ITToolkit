@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks, Events, Startup and Sessions validated locally; BitLocker permission path verified; Policy permission path verified; SharePermissions and Health validated; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks, Events, Startup and Sessions validated locally; BitLocker and Policy elevated collector SUCCESS verified, GUI/Classic HTML pending; SharePermissions and Health validated; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -188,3 +188,5 @@ These have no assigned milestone or implementation commitment:
 **Local Health Windows test (2026-10-15):** GUI and Classic collection and HTML save/reopen passed. C: 31.4% free (145.72 GB), 324 services queried with 6 automatic not running, and 8 recent System errors/critical events (24 hours). Evidence only, not a health assessment.
 
 **v1.27C validation:** 18 of 20 local diagnostic sections confirmed with successful Windows data collection. BitLocker and Policy remain positive-path unverified; their ACCESS DENIED reporting has been tested. CSV/TXT and remote regression tests remain open. v1.27D health analysis is planned.
+
+**Elevated Windows collector results (2026-10-15):** BitLocker and Policy now both returned SUCCESS in Windows PowerShell 5.1 under the same authorized identity with elevation. BitLocker detected two unencrypted/unprotected volumes (C:, E:); Policy returned 37 RSoP lines for a standalone local computer. Their prior ACCESS DENIED behavior was due to a non-elevated token. **All 20 local collectors have successful Windows command-line data collection, while GUI/Classic HTML positive-path validation for BitLocker and Policy is still pending.** Keep v1.27C in progress until full cross-interface checks and appropriate regression validation; do not start treating a collector SUCCESS as a health grade.
