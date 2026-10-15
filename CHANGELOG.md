@@ -684,3 +684,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Screenshot regression: with compact GUI height, scrolling the combined left sidebar could hide all navigation buttons while health details were partly clipped.
 - Restructured sidebar into fixed navigation and target rows, a dedicated scrollable Computer Health evidence row, and a fixed Switch to Classic footer. Existing Health elements and collection logic were preserved.
 - **Still requires workplace Windows layout verification** at compact and normal window sizes; no release status change.
+
+### v1.27 — Compact sidebar verified; unnecessary scroll reset reverted (2026-10-15)
+
+- Technician clarified that the scrolled position in the screenshot was intentional and demonstrated successful independent scrolling, not a bug.
+- Reverted the subsequently introduced, unrequested auto-scroll-to-top behavior. Fixed navigation, selected target, independently scrollable health pane, and Switch to Classic remain intact.
+- Compact layout is technician-validated at the pictured reduced window size; other resize and edge cases remain subject to regression testing.
