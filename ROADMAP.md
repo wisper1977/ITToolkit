@@ -25,6 +25,10 @@ This roadmap tracks **current capabilities, remaining validation, and planned wo
 - **Direct-local diagnostics in both interfaces:** Explicit **Use Local Computer** mode uses local PowerShell, CIM/WMI, registry and Windows utilities without requiring local WinRM or `ADMIN$`. All **20 report sections** now have read-only local collectors through the shared implementation: **Health, System, Hardware, Network, Storage, Services, Events, Policy, Users, Groups, Shares, Software, Updates, Tasks, Administrators, Sessions, SharePermissions, Firewall, BitLocker, and Startup.** Unsupported or inaccessible evidence is reported honestly rather than interpreted as healthy.
 - **Scoped privileged local collection:** BitLocker and Policy can request explicit Windows UAC approval for the selected local diagnostic without elevating the entire GUI or Classic application. The handoff runs only the read-only check, restricts and cleans up temporary output, and rejects results obtained under a different Windows identity. The standard non-elevated workflow remains unchanged. No alternate-account substitution, stored passwords or BitLocker recovery secrets are intended.
 
+### Pending report-opening compatibility validation
+
+- Verify GUI recent-report and Reports archive Open Report actions after the explicit Windows shell `Open` verb change, especially when the GUI is started through the alternate-credentials launcher. Confirm behavior with HTML reports and relevant other saved formats, and regress the normal-account path. The standalone `runas` PowerShell test succeeded, but the updated GUI has not yet been Windows-validated.
+
 ### Windows validation completed
 
 - **GUI/Classic and HTML:** **18 of 20** local sections have successfully collected on Windows in both interfaces, with saved HTML reports reopened. This covers every section **except BitLocker and Policy** for their GUI/Classic elevated positive-path and report-flow tests.
