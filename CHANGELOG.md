@@ -6,6 +6,14 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### v1.27C — Updates validated; local Scheduled Tasks implementation (2026-10-15)
+
+- **Windows technician confirmed:** Local Updates worked in both GUI and Classic, including HTML saving/opening. Six installed QFE records were displayed; one missing installation date/installer was preserved without a fabricated value.
+- Added read-only local Scheduled Tasks inventory using `Get-ScheduledTask` and `Get-ScheduledTaskInfo`: task path/name/state, last/next run, last task result. Each task-info failure is shown explicitly rather than silently claiming complete detail. Task result codes are data, not collector errors.
+- Enabled local Tasks in GUI/Classic, and changed `Test-LocalDiagnostics.ps1` default to Tasks. Remote Tasks behavior unchanged.
+- **Pending Windows tests:** Tasks collector, UI rendering and performance with large inventories, HTML save/open, permission/failure paths, remote regression, and remaining CSV/TXT format checks.
+
+
 ### v1.27C — Software verified; Local Updates increment (2026-10-15)
 
 - **Windows technician confirmed:** Local Software worked in GUI and Classic and HTML saving/opening passed. The collector listed many machine-wide uninstall registry entries, including names, versions and publishers. Some records have blank metadata as supplied by the registry.
