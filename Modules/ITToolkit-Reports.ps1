@@ -426,10 +426,10 @@ function Get-RemoteScheduledTasks([string]$Target) {
 }
 function Get-SectionStatus([string]$Section,[string]$Content) {
     if ([string]::IsNullOrWhiteSpace($Content)) { return 'NO RESULTS' }
-    # The historical failure prefix lists multiple possible outcomes. Do not
-    # interpret its literal "ACCESS DENIED" label as evidence of a denied query.
-    if ($Content -match '(?i)^UNAVAILABLE / ACCESS DENIED / ERROR:') {
-        $actualError = $Content -replace '(?i)^UNAVAILABLE / ACCESS DENIED / ERROR:\s*', ''
+    # Both the new neutral error heading and older report content indicate
+    # collection failure; classify ONLY the actual error message, not the label.
+    if ($Content -match '(?i)^(?:Error details:|UNAVAILABLE / ACCESS DENIED / ERROR:)') {
+        $actualError = $Content -replace '(?i)^(?:Error details:|UNAVAILABLE / ACCESS DENIED / ERROR:)\s*', ''
         if ($actualError -match '(?i)access is denied|access denied|0x80070005|unauthorized') { return 'ACCESS DENIED' }
         return 'UNAVAILABLE'
     }
@@ -665,5 +665,5 @@ function Get-ReportSection([string]$Section,[string]$Target) {
                 return $result
             }
         }
-    } catch { return "UNAVAILABLE / ACCESS DENIED / ERROR: $($_.Exception.Message)" }
+    } catch { return "Error details: $($_.Exception.Message)" }
 }
