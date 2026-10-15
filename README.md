@@ -26,6 +26,15 @@ The **IT Toolkit** is a portable, PowerShell-based utility for IT technicians wh
 
 No agent is installed on remote target computers by the toolkit's launcher.
 
+
+## Screenshots
+
+### Graphical Dashboard
+
+The IT Toolkit provides a graphical dashboard for remote system diagnostics, administrative access checks, reporting, and favorite utilities.
+
+![IT Toolkit Dashboard](Screenshots/Dashboard.png)
+
 ## Installation
 
 1. Download the v1.26 release ZIP and extract its contents into a local folder, such as `C:\ITToolkit`.
