@@ -55,6 +55,8 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 - **Verified local snapshot comparison artifacts:** Two uploaded v1.27 SchemaVersion 1 snapshots of `IT-7PY1M84`, Local mode under the same collection identity, have all seven inventory categories present. Their uploaded HTML comparison lists **9 service-property changes** across Services (including BITS State Running→Stopped and StartMode Auto→Manual) and no differences for Software, Updates, Users, Groups, Administrators or Shares. These observations agree with the supplied snapshot values and validate this local baseline/newer comparison and HTML-output case; they do not establish remote, missing/failed inventory, or archive reload edge cases.
 - No permissions, user identity, Explorer policy, collector, or production changes were made.
 
+- **Reports-folder Explorer launch follow-up (2026-10-15):** The prior direct `explorer.exe` invocation returned successfully in GUI but displayed no folder in the separately authorized admin workflow. Technician tested the identical PowerShell command with Explorer's `/n,"C:\GitHub\ITToolkit\Reports"` argument and confirmed it opened the folder. GUI Report Archive → Open Reports Folder now uses that tested `/n` form, without altering credentials, directory permissions or the Copy Folder Path fallback. **GUI Windows retest still required**; success in standalone PowerShell does not prove the WPF button path works.
+
 ### Remaining release checks and limitations
 
 - Validate unavailable/denied and partial Health paths, negative pending-restart indicators, and alternate remote authentication **provenance** where observable. Check latest saved seven-check output in the relevant HTML/CSV/TXT workflows.
