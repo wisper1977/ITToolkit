@@ -56,6 +56,33 @@ function Get-ToolkitLocalHealthAnalysis {
             }
         }
     }
+    foreach ($extra in @('SystemUptime','FirewallProfiles','InstalledHotfixes')) {
+        $match = @($Result.Data | Where-Object { $_ -and [string]$_.Check -eq $extra } | Select-Object -First 1)
+        if (-not $match.Count -or [string]$match[0].QueryStatus -ne 'Available') {
+            $unavailable++
+            $reason = if ($match.Count -and $match[0].Error) { [string]$match[0].Error } else { 'No verified evidence returned.' }
+            $findings.Add([pscustomobject]@{Check=$extra;Level='Unavailable';Evidence=$reason;NextStep='Review permissions and the corresponding diagnostic collector.'})
+            continue
+        }
+        $record=$match[0]
+        $available++
+        switch ($extra) {
+            'SystemUptime' {
+                $findings.Add([pscustomobject]@{Check=$extra;Level='Observed';Evidence=("{0}; uptime {1} days." -f $record.Caption,$record.UptimeDays);NextStep='Review reboot requirements only alongside actual update or operational evidence.'})
+            }
+            'FirewallProfiles' {
+                if ([int]$record.DisabledCount -gt 0) {
+                    $review++
+                    $findings.Add([pscustomobject]@{Check=$extra;Level='Review';Evidence=("Disabled Windows Firewall profiles: {0}." -f $record.DisabledProfiles);NextStep='Confirm effective policy and intended network security controls before changing settings.'})
+                } else {
+                    $findings.Add([pscustomobject]@{Check=$extra;Level='Observed';Evidence=("{0} queried Windows Firewall profiles are enabled." -f $record.ProfilesQueried);NextStep='Enabled profiles alone do not prove a secure firewall ruleset.'})
+                }
+            }
+            'InstalledHotfixes' {
+                $findings.Add([pscustomobject]@{Check=$extra;Level='Observed';Evidence=("{0} installed QFE entries returned; missing-update status not assessed." -f $record.HotfixCount);NextStep='Use an approved update compliance source to determine missing or overdue updates.'})
+            }
+        }
+    }
     return [pscustomobject]@{
         Target = [string]$Result.Target
         Mode = 'Local'
@@ -145,6 +172,57 @@ function Get-ToolkitRemoteHealthAnalysis {
                 $level = if ($count -gt 0) { 'Review' } else { 'Observed' }
                 if ($level -eq 'Review') { $review++ }
                 $findings.Add([pscustomobject]@{Check=$check.Check;Level=$level;Evidence=("$count remote critical/error System events within 24h (max 100 sampled).");NextStep='Review event sources, IDs and recurrence before assigning severity.'})
+            }
+        }
+    }
+    foreach ($extra in @(
+        @{Check='SystemUptime';Source='System uptime (days)'},
+        @{Check='FirewallProfiles';Source='Disabled firewall profiles'},
+        @{Check='InstalledHotfixes';Source='Installed QFE count'}
+    )) {
+        $match=@($Result.Data | Where-Object { $_ -and [string]$_.Check -eq $extra.Source } | Select-Object -First 1)
+        if (-not $match.Count -or [string]$match[0].Status -ne 'SUCCESS') {
+            $unavailable++
+            $reason=if ($match.Count) {[string]$match[0].Value} else {'No verified remote evidence returned.'}
+            $findings.Add([pscustomobject]@{Check=$extra.Check;Level='Unavailable';Evidence=$reason;NextStep='Inspect remote WinRM access and collector permissions.'})
+            continue
+        }
+        $value=[string]$match[0].Value
+        switch ($extra.Check) {
+            'SystemUptime' {
+                $days=0.0
+                if (-not [double]::TryParse($value,[Globalization.NumberStyles]::Float,[Globalization.CultureInfo]::InvariantCulture,[ref]$days) -or $days -lt 0) {
+                    $unavailable++
+                    $findings.Add([pscustomobject]@{Check=$extra.Check;Level='Unavailable';Evidence='Uptime value could not be validated.';NextStep='Inspect remote operating system evidence.'})
+                    continue
+                }
+                $available++
+                $findings.Add([pscustomobject]@{Check=$extra.Check;Level='Observed';Evidence=("Remote uptime: {0} days." -f $days);NextStep='Evaluate reboot needs alongside patch and operational policies.'})
+            }
+            'FirewallProfiles' {
+                if (-not $match[0].PSObject.Properties['DisabledCount'] -or
+                    -not $match[0].PSObject.Properties['ProfilesQueried']) {
+                    $unavailable++
+                    $findings.Add([pscustomobject]@{Check=$extra.Check;Level='Unavailable';Evidence='Firewall profile counts are missing.';NextStep='Inspect remote firewall profile data.'})
+                    continue
+                }
+                $available++
+                if ([int]$match[0].DisabledCount -gt 0) {
+                    $review++
+                    $findings.Add([pscustomobject]@{Check=$extra.Check;Level='Review';Evidence=("Disabled Windows Firewall profiles: {0}." -f $value);NextStep='Confirm effective policy and approved security configuration.'})
+                } else {
+                    $findings.Add([pscustomobject]@{Check=$extra.Check;Level='Observed';Evidence=("{0} queried remote firewall profiles enabled." -f $match[0].ProfilesQueried);NextStep='Firewall profile state does not establish security compliance.'})
+                }
+            }
+            'InstalledHotfixes' {
+                $count=0
+                if (-not [int]::TryParse($value,[ref]$count) -or $count -lt 0) {
+                    $unavailable++
+                    $findings.Add([pscustomobject]@{Check=$extra.Check;Level='Unavailable';Evidence='Installed QFE count is invalid.';NextStep='Inspect remote hotfix query.'})
+                    continue
+                }
+                $available++
+                $findings.Add([pscustomobject]@{Check=$extra.Check;Level='Observed';Evidence=("$count installed QFE entries returned; missing updates not assessed.");NextStep='Use an approved patch compliance source for missing updates.'})
             }
         }
     }
