@@ -114,3 +114,5 @@ These have no assigned milestone or implementation commitment:
 **GUI Local Services verification (2026-10-14):** GUI Local Services output matched independent collector results: `SUCCESS` / `Success`, 324 queried and seven automatic-start services not running, with the individual service records displayed. GUI Services save/reopen, Classic Services, negative paths, and remote regression remain pending.
 
 **GUI switch positioning validation (2026-10-14):** Technician confirmed the bottom-aligned Switch to Classic control beneath Target Computer works on Windows. Layout and basic switch behavior passed; unrelated regressions remain outstanding.
+
+**Local Services report-saving confirmation (2026-10-14):** Technician reported that saving a Local Services report works. Specific GUI/Classic and HTML/CSV/TXT combinations were not identified; retain explicit per-format coverage and remote regression as pending.
