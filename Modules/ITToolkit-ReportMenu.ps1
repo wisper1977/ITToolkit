@@ -149,6 +149,11 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
                 }
                 if ($localResult.Error) { $parts.Add("Error details: $($localResult.Error)") }
                 foreach ($record in @($localResult.Data)) { $parts.Add(($record | Format-List * | Out-String -Width 200).TrimEnd()) }
+                if ($section -eq 'Health') {
+                    . (Join-Path $PSScriptRoot 'ITToolkit-HealthAnalysis.ps1')
+                    $parts.Add('')
+                    $parts.Add((Format-ToolkitHealthAnalysis -Analysis (Get-ToolkitLocalHealthAnalysis -Result $localResult)))
+                }
                 $content = $parts -join "`r`n"
             }
         } else {
