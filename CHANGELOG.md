@@ -394,3 +394,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - **Windows validation passed (2026-10-14):** Technician confirmed the relocated bottom-aligned GUI **Switch to Classic** button works as intended after pulling the updated development branch. No new code changes were needed. Remaining diagnostic/report/credential regressions are tracked separately.
 
 - **Local Services saved report (Windows technician confirmation, 2026-10-14):** Saving a Local Services diagnostic report worked. This confirms successful saving on the tested path; the exact interface and coverage of HTML, CSV, and TXT formats were not specified, so individual interface/format validation is not claimed. Remote collection regression testing remains pending.
+
+### v1.27C — Local test harness and Storage collector validation
+
+- Added `Test-LocalDiagnostics.ps1` at the repository root: reloads the checked-out collector on each run to avoid stale functions, validates the selected section, clears stale-output ambiguity using a fresh scoped result, prints status and records, and returns a nonzero process exit code on collection failure. Defaults to Storage and supports `-Section` for other implemented sections. Does not modify host state or write reports.
+- **Windows collector test passed (technician-confirmed):** Direct local Storage returned `SUCCESS` / `Success` with no errors on `DESKTOP-8EHGAPD`; fixed volumes C: and E: were enumerated with capacity, free GB, and free percent.
+- **Still pending:** Windows testing of the new test harness, Storage GUI and Classic integration, report saving and remote regression. A `SUCCESS` query does not establish healthy storage.
