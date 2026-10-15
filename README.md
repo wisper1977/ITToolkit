@@ -114,7 +114,13 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 - Improved footer handling of technician and computer names when space is limited.
 - Updated `Toolkit-config.json` to version `1.27` on the development branch.
 
-**Planned next:** v1.27B shared diagnostic result handling; subsequent diagnostic health analysis, network diagnostics, snapshot enhancements, and report improvements are proposals and are **not yet implemented**.
+**v1.27B — Shared diagnostic status handling (first increment; Windows testing pending)**
+
+- A shared diagnostic classification now distinguishes `Success`, `NoData`, `Review`, `Partial`, `Unavailable`, `AccessDenied`, `NotTested`, and `Unknown` without replacing the collectors' original status or error detail.
+- The shared dispatcher adds a `StatusCategory` field to its results; the Classic alternate-credential formatter and GUI default/alternate diagnostic reports can display the category.
+- Existing diagnostic collection methods, authentication selection, and saved report formats remain in place. **The change needs Windows regression testing before v1.27B can be considered complete.**
+
+**Planned next:** Continue v1.27B with cross-interface verification and error/status consistency. Health analysis, network diagnostics, snapshot enhancements, and report improvements remain proposals, **not yet implemented**.
 
 ### v1.26
 
