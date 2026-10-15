@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup','BitLocker','Sessions','Policy','SharePermissions')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup','BitLocker','Sessions','Policy','SharePermissions','Health')]
         [string]$Section
     )
 
@@ -42,6 +42,100 @@ function Get-ToolkitLocalDiagnostic {
                         LastBootUpTime = $os.LastBootUpTime
                         OSArchitecture = [string]$os.OSArchitecture
                     })
+                }
+            }
+            'Health' {
+                # Evidence-only local summary, not a system health grade.
+                # Remote ping/ADMIN$ checks are intentionally inapplicable locally.
+                $records = New-Object System.Collections.Generic.List[object]
+                $failures = New-Object System.Collections.Generic.List[string]
+                try {
+                    $systemDrive = [string]$env:SystemDrive
+                    $drive = Get-CimInstance -ClassName Win32_LogicalDisk -Filter (
+                        "DeviceID='" + $systemDrive + "'") -ErrorAction Stop
+                    if ($null -eq $drive -or [double]$drive.Size -le 0) {
+                        throw 'System volume size is unavailable.'
+                    }
+                    $records.Add([pscustomobject]@{
+                        Check = 'SystemDrive'
+                        QueryStatus = 'Available'
+                        Drive = $systemDrive
+                        FreePercent = [math]::Round(
+                            100 * [double]$drive.FreeSpace / [double]$drive.Size, 1)
+                        FreeGB = [math]::Round([double]$drive.FreeSpace / 1GB, 2)
+                        Note = 'Observed capacity only; no health rating assigned.'
+                    })
+                } catch {
+                    $failures.Add('SystemDrive')
+                    $records.Add([pscustomobject]@{
+                        Check = 'SystemDrive'
+                        QueryStatus = 'Unavailable'
+                        Error = [string]$_.Exception.Message
+                    })
+                }
+                try {
+                    $services = @(Get-CimInstance -ClassName Win32_Service -ErrorAction Stop)
+                    if ($services.Count -eq 0) {
+                        throw 'Service query returned no records.'
+                    }
+                    $notRunning = @($services | Where-Object {
+                        $_.StartMode -eq 'Auto' -and $_.State -ne 'Running'
+                    })
+                    $records.Add([pscustomobject]@{
+                        Check = 'AutomaticServices'
+                        QueryStatus = 'Available'
+                        ServicesQueried = $services.Count
+                        AutomaticNotRunning = $notRunning.Count
+                        Note = 'Trigger-start or intentionally stopped services need individual review.'
+                    })
+                } catch {
+                    $failures.Add('AutomaticServices')
+                    $records.Add([pscustomobject]@{
+                        Check = 'AutomaticServices'
+                        QueryStatus = 'Unavailable'
+                        Error = [string]$_.Exception.Message
+                    })
+                }
+                try {
+                    $events = @(Get-WinEvent -FilterHashtable @{
+                        LogName = 'System'
+                        Level = @(1,2)
+                        StartTime = (Get-Date).AddDays(-1)
+                    } -MaxEvents 100 -ErrorAction Stop)
+                    $records.Add([pscustomobject]@{
+                        Check = 'RecentSystemEvents'
+                        QueryStatus = 'Available'
+                        CriticalOrErrorCount = $events.Count
+                        WindowHours = 24
+                        MaxEvents = 100
+                        Note = 'Bounded count, not a complete error history.'
+                    })
+                } catch {
+                    $message = [string]$_.Exception.Message
+                    if ($_.FullyQualifiedErrorId -match 'NoMatchingEventsFound' -or
+                        $message -match '(?i)^No events were found') {
+                        $records.Add([pscustomobject]@{
+                            Check = 'RecentSystemEvents'
+                            QueryStatus = 'NoData'
+                            CriticalOrErrorCount = 0
+                            WindowHours = 24
+                            MaxEvents = 100
+                            Note = 'No matching events found; this does not establish health.'
+                        })
+                    } else {
+                        $failures.Add('RecentSystemEvents')
+                        $records.Add([pscustomobject]@{
+                            Check = 'RecentSystemEvents'
+                            QueryStatus = 'Unavailable'
+                            Error = $message
+                        })
+                    }
+                }
+                $result.Data = @($records.ToArray())
+                if ($failures.Count -gt 0) {
+                    $result.Status = 'PARTIAL'
+                    $result.StatusCategory = 'Partial'
+                    $result.Error = 'Unavailable checks: ' + ($failures -join ', ')
                 }
             }
             'SharePermissions' {
