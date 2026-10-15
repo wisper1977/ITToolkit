@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators')]
         [string]$Section
     )
 
@@ -43,6 +43,30 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Administrators' {
+                # SID identifies the built-in group independently of OS display language.
+                # Direct members only: domain group nesting is deliberately not expanded.
+                $adminSid = New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544')
+                $members = @(Get-LocalGroupMember -SID $adminSid -ErrorAction Stop)
+                $records = New-Object System.Collections.Generic.List[object]
+                $records.Add([pscustomobject]@{
+                    RecordType = 'Summary'
+                    GroupSID = 'S-1-5-32-544'
+                    DirectMemberCount = $members.Count
+                    Note = 'Direct members only; nested domain group membership is not expanded.'
+                })
+                foreach ($member in @($members | Sort-Object Name)) {
+                    $records.Add([pscustomobject]@{
+                        RecordType = 'Member'
+                        Name = [string]$member.Name
+                        ObjectClass = [string]$member.ObjectClass
+                        PrincipalSource = [string]$member.PrincipalSource
+                        SID = if ($null -ne $member.SID) { [string]$member.SID.Value } else { '' }
+                    })
+                }
+                $result.Data = @($records.ToArray())
+                # An empty membership list still yields SUCCESS if the group was queried.
             }
             'Groups' {
                 # Read-only local SAM group inventory. Membership enumeration is a
