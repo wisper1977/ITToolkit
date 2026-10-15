@@ -56,6 +56,14 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Regression-test this increment with a nonexistent target (expected `UNAVAILABLE`) and, later, a real explicit permission rejection (expected `ACCESS DENIED`). Other collector-reported statuses remain unchanged.
 - Confirm report saving, snapshots, and existing diagnostics remain operational; **v1.27B is not yet marked complete**.
 
+### v1.27C — Classic Services and interface switching (implementation; Windows switch validation pending)
+
+- **Windows tester confirmed:** Classic Local Services executed successfully and produced expected output; report saving and remote regression were not separately verified in this test.
+- Grouped Classic main-menu choices sequentially: categories 1–6, target actions 7–10, settings 11–13, interface switching 14. Local Computer moved from 13 to 10; Settings, Tools, and Target Credentials moved to 11, 12, and 13 respectively. Updated stale local-services descriptions.
+- Added Classic `14 Switch to GUI` and a GUI sidebar `Switch to Classic` button. Each starts the other entry point with the **current Windows identity** via a new Windows PowerShell process. No credential, target, or session-state handoff; switch only closes the source interface after successful process startup.
+- GUI switching is blocked while diagnostic/snapshot collection is active. Failed launches leave the source interface available. Explicitly chosen alternate target credentials are not reused or silently substituted.
+- **Windows validation pending:** both switch directions, menu numbering, authentication boundaries, report save/reopen, and regression tests. The new switching feature must not be treated as complete until tested.
+
 ### v1.27C — Local Services collector Windows verification
 
 - **Confirmed collector success on Windows workstation `DESKTOP-8EHGAPD`:** Explicitly reloaded the current `Modules/ITToolkit-LocalDiagnostics.ps1` function; `Get-ToolkitLocalDiagnostic -Section Services` returned `SUCCESS` / `Success` with no error, 324 service records queried, and seven automatic-start services currently not running.
