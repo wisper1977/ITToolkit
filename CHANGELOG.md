@@ -565,3 +565,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - **Windows technician confirmation:** Normal GUI's explicit UAC BitLocker action returned SUCCESS with C: and E: volume records under the original Windows identity, establishing successful elevated data return to the GUI without elevating the parent process.
 - **Security compatibility observation:** Avast repeatedly attempted to block this UAC handoff; collection nevertheless succeeded. The precise alert/detection has not yet been supplied or assessed. No security exclusions or bypasses are recommended or implemented.
 - **Still pending:** GUI Policy UAC, Classic BitLocker/Policy retry, HTML save/reopen for newly elevated results, UAC declined/different-account scenarios, antivirus review, and regression validation. v1.27C is not complete.
+
+### v1.27 — GUI Copy Report action (Windows validation pending)
+
+- Added a far-left **Copy Report** button on the Diagnostics report action row, visually separated from the right-side save format and **Save Report** controls.
+- Copies the currently displayed diagnostic output into the Windows clipboard without recollection or a file write. The button is enabled only after a valid report completes and disabled when report state is invalidated; copying checks current target, mode, identity and exact displayed text before proceeding. Clipboard failure is reported without disrupting save functionality.
+- Windows GUI positioning, non-elevated and UAC report copying, clipboard/paste, stale-report handling and Save Report regressions remain to be tested. No change to Classic or collection logic.
