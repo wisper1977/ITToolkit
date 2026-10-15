@@ -273,8 +273,8 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
       </Border>
       <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="19" CornerRadius="5" Margin="0,0,0,15">
        <StackPanel>
-        <TextBlock Text="LAST LOCAL HEALTH ANALYSIS" FontWeight="SemiBold" Foreground="#17365D" Margin="0,0,0,8"/>
-        <TextBlock Name="DashboardHealthSummary" Text="Run the local Quick health check to populate an evidence-based summary." TextWrapping="Wrap" Foreground="#53677E" Margin="0,0,0,12"/>
+        <TextBlock Text="LAST COMPUTER HEALTH ANALYSIS" FontWeight="SemiBold" Foreground="#17365D" Margin="0,0,0,8"/>
+        <TextBlock Name="DashboardHealthSummary" Text="Run Health Check for the selected local or remote computer to populate evidence." TextWrapping="Wrap" Foreground="#53677E" Margin="0,0,0,12"/>
         <UniformGrid Columns="3" Margin="0,0,0,8">
          <Border Background="#FFF2DD" CornerRadius="5" Padding="12,8" Margin="0,0,8,0"><StackPanel><TextBlock Text="REVIEW FINDINGS" FontSize="10" FontWeight="SemiBold" Foreground="#785018"/><TextBlock Name="HealthReviewCount" Text="—" FontSize="23" FontWeight="SemiBold" Foreground="#785018"/></StackPanel></Border>
          <Border Background="#EDF4FD" CornerRadius="5" Padding="12,8" Margin="0,0,8,0"><StackPanel><TextBlock Text="AVAILABLE CHECKS" FontSize="10" FontWeight="SemiBold" Foreground="#274C79"/><TextBlock Name="HealthAvailableCount" Text="—" FontSize="23" FontWeight="SemiBold" Foreground="#274C79"/></StackPanel></Border>
@@ -530,7 +530,7 @@ function Update-TargetInfo {
     $ui.TargetLastDiagnostic.Text = [string]$script:LastDiagnosticSummary
 }
 function Clear-DashboardHealthDetails {
-    $ui.DashboardHealthSummary.Text = 'Run the local Quick health check to populate an evidence-based summary.'
+    $ui.DashboardHealthSummary.Text = 'Run Health Check for the selected local or remote computer to populate evidence.'
     foreach ($name in @('HealthReviewCount','HealthAvailableCount','HealthUnavailableCount')) { $ui[$name].Text = '—' }
     $ui.HealthStorageDetail.Text = 'Storage: Not assessed'
     $ui.HealthServicesDetail.Text = 'Services: Not assessed'
@@ -538,8 +538,12 @@ function Clear-DashboardHealthDetails {
 }
 function Update-TargetView {
     # Do not display another target's prior health observations as current.
+    $currentHealthMode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $currentHealthIdentity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
     if ($script:DashboardHealthTarget -and
-        (-not $script:LocalTargetMode -or $script:DashboardHealthTarget -ine $script:TargetComputer)) {
+        ($script:DashboardHealthTarget -ine $script:TargetComputer -or
+         $script:DashboardHealthMode -ne $currentHealthMode -or
+         $script:DashboardHealthIdentity -ine $currentHealthIdentity)) {
         $script:DashboardHealthTarget = $null
         Clear-DashboardHealthDetails
     }
@@ -1229,8 +1233,10 @@ $script:DiagnosticTimer.Add_Tick({
             $completed.Mode -ne $activeMode -or $completed.Identity -ine $activeIdentity) {
             throw 'Target or credentials changed during collection. Results discarded; run diagnostics again.'
         }
-        if ($completed.Mode -eq 'Local' -and 'Health' -in @($completed.Sections)) {
+        if ('Health' -in @($completed.Sections)) {
             $script:DashboardHealthTarget = [string]$completed.Target
+            $script:DashboardHealthMode = [string]$completed.Mode
+            $script:DashboardHealthIdentity = [string]$completed.Identity
             $summary = [regex]::Match($ui.DiagnosticOutput.Text, 'Review: (\d+) \| Available: (\d+) \| Unavailable: (\d+)')
             if ($summary.Success) {
                 $ui.HealthReviewCount.Text = $summary.Groups[1].Value
@@ -1247,8 +1253,8 @@ $script:DiagnosticTimer.Add_Tick({
                         $entry.Title + ': ' + $finding.Groups[1].Value + ' — ' + $finding.Groups[2].Value
                     } else { $entry.Title + ': Not assessed / unavailable' }
                 }
-                $ui.DashboardHealthSummary.Text = ("{0}: {1} review findings, {2} available checks, {3} unavailable checks. Collection initiated by {4}; see Diagnostics for evidence and next steps." -f
-                    $completed.Target,$summary.Groups[1].Value,$summary.Groups[2].Value,$summary.Groups[3].Value,$completed.Identity)
+                $ui.DashboardHealthSummary.Text = ("{0} ({1}): {2} review findings, {3} available checks, {4} unavailable checks. Requested identity: {5}; see Diagnostics for evidence and next steps." -f
+                    $completed.Target,$completed.Mode,$summary.Groups[1].Value,$summary.Groups[2].Value,$summary.Groups[3].Value,$completed.Identity)
             } else {
                 Clear-DashboardHealthDetails
                 $ui.DashboardHealthSummary.Text = 'Health analysis unavailable. See the Diagnostics report for details.'
@@ -1349,6 +1355,13 @@ $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("Target: $target")
 $lines.Add("Collected: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
 $lines.Add('Read-only diagnostics; a successful query does not establish system health.')
+if ('Health' -in $requested) {
+    . (Join-Path $root 'Modules\ITToolkit-Authentication.ps1')
+    . (Join-Path $root 'Modules\ITToolkit-WmiDiagnostics.ps1')
+    . (Join-Path $root 'Modules\ITToolkit-CompositeDiagnostics.ps1')
+    . (Join-Path $root 'Modules\ITToolkit-HealthAnalysis.ps1')
+    $healthContext = New-ToolkitAuthContext -ComputerName $target -Mode Default
+}
 foreach ($section in $requested) {
     $lines.Add('')
     $lines.Add(('=' * 65))
@@ -1360,6 +1373,12 @@ foreach ($section in $requested) {
         $lines.Add("STATUS: $status")
         $lines.Add("Status category: $(Get-ToolkitDiagnosticStatusCategory -Status $status)")
         $lines.Add($content)
+        if ($section -eq 'Health') {
+            $remoteHealth = Get-ToolkitCompositeDiagnostic -Context $healthContext -Section Health
+            $lines.Add('')
+            $lines.Add('Remote Health evidence collected separately through the selected Default identity over WinRM; unavailable transport is not a passed check.')
+            $lines.Add((Format-ToolkitHealthAnalysis -Analysis (Get-ToolkitRemoteHealthAnalysis -Result $remoteHealth)))
+        }
     } catch {
         $failureMessage = [string]$_.Exception.Message
         $failureStatus = Get-ToolkitDiagnosticExceptionStatus -Message $failureMessage
@@ -1428,7 +1447,7 @@ $script:ToolkitRoot = $root
 foreach ($name in @('ITToolkit-Authentication.ps1','ITToolkit-WmiDiagnostics.ps1',
     'ITToolkit-WinRMDiagnostics.ps1','ITToolkit-MixedDiagnostics.ps1',
     'ITToolkit-CompositeDiagnostics.ps1','ITToolkit-DetailDiagnostics.ps1',
-    'ITToolkit-DiagnosticDispatcher.ps1','ITToolkit-ClassicDispatcher.ps1')) {
+    'ITToolkit-DiagnosticDispatcher.ps1','ITToolkit-ClassicDispatcher.ps1','ITToolkit-HealthAnalysis.ps1')) {
     $path = Join-Path $root ('Modules\' + $name)
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing Phase 5B dependency: $path" }
     . $path
@@ -1446,6 +1465,10 @@ foreach ($section in $requested) {
         $result = Invoke-ToolkitDiagnostic -Context $context -Section $section
         $lines.Add("STATUS: $($result.Status)")
         $lines.Add((Convert-ClassicDispatcherResult -Result $result))
+        if ($section -eq 'Health') {
+            $lines.Add('')
+            $lines.Add((Format-ToolkitHealthAnalysis -Analysis (Get-ToolkitRemoteHealthAnalysis -Result $result)))
+        }
     } catch {
         $failureMessage = [string]$_.Exception.Message
         $failureStatus = Get-ToolkitDiagnosticExceptionStatus -Message $failureMessage
