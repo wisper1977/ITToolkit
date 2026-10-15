@@ -664,7 +664,9 @@ function Invoke-ToolkitElevatedLocalDiagnostic {
         # Restrict temporary results to the invoking identity, administrators and SYSTEM.
         $acl = New-Object System.Security.AccessControl.DirectorySecurity
         $acl.SetAccessRuleProtection($true,$false)
-        foreach ($account in @($caller,'BUILTIN\Administrators','NT AUTHORITY\SYSTEM')) {
+        foreach ($account in @([Security.Principal.WindowsIdentity]::GetCurrent().User,
+            (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544')),
+            (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-18')))) {
             $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
                 $account,'FullControl','ContainerInherit,ObjectInherit','None','Allow')
             $acl.AddAccessRule($rule)
