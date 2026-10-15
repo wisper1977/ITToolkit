@@ -1249,7 +1249,7 @@ foreach ($section in $requested) {
         $failureStatus = Get-ToolkitDiagnosticExceptionStatus -Message $failureMessage
         $lines.Add("STATUS: $failureStatus")
         $lines.Add("Status category: $(Get-ToolkitDiagnosticStatusCategory -Status $failureStatus)")
-        $lines.Add("ERROR: $failureMessage")
+        $lines.Add("Error details: $failureMessage")
     }
 }
 return ($lines -join "`r`n")
@@ -1286,7 +1286,7 @@ foreach ($section in $requested) {
         $failureStatus = Get-ToolkitDiagnosticExceptionStatus -Message $failureMessage
         $lines.Add("STATUS: $failureStatus")
         $lines.Add("Status category: $(Get-ToolkitDiagnosticStatusCategory -Status $failureStatus)")
-        $lines.Add("ERROR: $failureMessage")
+        $lines.Add("Error details: $failureMessage")
     }
 }
 $context = $null
