@@ -56,6 +56,11 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Regression-test this increment with a nonexistent target (expected `UNAVAILABLE`) and, later, a real explicit permission rejection (expected `ACCESS DENIED`). Other collector-reported statuses remain unchanged.
 - Confirm report saving, snapshots, and existing diagnostics remain operational; **v1.27B is not yet marked complete**.
 
+### v1.27C — GUI switch positioning (Windows layout retest pending)
+
+- Moved **Switch to Classic** from the primary navigation group to the bottom of the GUI left sidebar, beneath Target Computer. The sidebar now uses a three-row Grid so the switch stays bottom-aligned when the window is resized.
+- The button uses the existing click handler; interface switching, identity handling, and active-collection safeguards are unchanged. Windows GUI rendering and switch regression tests are pending.
+
 ### v1.27C — Classic Services and interface switching (implementation; Windows switch validation pending)
 
 - **Windows tester confirmed:** Classic Local Services executed successfully and produced expected output; report saving and remote regression were not separately verified in this test.
