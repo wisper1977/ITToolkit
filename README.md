@@ -1,14 +1,17 @@
 # IT Toolkit
 
-**Version 1.26** · Windows PowerShell 5.1 · Windows administration and diagnostics
+**Development version 1.27 (v1.27A completed)** · Windows PowerShell 5.1 · Windows administration and diagnostics
+
+> **Release status:** `develop/v1.27` is the active development branch. **v1.26 on `main` remains the stable production release.** The v1.27 GUI refinements have been tested on Windows; later v1.27 milestones are still planned and are not included yet.
 
 The **IT Toolkit** is a portable, PowerShell-based utility for IT technicians who troubleshoot and document Windows workstations and servers. It provides a graphical interface and a Classic console menu for remote diagnostics, access checks, reporting, and system inventory comparisons.
 
-> **Platform support:** Version 1.26 is designed for **Windows**. Its graphical interface uses Windows Presentation Foundation (WPF), and several collectors use Windows-specific management APIs. **macOS and Linux are not supported by this release.** A cross-platform edition is a potential future project.
+> **Platform support:** The current toolkit is designed for **Windows**. Its graphical interface uses Windows Presentation Foundation (WPF), and several collectors use Windows-specific management APIs. **macOS and Linux are not supported by this release.** A cross-platform edition is a potential future project.
 
 ## Features
 
 - **Two interfaces:** Windows GUI and numbered Classic PowerShell menus.
+- **v1.27A GUI refinements (development branch):** Multiline labels on Tools and Dashboard favorite buttons; improved display of long target names, recent reports, and footer text in narrower windows.
 - **Remote access checks:** DNS resolution, ICMP reachability, WMI, WinRM, and `ADMIN$` accessibility.
 - **Credential selection:** Run supported diagnostics with your current Windows identity or explicitly supplied alternate administrative credentials. Credentials are not intended to be stored in configuration files.
 - **Windows diagnostics:** Collect information across system, storage, services, hardware, local accounts and groups, shares, software, updates, tasks, firewall, events, and related categories. Some checks require particular remote services or privileges.
@@ -37,7 +40,7 @@ The IT Toolkit provides a graphical dashboard for remote system diagnostics, adm
 
 ## Installation
 
-1. Download the v1.26 release ZIP and extract its contents into a local folder, such as `C:\ITToolkit`.
+1. For the stable release, download the **v1.26 release ZIP** from [GitHub Releases](https://github.com/wisper1977/ITToolkit/releases/tag/v1.26). For the in-progress v1.27 build, switch to [`develop/v1.27`](https://github.com/wisper1977/ITToolkit/tree/develop/v1.27) and clone or download that branch. Extract into a local folder, such as `C:\ITToolkit`.
 2. Keep `Modules`, `Branding`, the `.ps1` files, and `Toolkit-config.json` together in their original relative paths.
 3. Review `Toolkit-config.json` and update paths, reporting options, and the default authentication domain for your environment.
 4. On Windows, run **`Launch.cmd`** to open the launcher and choose the GUI or Classic interface.
@@ -101,6 +104,18 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 
 ## Version history
 
+### v1.27 (in development)
+
+**v1.27A — GUI refinement (completed and Windows-tested)**
+
+- Updated the Tools page and Dashboard Favorite Shortcuts to display long tool names on multiple lines with centered labels.
+- Improved layout handling for long target computer names and recent target entries.
+- Adjusted recent report filename display while retaining full paths in tooltips.
+- Improved footer handling of technician and computer names when space is limited.
+- Updated `Toolkit-config.json` to version `1.27` on the development branch.
+
+**Planned next:** v1.27B shared diagnostic result handling; subsequent diagnostic health analysis, network diagnostics, snapshot enhancements, and report improvements are proposals and are **not yet implemented**.
+
 ### v1.26
 
 - Expanded Default and Alternate credential support across diagnostic workflows.
@@ -108,7 +123,7 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 - Improved GUI and Classic reporting and result-status presentation.
 - Added GUI and Classic snapshot creation with structured JSON comparisons.
 
-See the [complete changelog](CHANGELOG.md) for the development history from v1.0 through v1.26.
+See the [complete changelog](CHANGELOG.md) for the documented release history through v1.26. The v1.27 work above is currently documented in this development-branch README.
 ---
 ## License
 
@@ -119,4 +134,4 @@ Copyright (C) 2026 Chris Collins
 
 See the [LICENSE](LICENSE) file for the full license text.
 
-*Developed for IT workflows. This README documents the v1.26 Windows release.*
+*Developed for IT workflows. This development-branch README documents v1.27 work in progress; v1.26 remains the stable Windows release.*
