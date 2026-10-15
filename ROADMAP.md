@@ -40,6 +40,9 @@ Results above describe **tested behavior, not a completed release**. Historical 
 
 ### Remaining v1.27 release checks
 
+
+**Validated October 15, 2026:** Separate-account GUI BitLocker UAC collected actual C: encryption data successfully on workplace computer IT-7PY1M84. It correctly distinguished initiating and elevated identities and did not repeat the previously approved RemoteSigned change. Still pending: saved reports, Classic elevation, cancellation and broader regression tests. Computer-policy retrieval separately returns Access Denied even when gpresult runs in an elevated administrator console.
+
 1. **Finish privileged diagnostic workflows:** Test GUI Policy with UAC; save and reopen elevated BitLocker and Policy HTML reports; test Classic's BitLocker/Policy ACCESS DENIED → explicit UAC retry → result/report flow. Verify cancelled UAC, distinct-account collection provenance, optional RemoteSigned approval/decline, Group Policy protection, and unchanged ordinary non-elevated behavior.
 2. **Review antivirus interoperability:** Avast attempted to block the elevated BitLocker helper although the query succeeded. Capture the exact detection and review the signed/known code path and process launch design before considering changes. Do **not** disable protections or assume the detection is a false positive.
 3. **Verify report/snapshot and status behavior:** Exercise HTML/CSV/TXT formats, local-vs-remote labeling, target/identity change protections, available/no-data/partial/denied results, snapshots and comparisons. Local snapshot handling should remain explicitly unavailable wherever it has not been implemented and verified.
