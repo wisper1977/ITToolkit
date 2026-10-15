@@ -205,7 +205,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
     <StackPanel Margin="26,22,26,22">
      <StackPanel Name="PageDashboard">
       <TextBlock Text="Dashboard" FontSize="24" FontWeight="SemiBold"/>
-      <TextBlock Text="Select a target computer, then open a diagnostic tool or your favorite shortcuts." Margin="0,6,0,17" Foreground="#60738A"/>
+      <TextBlock Text="Select a target computer, then open a diagnostic tool or your favorite shortcuts." TextWrapping="Wrap" Margin="0,6,0,17" Foreground="#60738A"/>
       <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="19" CornerRadius="5" Margin="0,0,0,15">
        <StackPanel><TextBlock Text="TARGET COMPUTER" FontWeight="SemiBold" Foreground="#17365D" Margin="0,0,0,9"/>
         <WrapPanel><TextBox Name="TargetInput" Width="270" Height="34" Padding="9,5" Margin="0,0,9,8" ToolTip="Computer hostname or IPv4 address"/><Button Name="SetTarget" Content="Set target / Check access" Height="34"/><Button Name="ClearTarget" Content="Clear" Height="34"/></WrapPanel>
@@ -220,18 +220,18 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
           <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
           <StackPanel Grid.Column="0">
           <TextBlock Text="SELECTED TARGET" Foreground="#60738A" FontSize="10" FontWeight="SemiBold"/>
-          <TextBlock Name="TargetNameText" Text="Not selected" FontSize="17" FontWeight="Bold" Foreground="#17365D" Margin="0,3,0,11"/>
+          <TextBlock Name="TargetNameText" Text="Not selected" TextWrapping="Wrap" FontSize="17" FontWeight="Bold" Foreground="#17365D" Margin="0,3,0,11"/>
           <WrapPanel Margin="0,0,0,10">
            <StackPanel Margin="0,0,18,6">
             <TextBlock Text="IPv4 ADDRESS" Foreground="#60738A" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,4"/>
             <Border Background="#DDEDFE" BorderBrush="#ADCFEF" BorderThickness="1" CornerRadius="5" Padding="10,5">
-             <TextBlock Name="TargetIpText" Text="(not selected)" FontWeight="SemiBold" Foreground="#194F85"/>
+             <TextBlock Name="TargetIpText" Text="(not selected)" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="#194F85"/>
             </Border>
            </StackPanel>
            <StackPanel Margin="0,0,0,6">
             <TextBlock Text="ADMIN$ STATUS" Foreground="#60738A" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,4"/>
             <Border Name="AdminBadge" Background="#E5EAF0" BorderBrush="#BBC8D5" BorderThickness="1" CornerRadius="5" Padding="10,5">
-             <TextBlock Name="AdminStatusText" Text="Not checked" FontWeight="SemiBold" Foreground="#51667B"/>
+             <TextBlock Name="AdminStatusText" Text="Not checked" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="#51667B"/>
             </Border>
            </StackPanel>
           </WrapPanel>
@@ -413,14 +413,16 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
      <ColumnDefinition Width="2*"/><ColumnDefinition Width="2*"/><ColumnDefinition Width="1.7*"/><ColumnDefinition Width="1.6*"/>
     </Grid.ColumnDefinitions>
     <TextBlock Grid.Column="0" Name="Status" Text="Ready" Foreground="#35516B" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,12,0"/>
-    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+    <Grid Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
+     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
      <TextBlock Text="TECHNICIAN  " FontSize="10" FontWeight="SemiBold" Foreground="#61748B" VerticalAlignment="Center"/>
-     <TextBlock Name="LocalUser" Foreground="#17365D" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-    </StackPanel>
-    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+     <TextBlock Grid.Column="1" Name="LocalUser" Foreground="#17365D" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+    </Grid>
+    <Grid Grid.Column="2" VerticalAlignment="Center" Margin="0,0,12,0">
+     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
      <TextBlock Text="COMPUTER  " FontSize="10" FontWeight="SemiBold" Foreground="#61748B" VerticalAlignment="Center"/>
-     <TextBlock Name="LocalComputer" Foreground="#17365D" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-    </StackPanel>
+     <TextBlock Grid.Column="1" Name="LocalComputer" Foreground="#17365D" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+    </Grid>
     <DockPanel Grid.Column="3" LastChildFill="True" VerticalAlignment="Center">
      <TextBlock Name="FooterRight" DockPanel.Dock="Right" Visibility="Collapsed"/>
      <TextBlock Text="POWERSHELL  " FontSize="10" FontWeight="SemiBold" Foreground="#61748B" DockPanel.Dock="Left"/>
@@ -441,6 +443,8 @@ $ui.Subtitle.Text = "Graphical Interface  |  Toolkit v$version"
 $ui.FooterRight.Text = [Security.Principal.WindowsIdentity]::GetCurrent().Name
 $ui.LocalUser.Text = [Security.Principal.WindowsIdentity]::GetCurrent().Name
 $ui.LocalComputer.Text = $env:COMPUTERNAME
+$ui.LocalUser.ToolTip = $ui.LocalUser.Text
+$ui.LocalComputer.ToolTip = $ui.LocalComputer.Text
 $ui.LocalPSVersion.Text = [string]$PSVersionTable.PSVersion
 $ui.SettingsInfo.Text = "Personal preferences: $prefsPath`nMaximum dashboard favorites: 10`nRecent targets retained: 8"
 
@@ -492,10 +496,12 @@ function Update-TargetView {
     $detailText = [string]$script:AdminDetail
 
     $ui.SideTarget.Text = $label
+    $ui.SideTarget.ToolTip = $label
     $ui.SideIPv4.Text = $ipText
     $ui.SideIPv4.Visibility = if ($script:TargetComputer) { 'Visible' } else { 'Collapsed' }
     $ui.SideAccess.Text = $statusText
     $ui.TargetNameText.Text = $label
+    $ui.TargetNameText.ToolTip = $label
     $ui.TargetIpText.Text = $ipText
     $ui.AdminStatusText.Text = $statusText
     $ui.AdminDetailText.Text = $detailText
@@ -760,9 +766,9 @@ function Refresh-RecentTargets {
         $row = New-Object Windows.Controls.DockPanel
         $row.Margin = '0,0,0,5'
         $button = New-Object Windows.Controls.Button
-        $button.Content = [string]$entry.Name
+        $button.Content = New-GUIToolButtonLabel ([string]$entry.Name) 145
         $button.Tag = [string]$entry.Name
-        $button.Margin = '0,0,8,0'; $button.MinWidth = 140
+        $button.Margin = '0,0,8,0'; $button.MinWidth = 140; $button.MaxWidth = 175; $button.MinHeight = 36
         $rememberedMode = if ($entry.PSObject.Properties['CredentialMode']) { [string]$entry.CredentialMode } else { 'Default' }
         $rememberedUser = if ($entry.PSObject.Properties['CredentialUser']) { [string]$entry.CredentialUser } else { '' }
         $button.Tag = [pscustomobject]@{ Name = [string]$entry.Name; Mode = $rememberedMode; User = $rememberedUser }
@@ -799,7 +805,7 @@ function Refresh-RecentTargets {
         [void]$row.Children.Add($button)
         $ip = New-Object Windows.Controls.TextBlock
         $ip.Text = [string]$entry.IPv4
-        $ip.Foreground = '#60738A'; $ip.VerticalAlignment = 'Center'
+        $ip.Foreground = '#60738A'; $ip.VerticalAlignment = 'Center'; $ip.TextTrimming = [Windows.TextTrimming]::CharacterEllipsis; $ip.ToolTip = $ip.Text
         [void]$row.Children.Add($ip)
         [void]$ui.RecentTargetRows.Children.Add($row)
     }
@@ -821,9 +827,9 @@ function Refresh-RecentReports {
         $row = New-Object Windows.Controls.DockPanel
         $row.Margin = '0,0,0,5'
         $button = New-Object Windows.Controls.Button
-        $button.Content = [string]$file.Name; $button.Tag = [string]$file.FullName
+        $button.Content = New-GUIToolButtonLabel ([string]$file.Name) 165; $button.Tag = [string]$file.FullName
         $button.ToolTip = 'Open saved report: ' + $file.FullName
-        $button.MaxWidth = 290; $button.Margin = '0,0,8,0'
+        $button.MaxWidth = 185; $button.MinHeight = 36; $button.Margin = '0,0,8,0'
         $button.Add_Click({
             try { Start-Process -FilePath ([string]$this.Tag) -ErrorAction Stop | Out-Null }
             catch { [Windows.MessageBox]::Show("Unable to open report: $($_.Exception.Message)", 'Report Archive') | Out-Null }
