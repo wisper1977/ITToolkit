@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks, Events, Startup and Sessions validated locally; BitLocker permission path verified; Policy permission path verified; SharePermissions validated; Health newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares, Software, Updates, Tasks, Events, Startup and Sessions validated locally; BitLocker permission path verified; Policy permission path verified; SharePermissions and Health validated; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -184,3 +184,7 @@ These have no assigned milestone or implementation commitment:
 **SharePermissions Windows validation (2026-10-15):** One ordinary share was successfully inventoried with SMB and NTFS access entries. GUI, Classic and HTML save/open confirmed. This brings fully validated direct-local sections to 17 of 20.
 
 **Local Health evidence collector (Windows validation pending):** Added direct-local, read-only disk, service and recent System event evidence for both interfaces. No health verdict or score is issued; that remains the planned v1.27D work. Test harness defaults to Health. BitLocker and Policy are implemented with confirmed access-denied paths but still require positive-path validation.
+
+**Local Health Windows test (2026-10-15):** GUI and Classic collection and HTML save/reopen passed. C: 31.4% free (145.72 GB), 324 services queried with 6 automatic not running, and 8 recent System errors/critical events (24 hours). Evidence only, not a health assessment.
+
+**v1.27C validation:** 18 of 20 local diagnostic sections confirmed with successful Windows data collection. BitLocker and Policy remain positive-path unverified; their ACCESS DENIED reporting has been tested. CSV/TXT and remote regression tests remain open. v1.27D health analysis is planned.
