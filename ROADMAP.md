@@ -8,7 +8,7 @@ This roadmap tracks **current capabilities, remaining validation, and planned wo
 
 | Milestone | Scope | Status |
 | --- | --- | --- |
-| **v1.27 — Current development build** | GUI usability, Classic/GUI navigation, consistent diagnostic results, direct-local diagnostics, and scoped privileged checks | **Release candidate — technician reports workplace checklist completed; release approval pending** |
+| **v1.27 — Current development build** | GUI usability, Classic/GUI navigation, consistent diagnostic results, direct-local diagnostics, and scoped privileged checks | **In progress — local snapshot workflow implemented, Windows tests pending** |
 | **Future — Evidence-based health analysis** | Interpret confirmed diagnostic evidence without treating unavailable data as healthy | Planned |
 | **Future — Technician-confirmed Quick Fix** | Explicit, authorized repairs with a preview, consent and verification | Planned; version unassigned |
 | **Future — NIST / Best Practices Computer Check** | Read-only, versioned Windows configuration/security posture checks | Planned; version unassigned |
@@ -112,3 +112,7 @@ Unscheduled possibilities include expanded DNS/routing and multi-NIC diagnostics
 **v1.27 workplace UAC blocker (2026-10-15):** Separate administrative UAC sign-in reaches the elevated PowerShell child, but that account's effective script execution policy blocks loading the local diagnostic module. The helper now explicitly reports this security-policy restriction. Supported remediation requires an approved script-signing/deployment or execution-policy configuration decision; no automatic bypass. Workplace GUI/Classic privileged collection remains unvalidated until approved execution and report-save testing pass.
 
 **v1.27 workplace UAC validation (2026-10-15):** Separate-account GUI Policy UAC completed on `IT-7PY1M84`; the elevated admin's `CurrentUser` PowerShell execution policy was explicitly changed from Restricted to RemoteSigned and the shared collector ran. The computer-scope gpresult query itself returned ACCESS DENIED, so positive Policy data collection remains open. Next verify gpresult/RSoP access under authorized admin context; then test workplace BitLocker UAC, GUI HTML reports, Classic parity, cancellation, and remote regressions. The GUI report banner now distinguishes read-only diagnostics from an explicitly approved persistent policy change.
+
+### Reopened v1.27 release gate — local snapshots
+
+The user identified a missing workflow after the previous workplace validation checklist: **local snapshot capture** was blocked in both interfaces. Local seven-category snapshot capture has now been implemented using the existing SchemaVersion 1 comparison inventory with direct-local WMI/registry access. The Classic saved-report snapshot option now uses the same local capture method. **Release-candidate status is withdrawn until Windows testing is complete.** Required tests: GUI local snapshot creation, same-host baseline/current comparison, Classic local snapshot creation and optional saved-report sidecar, archive compatibility, category error handling, target/identity provenance, and remote Default/Alternate snapshot regressions. The known computer Policy gpresult Access Denied remains a separate Windows permission restriction.
