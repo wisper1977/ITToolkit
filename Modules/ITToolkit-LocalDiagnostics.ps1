@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups')]
         [string]$Section
     )
 
@@ -43,6 +43,19 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Groups' {
+                # Read-only local SAM group inventory. Membership enumeration is a
+                # separate follow-up; do not infer membership from group existence.
+                $groups = @(Get-CimInstance -ClassName Win32_Group -Filter 'LocalAccount=True' -ErrorAction Stop)
+                $result.Data = @($groups | Sort-Object Name | ForEach-Object {
+                    [pscustomobject]@{
+                        Domain = [string]$_.Domain
+                        Name = [string]$_.Name
+                        SID = [string]$_.SID
+                        Description = [string]$_.Description
+                    }
+                })
             }
             'Users' {
                 # Read-only local SAM account inventory, matching the remote Users scope.
