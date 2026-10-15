@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators and Shares validated locally; Software newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware, Users, Groups, Administrators, Shares and Software validated locally; Updates newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -148,3 +148,7 @@ These have no assigned milestone or implementation commitment:
 **Local Shares verified (2026-10-15):** GUI and Classic reported standard Windows administrative shares and HTML saved/opened. This confirms collection, not network access or share permissions.
 
 **Local Software increment (Windows validation pending):** Shared local inventory reads machine-wide uninstall entries from both native and 32-bit registry views. GUI and Classic now include Software in explicit local collection; `Test-LocalDiagnostics.ps1` defaults to Software. Installation changes are not performed. Windows collector/UI/HTML and edge-case validation remain pending.
+
+**Software Windows verification (2026-10-15):** GUI and Classic completed successfully; HTML saved and reopened. Application inventory returned machine-wide uninstall registry entries.
+
+**Local Updates increment (Windows validation pending):** Shared read-only installed QFE hotfix inventory enabled in GUI/Classic and test harness defaults to Updates. Does not check missing patches or recent update failure events. Windows and regression testing outstanding.
