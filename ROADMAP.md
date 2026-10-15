@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network and Hardware validated locally; Users newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, Network, Hardware and Users validated locally; Groups newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -132,3 +132,7 @@ These have no assigned milestone or implementation commitment:
 **Hardware Windows validation (2026-10-15):** Hardware ran and HTML reports saved/opened in GUI and Classic; physical-disk coverage remains an item for later inventory comparisons.
 
 **Local Users implementation (Windows validation pending):** Shared local account inventory using `Win32_UserAccount` with a local-account filter is now wired to both interfaces; the single-command smoke test defaults to Users. User collector and report testing still required.
+
+**Local Users Windows validation (2026-10-15):** Both interfaces ran successfully and HTML reports saved and reopened. Additional format and regression tests remain outstanding.
+
+**Local Groups increment (Windows validation pending):** Added shared direct-local group inventory via `Win32_Group`, returning domain, name, SID and description. Both interfaces now support Groups locally, and the one-command test defaults to Groups. Membership, GUI/Classic Windows testing, report formats and negative-path checks remain outstanding.
