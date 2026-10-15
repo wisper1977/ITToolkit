@@ -690,7 +690,7 @@ function Invoke-ToolkitElevatedLocalDiagnostic {
 $ErrorActionPreference = 'Stop'
 try {
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+    $principal = New-Object System.Security.Principal.WindowsPrincipal -ArgumentList $identity
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
         throw 'The Windows UAC process does not have an elevated administrator token.'
     }
