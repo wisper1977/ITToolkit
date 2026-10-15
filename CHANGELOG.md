@@ -79,7 +79,9 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Existing remote target selection remains available. GUI target switches are blocked during diagnostic/snapshot collection; Classic remote tool categories cannot run under explicit local mode.
 - The GUI prevents ADMIN$ checks for local selection, and both modes decline local snapshot capture rather than running remote snapshot collectors.
 - Current-user token only. Secure alternate-administrator local execution, remaining local collectors, and structured local snapshots are not yet implemented.
-- Windows GUI/Classic integration, report saving, and remote regression testing pending; do **not** mark v1.27C complete.
+- Windows validation confirmed GUI local Firewall `SUCCESS` and local Users `NOT TESTED`; the user confirmed Classic local reports save successfully.
+- **GUI report-save regression fix:** The Save Report handler now recognizes `Local` alongside `Default` and `Alternate`, without weakening its target/identity checks. Saved local reports use a `LOCAL DIAGNOSTIC REPORT` heading instead of `REMOTE`.
+- GUI local report-saving retest, additional GUI/Classic scenarios, and remote regression testing are pending; do **not** mark v1.27C complete.
 
 ### Documentation organization
 
