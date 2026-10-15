@@ -1971,7 +1971,7 @@ $ui.ArchiveFolder.Add_Click({
         # no input is interpreted as PowerShell code from the path itself.
         $quotedExplorer = "'" + $explorer.Replace("'", "''") + "'"
         $quotedFolder = "'" + $fullFolder.Replace("'", "''") + "'"
-        $launchScript = "Start-Process -FilePath $quotedExplorer -ArgumentList ('/n,' + [char]34 + $quotedFolder.Trim([char]39) + [char]34) -ErrorAction Stop"
+        $launchScript = "Start-Process -FilePath $quotedExplorer -ArgumentList ('/n,' + [char]34 + $quotedFolder + [char]34) -ErrorAction Stop"
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($launchScript))
         Start-Process -FilePath $powerShell -ArgumentList @('-NoLogo','-NoProfile','-NonInteractive','-EncodedCommand',$encoded) -ErrorAction Stop | Out-Null
         $ui.ArchiveStatus.Text = "Explorer launch requested via separate PowerShell: $fullFolder (if Explorer doesn't appear, use Copy Folder Path)."
