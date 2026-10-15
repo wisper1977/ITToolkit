@@ -177,7 +177,7 @@ See the [LICENSE](LICENSE) file for the full license text.
 
 ### Developer smoke test: local diagnostics
 
-On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **SharePermissions**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
+On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **Health**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
 
 **Local Storage direct collector validation (technician-confirmed, 2026-10-14):** Windows PowerShell returned `SUCCESS`/`Success` with no error and two fixed logical drives (C: and E:), including size, free GB, and percentage. GUI/Classic Storage output and report-save checks remain pending.
 
@@ -240,3 +240,7 @@ On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiag
 **Policy negative-path test (2026-10-15):** Windows returned ACCESS DENIED; error handling is verified, but successful policy collection remains pending.
 
 **Local Share Permissions (Windows verification pending):** Read-only collection for ordinary local SMB shares now includes share ACLs and NTFS root ACL entries. Special/admin shares excluded, no ACL mutation or effective-access claim. A zero-share summary is valid; individual read errors are reported as PARTIAL. Both interfaces are enabled and the test harness defaults to SharePermissions.
+
+**Local SharePermissions Windows validation (2026-10-15):** Technician confirmed GUI and Classic collection with HTML save/open. One ordinary `Screenshots` share was inventoried; share ACLs and root NTFS ACLs were both reported. `Everyone` had Full share permission but ReadAndExecute on the NTFS root, illustrating why those permission layers must remain distinct. No effective access assertion was made.
+
+**v1.27C Local Health evidence summary (Windows validation pending):** Local GUI and Classic now use a read-only collector covering system-drive free space, automatic-start services currently stopped, and up to 100 System critical/error events from the past 24 hours. Per-check query failures are marked `PARTIAL`; zero matching event records are distinguished from inaccessible logs. No remote ping/ADMIN$ checks are attempted locally. This is an evidence inventory, not the v1.27D evidence-based health analysis. The reusable test script defaults to Health. BitLocker and Policy positive-path validation remain outstanding.
