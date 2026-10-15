@@ -47,7 +47,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Added explicit `Status category: Unavailable` lines to both GUI diagnostic worker exception paths while keeping existing exception detail text unchanged.
 - **Third increment:** Replaced the GUI workers' blanket `UNAVAILABLE` exception label with shared classification that reports `ACCESS DENIED` only for explicit authorization-related errors, while retaining `UNAVAILABLE` for other failures. The shared dispatcher uses the same classification in its exception path, and detailed error messages remain visible.
 - **Regression fix:** Corrected `Get-SectionStatus` (Classic/GUI Default report status parsing) so the historic generic error prefix does not itself trigger `ACCESS DENIED`. The actual error details are evaluated instead; `The RPC server is unavailable` should yield `UNAVAILABLE`.
-- Windows retest pending for this correction; issue reproduced from user-provided output.
+- **Windows retest passed (GUI Default mode):** An RPC-unavailable System diagnostic reported `STATUS: UNAVAILABLE` and `Status category: Unavailable`, preserving `The RPC server is unavailable.` as the underlying error. This validates the specific misclassification fix; alternate credentials and genuine access-denied responses remain untested.
 
 #### Validation pending
 - GUI Default mode and status display received initial Windows confirmation; GUI Alternate and Classic alternate credentials remain untested pending access to an authorized remote target.
