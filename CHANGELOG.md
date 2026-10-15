@@ -56,13 +56,14 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Regression-test this increment with a nonexistent target (expected `UNAVAILABLE`) and, later, a real explicit permission rejection (expected `ACCESS DENIED`). Other collector-reported statuses remain unchanged.
 - Confirm report saving, snapshots, and existing diagnostics remain operational; **v1.27B is not yet marked complete**.
 
+### Documentation organization
+
+- Added [ROADMAP.md](ROADMAP.md) as the dedicated plan for pending v1.27B validation, v1.27C local diagnostics, v1.27D health analysis, the proposed Quick Fix menu, NIST/best-practices checks, and later enhancements.
+- Replaced the lengthy planned-feature section in [README.md](README.md) with a link to the roadmap. No runtime functionality changed.
+
 ### Planned (not yet implemented)
-- **v1.27B continuation:** Cross-interface verification and further status/error consistency.
-- **v1.27C — Local Computer Diagnostics:** Direct local diagnostics for GUI and Classic using shared collection, avoiding dependency on remote WinRM/ADMIN$ for local runs; support common results, reports, and snapshots. Required modes: current-user standard local diagnostics and explicit alternate-administrator local diagnostics. Privileged local checks must run under a distinct authenticated/elevated process with an appropriate security token; supplying `PSCredential` alone does not elevate a local cmdlet. Enforce explicit authorization, no silent identity fallback, no persisted passwords, no credentials in output, and clear access-denied results. Align the design with NIST least-privilege controls (SP 800-53 AC-6 and SP 800-171 Rev. 3 03.01.06–03.01.07). No implementation yet.
-- **v1.27D — Health Analysis:** Evidence-based findings using collected diagnostic results.
-- **Quick Fix menu (tentatively after v1.27D; no implementation yet):** GUI and Classic access to shared, technician-confirmed repairs. Candidate actions include flush DNS, restart Print Spooler or selected services, recover Windows Update services, SFC/DISM checks, and enable/configure WinRM where authorized. Remote actions must validate the management channel; WinRM-disabled systems need a separate authorized method (for example suitable RPC/service management or centrally deployed policy), not a WinRM call. Distinguish locally flushed DNS from the target's cache. Require warning/confirmation and explicit opt-in for disruptive network changes or reboots; preserve credentials boundaries, verify outcomes, and include action logging. Never silently perform a repair when collecting diagnostics.
-- **NIST / Best Practices Computer Check (later milestone; no implementation yet):** Read-only, evidence-based Windows security posture assessment in **both GUI and Classic** using the shared local/remote collectors. Plan selectable OS-appropriate baseline profiles and mappings to named, versioned security benchmarks or NIST controls, informed by NIST SP 800-70 Rev. 5/National Checklist Program and relevant Microsoft security baselines. Candidate checks: local admin membership, account/UAC policies, firewall, BitLocker, Defender, audit policy, updates, RDP/WinRM exposure, SMB configuration, and password/lockout policy where observable. Report each rule as Pass, Finding, Not Applicable, or Unable to Verify with evidence, source/version, severity, and recommended remediation; distinguish policy-managed settings and document exceptions. No automatic changes, no unsupported claim of formal NIST certification or organizational compliance (which also involves processes and non-host controls). May eventually feed technician-approved Quick Fix actions.
-- Later proposals: expanded network diagnostics, snapshot enhancements, and clearer ticket/report summaries.
+
+Future milestones, security requirements, and proposed features are maintained in [ROADMAP.md](ROADMAP.md). These are not part of the current release.
 
 ## [1.26] — 2026-10-14
 
