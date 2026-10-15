@@ -85,5 +85,9 @@ function Get-ClassicAlternateReportSection {
     param([Parameter(Mandatory=$true)][string]$Section)
     $null = Test-ClassicAlternateReportContext
     $result = Invoke-ToolkitDiagnostic -Context $script:ToolkitAuthContext -Section $Section
-    return [pscustomobject]@{Section=$Section;Status=[string]$result.Status;StatusCategory=[string]$result.StatusCategory;Content=(Convert-ClassicDispatcherResult $result)}
+    $text = Convert-ClassicDispatcherResult $result
+    if ($Section -eq 'Health') {
+        $text += "`r`n`r`n" + (Format-ToolkitHealthAnalysis -Analysis (Get-ToolkitRemoteHealthAnalysis -Result $result))
+    }
+    return [pscustomobject]@{Section=$Section;Status=[string]$result.Status;StatusCategory=[string]$result.StatusCategory;Content=$text}
 }
