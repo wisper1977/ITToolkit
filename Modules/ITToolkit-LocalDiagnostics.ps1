@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage')]
+        [ValidateSet('System','Firewall','Services','Storage','Network')]
         [string]$Section
     )
 
@@ -43,6 +43,26 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Network' {
+                # Read-only local adapter configuration; no remote ping, traceroute or WinRM.
+                # Preserve each address/gateway as a distinct list in a single string field
+                # so GUI, Classic, and saved text reports remain readable.
+                $adapters = @(Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=True' -ErrorAction Stop)
+                $result.Data = @($adapters | Sort-Object Index | ForEach-Object {
+                    [pscustomobject]@{
+                        Description = [string]$_.Description
+                        InterfaceIndex = [int]$_.Index
+                        MACAddress = [string]$_.MACAddress
+                        DHCPEnabled = [bool]$_.DHCPEnabled
+                        IPAddresses = (@($_.IPAddress | Where-Object { $_ }) -join ', ')
+                        SubnetMasks = (@($_.IPSubnet | Where-Object { $_ }) -join ', ')
+                        DefaultGateways = (@($_.DefaultIPGateway | Where-Object { $_ }) -join ', ')
+                        DNSServers = (@($_.DNSServerSearchOrder | Where-Object { $_ }) -join ', ')
+                        DNSDomain = [string]$_.DNSDomain
+                    }
+                })
+                # A valid query with no enabled IP adapters yields NoData, not Success.
             }
             'Storage' {
                 # Match the existing remote disk-space report: fixed logical disks only.
