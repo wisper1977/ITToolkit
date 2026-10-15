@@ -678,3 +678,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Moved the full-width Dashboard Health block into a compact Computer Health card in the left navigation panel beneath target status. Three small review/checked/unknown counters accompany individual Storage, Services and Events summaries, with non-collected System, Security and Updates explicitly marked not assessed.
 - Increased sidebar width modestly to fit readable information and added independent vertical scrolling while retaining Switch to Classic anchored at the bottom. Removed the redundant full-width Health block so the Dashboard main area has more space.
 - **Implementation committed, Windows layout regression pending** for narrow displays, panel scrolling, target and authentication changes. No new health collection or Classic behavior changes.
+
+### v1.27 — Small-window sidebar navigation fix (Windows validation pending)
+
+- Screenshot regression: with compact GUI height, scrolling the combined left sidebar could hide all navigation buttons while health details were partly clipped.
+- Restructured sidebar into fixed navigation and target rows, a dedicated scrollable Computer Health evidence row, and a fixed Switch to Classic footer. Existing Health elements and collection logic were preserved.
+- **Still requires workplace Windows layout verification** at compact and normal window sizes; no release status change.
