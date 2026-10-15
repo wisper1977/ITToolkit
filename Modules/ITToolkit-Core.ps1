@@ -64,6 +64,7 @@ function Change-Target {
         Pause-Toolkit
         return
     }
+    $script:LocalTargetMode = $false
     $script:TargetComputer = $value
     $script:TargetIPv4 = Resolve-TargetIPv4 $value
     Test-RemoteAdminAccess
