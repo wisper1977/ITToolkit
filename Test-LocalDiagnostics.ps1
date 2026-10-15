@@ -3,7 +3,7 @@
 # Change the default Section when the next collector is ready to test.
 [CmdletBinding()]
 param(
-    [string]$Section = 'Shares'
+    [string]$Section = 'Software'
 )
 
 $ErrorActionPreference = 'Stop'
