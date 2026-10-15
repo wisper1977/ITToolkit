@@ -27,7 +27,7 @@ This roadmap tracks **current capabilities, remaining validation, and planned wo
 
 ### Pending report-opening compatibility validation
 
-- Verify GUI recent-report and Reports archive Open Report actions after the direct Microsoft Edge HTML launch change (following an unsuccessful shell `Open` verb attempt), especially when the GUI is started through the alternate-credentials launcher. Confirm behavior with HTML reports and relevant other saved formats, and regress the normal-account path. The standalone `runas` PowerShell test succeeded, but the updated GUI has not yet been Windows-validated.
+- Verify GUI recent-report and Reports archive Open Report actions after the direct Microsoft Edge HTML launch change (following an unsuccessful shell `Open` verb attempt), especially when the GUI is started through the alternate-credentials launcher. Confirm behavior with HTML reports and relevant other saved formats, and regress the normal-account path. **Windows technician confirmed:** The updated development GUI now opens HTML reports through the administrative-credential launch path on the affected workstation. Separate Dashboard/archive verification, non-HTML formats and broader regression testing remain pending.
 
 ### Windows validation completed
 
