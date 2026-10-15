@@ -6,6 +6,13 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### Documentation — Consolidated v1.27 roadmap (2026-10-15)
+
+- Reorganized `ROADMAP.md` into one unified v1.27 development milestone rather than separate lettered sub-milestones; consolidated repetitive collector-by-collector notes into implemented capabilities, confirmed Windows validation, open tests, and later planned features.
+- Preserved the distinction between 20 successful command-line local collectors, 18 GUI/Classic HTML-validated local sections, and outstanding elevated GUI/Classic Policy and BitLocker reporting, Avast compatibility, regression and format checks. Earlier detailed implementation/test history remains in this changelog.
+- Updated README development status wording to align with the current v1.27 work. No toolkit implementation or production branch changes.
+
+
 ### v1.27C — Sessions verified; Local Computer Policy implemented (2026-10-15)
 
 - **Technician-confirmed Windows test:** Local Sessions returned a valid active console session in GUI and Classic; HTML reports saved and reopened.
