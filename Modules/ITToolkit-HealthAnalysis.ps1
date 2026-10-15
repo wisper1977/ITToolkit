@@ -58,6 +58,7 @@ function Get-ToolkitLocalHealthAnalysis {
     }
     return [pscustomobject]@{
         Target = [string]$Result.Target
+        Mode = 'Local'
         CollectionIdentity = [string]$Result.UserName
         CollectedAt = $Result.CollectedAt
         ReviewCount = $review
@@ -70,7 +71,7 @@ function Format-ToolkitHealthAnalysis {
     [CmdletBinding()]
     param([Parameter(Mandatory=$true)][object]$Analysis)
     $lines = New-Object System.Collections.Generic.List[string]
-    $lines.Add('EVIDENCE-BASED HEALTH ANALYSIS (LOCAL)')
+    $lines.Add(("EVIDENCE-BASED HEALTH ANALYSIS ({0})" -f $Analysis.Mode))
     $lines.Add(("Review: {0} | Available: {1} | Unavailable: {2}" -f $Analysis.ReviewCount,$Analysis.AvailableCount,$Analysis.UnavailableCount))
     $lines.Add('Review findings are investigation prompts, not confirmed faults. No overall health score is assigned.')
     foreach ($finding in @($Analysis.Findings)) {
@@ -149,6 +150,7 @@ function Get-ToolkitRemoteHealthAnalysis {
     }
     return [pscustomobject]@{
         Target=[string]$Result.Target
+        Mode=[string]$Result.Mode
         CollectionIdentity=[string]$Result.UserName
         CollectedAt=$Result.CollectedAt
         ReviewCount=$review
