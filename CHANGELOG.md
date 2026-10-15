@@ -711,3 +711,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Added equivalent registry checks to the existing selected-credential remote WinRM Health collector; remote failure does not cause local fallback or identity substitution.
 - Shared Health analysis now returns seven available/review/unavailable checks where all are readable, with a distinct pending-restart investigation note in Classic and the compact GUI sidebar. No reboot action or Windows Update compliance assertion.
 - **Windows testing required:** local and remote Default/Alternate, real positive and negative indicators, access denied, partial/unavailable results, GUI sidebar and Classic saved Health reports. The preceding six-category local and Default remote GUI tests remain separately documented.
+
+### v1.27 — Local and Default remote restart-indicator GUI validation (2026-10-15)
+
+- Technician screenshots confirm `IT-7PY1M84` (local) and `ML-PCSCALE` (remote Default) both display **3 review / 7 checked / 0 unknown** in the scrollable Computer Health sidebar.
+- `PendingRestart` correctly displays a Review finding for **Pending file rename operations** on both computers, without declaring Windows Update missing or restarting machines. Existing storage, services, events, uptime, firewall and QFE evidence remains distinct by target.
+- These screenshots validate the GUI positive-indicator read/display path only. Still require a confirmed negative-indicator case, restricted/partial failure, remote Alternate identity, Classic rendering, and saved-report regression before release.
