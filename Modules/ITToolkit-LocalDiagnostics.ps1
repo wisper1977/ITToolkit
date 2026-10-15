@@ -646,8 +646,8 @@ function Get-ToolkitLocalDiagnostic {
 }
 
 
-# Explicit user-approved UAC handoff for restricted local report sections.
-# No credentials/recovery material pass through this helper.
+# Explicit UAC handoff supports consent elevation and a separate administrator
+# account supplied to Windows. The initiating process never handles credentials.
 function Invoke-ToolkitElevatedLocalDiagnostic {
     [CmdletBinding()]
     param(
@@ -655,16 +655,19 @@ function Invoke-ToolkitElevatedLocalDiagnostic {
         [ValidateSet('BitLocker','Policy')]
         [string]$Section
     )
-    $caller = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+    $initiator = [Security.Principal.WindowsIdentity]::GetCurrent()
     $modulePath = Join-Path $PSScriptRoot 'ITToolkit-LocalDiagnostics.ps1'
     $exe = Join-Path $PSHOME 'powershell.exe'
     $directory = Join-Path $env:TEMP ('ITToolkit-Elevated-' + [guid]::NewGuid().ToString('N'))
     [void](New-Item -ItemType Directory -Path $directory -ErrorAction Stop)
     try {
-        # Restrict temporary results to the invoking identity, administrators and SYSTEM.
+        # Separate UAC administrator identities need access to the transfer folder.
+        # Never grant Everyone, Users, or Authenticated Users access. Windows UAC
+        # must approve the administrator process; the initiating account only
+        # reads the result after the child exits.
         $acl = New-Object System.Security.AccessControl.DirectorySecurity
         $acl.SetAccessRuleProtection($true,$false)
-        foreach ($account in @([Security.Principal.WindowsIdentity]::GetCurrent().User,
+        foreach ($account in @($initiator.User,
             (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-32-544')),
             (New-Object System.Security.Principal.SecurityIdentifier('S-1-5-18')))) {
             $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
@@ -673,52 +676,94 @@ function Invoke-ToolkitElevatedLocalDiagnostic {
         }
         (Get-Item -LiteralPath $directory).SetAccessControl($acl)
         $outputFile = Join-Path $directory 'report.clixml'
+        $errorFile = Join-Path $directory 'error.clixml'
+        $nonce = [guid]::NewGuid().ToString('N')
         $safeModule = "'" + $modulePath.Replace("'","''") + "'"
         $safeOutput = "'" + $outputFile.Replace("'","''") + "'"
-        $safeSection = "'" + $Section.Replace("'","''") + "'"
+        $safeError = "'" + $errorFile.Replace("'","''") + "'"
+        $safeSection = "'" + $Section + "'"
+        $safeNonce = "'" + $nonce + "'"
+        # All generated parameters are escaped literals or validated choices.
+        # Errors are returned as data, not hidden by a detached child process.
         $child = @'
 $ErrorActionPreference = 'Stop'
-. __MODULE__
-$diagnosticIdentity = [Security.Principal.WindowsIdentity]::GetCurrent().Name
-$diagnosticResult = Get-ToolkitLocalDiagnostic -Section __SECTION__
-[pscustomobject]@{ Identity = $diagnosticIdentity; Result = $diagnosticResult } |
-    Export-Clixml -LiteralPath __OUTPUT__
+try {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+        throw 'The Windows UAC process does not have an elevated administrator token.'
+    }
+    . __MODULE__
+    $diagnosticResult = Get-ToolkitLocalDiagnostic -Section __SECTION__
+    [pscustomobject]@{
+        Nonce = __NONCE__
+        CollectionIdentity = $identity.Name
+        CollectionSid = $identity.User.Value
+        IsElevated = $true
+        Result = $diagnosticResult
+    } | Export-Clixml -LiteralPath __OUTPUT__ -ErrorAction Stop
+} catch {
+    try {
+        [pscustomobject]@{
+            Nonce = __NONCE__
+            CollectionIdentity = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+            Error = [string]$_.Exception.Message
+        } | Export-Clixml -LiteralPath __ERROR__ -ErrorAction Stop
+    } catch { }
+    exit 1
+}
 '@
-        $child = $child.Replace('__MODULE__',$safeModule).Replace('__SECTION__',$safeSection).Replace('__OUTPUT__',$safeOutput)
+        $child = $child.Replace('__MODULE__',$safeModule).
+            Replace('__SECTION__',$safeSection).
+            Replace('__OUTPUT__',$safeOutput).
+            Replace('__ERROR__',$safeError).
+            Replace('__NONCE__',$safeNonce)
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($child))
         try {
             $process = Start-Process -FilePath $exe -ArgumentList @(
                 '-NoProfile','-NonInteractive','-EncodedCommand',$encoded
             ) -Verb RunAs -Wait -PassThru -ErrorAction Stop
         } catch {
-            $startError = [string]$_.Exception.Message
             if ($_.Exception -is [System.ComponentModel.Win32Exception] -and
                 $_.Exception.NativeErrorCode -eq 1223) {
                 throw 'Windows UAC approval was cancelled. No elevated diagnostic was collected.'
             }
-            throw ("Windows could not start the UAC diagnostic process: {0}. Check local elevation permissions and endpoint security events." -f $startError)
+            throw ('Windows could not start the elevated diagnostic: ' + [string]$_.Exception.Message)
         }
-        $hasOutput = Test-Path -LiteralPath $outputFile -PathType Leaf
-        if (-not $hasOutput) {
-            $detail = ("Elevated diagnostic process ended without an accessible result (exit code: {0}). " +
-                "Possible causes include endpoint security restrictions, process launch failure, or " +
-                "UAC running under a different administrator account. The result folder is restricted " +
-                "to the requesting user, Administrators and SYSTEM. No alternate identity was used " +
-                "or accepted by IT Toolkit. Review Windows/endpoint security logs; do not disable protection.")
-            throw ($detail -f $process.ExitCode)
+        if (Test-Path -LiteralPath $errorFile -PathType Leaf) {
+            $childError = Import-Clixml -LiteralPath $errorFile -ErrorAction Stop
+            if ([string]$childError.Nonce -eq $nonce) {
+                throw ("Elevated diagnostic under {0} failed: {1}" -f
+                    [string]$childError.CollectionIdentity, [string]$childError.Error)
+            }
+        }
+        if (-not (Test-Path -LiteralPath $outputFile -PathType Leaf)) {
+            throw ("Elevated diagnostic returned no accessible result (exit code {0}). " +
+                "Check UAC account rights, whether the administrator account can access the " +
+                "toolkit files and the protected temporary folder, and endpoint security events." -f $process.ExitCode)
+        }
+        if ($process.ExitCode -ne 0) {
+            throw ("Elevated process exited with code {0}; its output was discarded." -f $process.ExitCode)
         }
         $payload = Import-Clixml -LiteralPath $outputFile -ErrorAction Stop
-        if ($process.ExitCode -ne 0) {
-            throw ("The elevated diagnostic exited with code {0}; the result was discarded." -f $process.ExitCode)
+        if ([string]$payload.Nonce -cne $nonce -or
+            -not [bool]$payload.IsElevated -or
+            [string]::IsNullOrWhiteSpace([string]$payload.CollectionIdentity) -or
+            [string]::IsNullOrWhiteSpace([string]$payload.CollectionSid)) {
+            throw 'Elevated diagnostic result failed identity or request validation.'
         }
-        if ([string]$payload.Identity -ine $caller) {
-            throw ('UAC selected a different Windows account (' + [string]$payload.Identity +
-                '). Results were discarded rather than attributed to the original user.')
+        if ($null -eq $payload.Result -or [string]$payload.Result.Section -ne $Section -or
+            [string]$payload.Result.Target -ine $env:COMPUTERNAME -or
+            [string]$payload.Result.Mode -ne 'Local') {
+            throw 'Elevated diagnostic returned data for an unexpected section, target, or mode.'
         }
-        if ($null -eq $payload.Result -or [string]$payload.Result.Section -ne $Section) {
-            throw 'The elevated diagnostic result was missing or did not match the requested section.'
-        }
-        return $payload.Result
+        # Do not relabel an administrator account as the initiating technician.
+        $result = $payload.Result
+        $result | Add-Member -NotePropertyName InitiatingIdentity -NotePropertyValue $initiator.Name -Force
+        $result | Add-Member -NotePropertyName CollectionIdentity -NotePropertyValue ([string]$payload.CollectionIdentity) -Force
+        $result | Add-Member -NotePropertyName CollectionSid -NotePropertyValue ([string]$payload.CollectionSid) -Force
+        $result | Add-Member -NotePropertyName Authorization -NotePropertyValue 'Windows UAC' -Force
+        return $result
     } finally {
         Remove-Item -LiteralPath $directory -Recurse -Force -ErrorAction SilentlyContinue
     }
