@@ -191,11 +191,12 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
     <StackPanel VerticalAlignment="Center"><TextBlock Name="Heading" Foreground="White" FontSize="24" FontWeight="SemiBold"/><TextBlock Name="Subtitle" Foreground="#CBDBEE" Margin="0,5,0,0" FontSize="12"/></StackPanel>
    </DockPanel>
   </Border>
-  <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+  <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="255"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
    <Border Background="#E6EDF5" BorderBrush="#CED9E6" BorderThickness="0,0,1,0" Padding="12,18">
     <Grid>
-     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-     <StackPanel Grid.Row="0">
+     <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+      <StackPanel>
      <Button Name="NavDashboard" Content="Dashboard" Height="41"/>
      <Button Name="NavDiagnostics" Content="Diagnostics" Height="41"/>
      <Button Name="NavTools" Content="Tools" Height="41"/>
@@ -213,8 +214,26 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
        </Border>
       </StackPanel>
      </Border>
-     </StackPanel>
-     <Button Grid.Row="2" Name="SwitchClassic" Content="Switch to Classic" Height="41" Margin="0" ToolTip="Start Classic with this Windows identity; targets and alternate credentials do not transfer."/>
+     <Border Background="#F4F8FD" BorderBrush="#C7D7E8" BorderThickness="1" CornerRadius="5" Padding="9" Margin="0,12,0,0">
+      <StackPanel>
+       <TextBlock Text="COMPUTER HEALTH" FontWeight="SemiBold" FontSize="11" Foreground="#17365D" Margin="0,0,0,5"/>
+       <TextBlock Name="DashboardHealthSummary" Text="Run Health Check for the selected computer." FontSize="11" TextWrapping="Wrap" Foreground="#53677E" Margin="0,0,0,9"/>
+       <UniformGrid Columns="3" Margin="0,0,0,10">
+        <Border Background="#FFF2DD" CornerRadius="4" Padding="5" Margin="0,0,4,0"><StackPanel><TextBlock Text="REVIEW" FontSize="9" FontWeight="SemiBold" Foreground="#785018" TextAlignment="Center"/><TextBlock Name="HealthReviewCount" Text="—" FontSize="19" FontWeight="SemiBold" Foreground="#785018" TextAlignment="Center"/></StackPanel></Border>
+        <Border Background="#E6F0FD" CornerRadius="4" Padding="5" Margin="0,0,4,0"><StackPanel><TextBlock Text="CHECKED" FontSize="9" FontWeight="SemiBold" Foreground="#274C79" TextAlignment="Center"/><TextBlock Name="HealthAvailableCount" Text="—" FontSize="19" FontWeight="SemiBold" Foreground="#274C79" TextAlignment="Center"/></StackPanel></Border>
+        <Border Background="#E7EAF0" CornerRadius="4" Padding="5"><StackPanel><TextBlock Text="UNKNOWN" FontSize="9" FontWeight="SemiBold" Foreground="#4B5563" TextAlignment="Center"/><TextBlock Name="HealthUnavailableCount" Text="—" FontSize="19" FontWeight="SemiBold" Foreground="#4B5563" TextAlignment="Center"/></StackPanel></Border>
+       </UniformGrid>
+       <TextBlock Text="EVIDENCE BY CATEGORY" FontWeight="SemiBold" FontSize="10" Foreground="#17365D" Margin="0,0,0,7"/>
+       <TextBlock Name="HealthStorageDetail" Text="Storage: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+       <TextBlock Name="HealthServicesDetail" Text="Services: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+       <TextBlock Name="HealthEventsDetail" Text="Events: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+       <TextBlock Text="System, Security, Updates: Not assessed in this quick check." TextWrapping="Wrap" FontSize="10" Foreground="#53677E" Margin="0,1,0,7"/>
+       <TextBlock Text="Review is not a confirmed fault. Unknown is not healthy. Full findings: Diagnostics." TextWrapping="Wrap" FontSize="10" Foreground="#60738A"/>
+      </StackPanel>
+     </Border>
+      </StackPanel>
+     </ScrollViewer>
+     <Button Grid.Row="1" Name="SwitchClassic" Content="Switch to Classic" Height="41" Margin="0" ToolTip="Start Classic with this Windows identity; targets and alternate credentials do not transfer."/>
     </Grid>
    </Border>
    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
@@ -269,27 +288,6 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
           </Border>
          </Grid>
         </Border>
-       </StackPanel>
-      </Border>
-      <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="19" CornerRadius="5" Margin="0,0,0,15">
-       <StackPanel>
-        <TextBlock Text="LAST COMPUTER HEALTH ANALYSIS" FontWeight="SemiBold" Foreground="#17365D" Margin="0,0,0,8"/>
-        <TextBlock Name="DashboardHealthSummary" Text="Run Health Check for the selected local or remote computer to populate evidence." TextWrapping="Wrap" Foreground="#53677E" Margin="0,0,0,12"/>
-        <UniformGrid Columns="3" Margin="0,0,0,8">
-         <Border Background="#FFF2DD" CornerRadius="5" Padding="12,8" Margin="0,0,8,0"><StackPanel><TextBlock Text="REVIEW FINDINGS" FontSize="10" FontWeight="SemiBold" Foreground="#785018"/><TextBlock Name="HealthReviewCount" Text="—" FontSize="23" FontWeight="SemiBold" Foreground="#785018"/></StackPanel></Border>
-         <Border Background="#EDF4FD" CornerRadius="5" Padding="12,8" Margin="0,0,8,0"><StackPanel><TextBlock Text="AVAILABLE CHECKS" FontSize="10" FontWeight="SemiBold" Foreground="#274C79"/><TextBlock Name="HealthAvailableCount" Text="—" FontSize="23" FontWeight="SemiBold" Foreground="#274C79"/></StackPanel></Border>
-         <Border Background="#EFF1F4" CornerRadius="5" Padding="12,8"><StackPanel><TextBlock Text="UNAVAILABLE CHECKS" FontSize="10" FontWeight="SemiBold" Foreground="#4B5563"/><TextBlock Name="HealthUnavailableCount" Text="—" FontSize="23" FontWeight="SemiBold" Foreground="#4B5563"/></StackPanel></Border>
-        </UniformGrid>
-        <TextBlock Text="EVIDENCE BY CATEGORY" FontWeight="SemiBold" FontSize="11" Foreground="#17365D" Margin="0,4,0,6"/>
-        <UniformGrid Columns="2">
-         <TextBlock Name="HealthStorageDetail" Text="Storage: Not assessed" TextWrapping="Wrap" Margin="0,0,12,8"/>
-         <TextBlock Name="HealthServicesDetail" Text="Services: Not assessed" TextWrapping="Wrap" Margin="0,0,12,8"/>
-         <TextBlock Name="HealthEventsDetail" Text="Events: Not assessed" TextWrapping="Wrap" Margin="0,0,12,8"/>
-         <TextBlock Text="System: Not assessed in this quick check" TextWrapping="Wrap" Margin="0,0,12,8"/>
-         <TextBlock Text="Security: Not assessed in this quick check" TextWrapping="Wrap" Margin="0,0,12,8"/>
-         <TextBlock Text="Updates: Not assessed in this quick check" TextWrapping="Wrap" Margin="0,0,12,8"/>
-        </UniformGrid>
-        <TextBlock Text="Only the three named checks are currently interpreted. Other sections are NOT ASSESSED, not healthy. See Diagnostics for source evidence." FontSize="11" Foreground="#60738A" TextWrapping="Wrap" Margin="0,6,0,0"/>
        </StackPanel>
       </Border>
       <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="19" CornerRadius="5" Margin="0,0,0,15">
