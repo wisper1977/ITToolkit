@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, and Services implemented in both; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, and Storage validated locally; Network newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -120,3 +120,7 @@ These have no assigned milestone or implementation commitment:
 **Local Storage increment (implementation; Windows test pending):** The shared direct-local collector and GUI/Classic local section allowlists now support Storage (fixed logical disks, size/free GB, free percentage). Zero or unknown capacity yields no free percentage; zero returned disks produces `NoData`. Remote diagnostics remain unchanged. Windows test, GUI/Classic reports, report saving and remote regression are outstanding.
 
 **Storage direct collector validation (2026-10-14):** Windows test passed on DESKTOP-8EHGAPD with two fixed logical disks (C: and E:), `SUCCESS` / `Success`, and no error. GUI/Classic and report validation are pending. A root-level `Test-LocalDiagnostics.ps1` smoke-test harness now reloads the latest collector on every execution and defaults to Storage; harness Windows testing is pending. Future diagnostic increments can change the default while preserving the one-command test workflow.
+
+**Storage GUI/Classic Windows confirmation (2026-10-14):** Both interfaces work, and the technician successfully saved and opened an HTML Storage report. CSV/TXT and remote regressions remain pending.
+
+**Local Network implementation (Windows validation pending):** Added shared IP-enabled adapter configuration inventory (addresses, subnets, gateways, DNS, MAC, DHCP) to local GUI/Classic with no remote fallback. Updated single-command test harness default to Network. Network output, report formats, edge cases, and remote regression are still pending.
