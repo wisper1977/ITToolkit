@@ -30,6 +30,8 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - A common `Get-ToolkitDiagnosticStatusCategory` classifier with explicit categories for success, no data, review, partial, unavailable, access denied, not tested, and unknown outcomes.
 - Additive `StatusCategory` output from the shared diagnostic dispatcher, while preserving original `Status`, `Error`, and collected records.
 - Status category display in the Classic alternate-credential report formatter and GUI diagnostic output (including Default mode).
+- **Second increment:** Propagated `StatusCategory` from the Classic alternate-credential report bridge as a structured property alongside the existing `Status` and `Content` fields.
+- Added explicit `Status category: Unavailable` lines to both GUI diagnostic worker exception paths while keeping existing exception detail text unchanged.
 
 #### Validation pending
 - Confirm GUI Default and Alternate runs, Classic alternate-credential reports, and representative SUCCESS / NO RESULTS / UNAVAILABLE / ACCESS DENIED statuses on Windows.
