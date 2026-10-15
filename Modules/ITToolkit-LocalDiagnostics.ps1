@@ -701,10 +701,15 @@ try {
     $previousPolicy = [string](Get-ExecutionPolicy)
     $policyChanged = $false
     if ($previousPolicy -eq 'Restricted' -and __ALLOW_POLICY__) {
-        $scopes = Get-ExecutionPolicy -List
-        if ([string]$scopes.MachinePolicy -ne 'Undefined' -or
-            [string]$scopes.UserPolicy -ne 'Undefined') {
-            throw 'An organization-controlled PowerShell execution policy is configured. IT Toolkit will not change it.'
+        $scopes = @(Get-ExecutionPolicy -List)
+        $machinePolicy = @($scopes | Where-Object { $_.Scope -eq 'MachinePolicy' } |
+            Select-Object -First 1 -ExpandProperty ExecutionPolicy)
+        $userPolicy = @($scopes | Where-Object { $_.Scope -eq 'UserPolicy' } |
+            Select-Object -First 1 -ExpandProperty ExecutionPolicy)
+        if ($machinePolicy.Count -ne 1 -or $userPolicy.Count -ne 1 -or
+            [string]$machinePolicy[0] -ne 'Undefined' -or
+            [string]$userPolicy[0] -ne 'Undefined') {
+            throw 'PowerShell execution policy is managed by Group Policy or could not be verified. IT Toolkit will not change it.'
         }
         Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force -ErrorAction Stop
         if ([string](Get-ExecutionPolicy) -ne 'RemoteSigned') {
@@ -729,6 +734,9 @@ try {
         [pscustomobject]@{
             Nonce = __NONCE__
             CollectionIdentity = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+            PolicyChanged = $policyChanged
+            PreviousExecutionPolicy = $previousPolicy
+            EffectiveExecutionPolicy = [string](Get-ExecutionPolicy)
             Error = [string]$_.Exception.Message
         } | Export-Clixml -LiteralPath __ERROR__ -ErrorAction Stop
     } catch { }
@@ -758,6 +766,11 @@ try {
             if ([string]$childError.Nonce -eq $nonce) {
                 $childMessage = [string]$childError.Error
                 $childAccount = [string]$childError.CollectionIdentity
+                if ([bool]$childError.PolicyChanged) {
+                    $childMessage = ("CurrentUser policy for {0} was changed from {1} to {2}, but the diagnostic failed: {3}" -f
+                        $childAccount, [string]$childError.PreviousExecutionPolicy,
+                        [string]$childError.EffectiveExecutionPolicy, $childMessage)
+                }
                 if ($childMessage -match '(?i)running scripts is disabled|cannot be loaded because|execution.polic|PSSecurityException|UnauthorizedAccess.*script') {
                     $detail = ("Windows PowerShell execution policy blocked the local diagnostic module under {0}. " +
                         "The administrator UAC sign-in succeeded, but the collector was NOT run. " +
