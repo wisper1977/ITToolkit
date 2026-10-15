@@ -132,6 +132,48 @@ function Get-ToolkitLocalDiagnostic {
                         })
                     }
                 }
+                # System, security and update observations use independent read-only
+                # checks. No installed-hotfix list can establish missing-update compliance.
+                try {
+                    $os = Get-CimInstance -ClassName Win32_OperatingSystem -ErrorAction Stop
+                    if (-not $os -or -not $os.LastBootUpTime) { throw 'Last boot time was unavailable.' }
+                    $records.Add([pscustomobject]@{
+                        Check='SystemUptime'; QueryStatus='Available'
+                        Caption=[string]$os.Caption
+                        LastBootUpTime=$os.LastBootUpTime
+                        UptimeDays=[math]::Round(((Get-Date)-[datetime]$os.LastBootUpTime).TotalDays,1)
+                        Note='Boot age is informational and does not establish system health.'
+                    })
+                } catch {
+                    $failures.Add('SystemUptime')
+                    $records.Add([pscustomobject]@{Check='SystemUptime';QueryStatus='Unavailable';Error=[string]$_.Exception.Message})
+                }
+                try {
+                    $profiles = @(Get-NetFirewallProfile -ErrorAction Stop)
+                    if ($profiles.Count -lt 1) { throw 'No Windows Firewall profiles returned.' }
+                    $disabled = @($profiles | Where-Object { -not [bool]$_.Enabled } | ForEach-Object { [string]$_.Name })
+                    $records.Add([pscustomobject]@{
+                        Check='FirewallProfiles'; QueryStatus='Available'
+                        ProfilesQueried=$profiles.Count
+                        DisabledProfiles=($disabled -join ', ')
+                        DisabledCount=$disabled.Count
+                        Note='Profile state is configuration evidence, not a security compliance verdict.'
+                    })
+                } catch {
+                    $failures.Add('FirewallProfiles')
+                    $records.Add([pscustomobject]@{Check='FirewallProfiles';QueryStatus='Unavailable';Error=[string]$_.Exception.Message})
+                }
+                try {
+                    $hotfixes = @(Get-CimInstance -ClassName Win32_QuickFixEngineering -ErrorAction Stop)
+                    $records.Add([pscustomobject]@{
+                        Check='InstalledHotfixes';QueryStatus='Available'
+                        HotfixCount=$hotfixes.Count
+                        Note='Installed QFE inventory only; does not detect missing updates or establish patch compliance.'
+                    })
+                } catch {
+                    $failures.Add('InstalledHotfixes')
+                    $records.Add([pscustomobject]@{Check='InstalledHotfixes';QueryStatus='Unavailable';Error=[string]$_.Exception.Message})
+                }
                 $result.Data = @($records.ToArray())
                 if ($failures.Count -gt 0) {
                     $result.Status = 'PARTIAL'
