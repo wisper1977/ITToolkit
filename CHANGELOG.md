@@ -6,6 +6,13 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### v1.27C — Administrators verified; Local Shares implementation (2026-10-15)
+
+- **Windows technician confirmed:** Local Administrators returned `SUCCESS` in GUI and Classic, and HTML reports saved and opened. It listed two direct members: built-in local Administrator (previously reported disabled) and a Microsoft-account-backed local user. Membership is not proof of successful sign-in or effective elevated token.
+- Added local read-only `Win32_Share` inventory (share name, path, description, type), including administrative shares, to shared collector. GUI and Classic local section routing now includes Shares; existing remote paths are unchanged.
+- Updated reusable test script default to Shares. Permissions, NTFS ACLs and network accessibility are **not** checked by this section. Windows Shares collector, GUI/Classic display, HTML saving, error/no-data paths and remote regression remain pending.
+
+
 ### v1.27C — Users validated; Groups implementation (2026-10-15)
 
 - **Windows technician confirmed:** Local Users worked in GUI and Classic, and the HTML reports saved and reopened. Seven local accounts appeared with account-state fields; no security-health conclusion was drawn from disabled accounts.
