@@ -12,6 +12,7 @@ The **IT Toolkit** is a portable, PowerShell-based utility for IT technicians wh
 
 - **Two interfaces:** Windows GUI and numbered Classic PowerShell menus.
 - **v1.27A GUI refinements (development branch):** Multiline labels on Tools and Dashboard favorite buttons; improved display of long target names, recent reports, and footer text in narrower windows.
+- **v1.27A window preferences (development branch; testing pending):** Remembers main GUI size, position, maximized state, and last open page per technician. Off-screen or invalid saved layouts fall back to default placement; previously selected targets are not automatically reconnected.
 - **Remote access checks:** DNS resolution, ICMP reachability, WMI, WinRM, and `ADMIN$` accessibility.
 - **Credential selection:** Run supported diagnostics with your current Windows identity or explicitly supplied alternate administrative credentials. Credentials are not intended to be stored in configuration files.
 - **Windows diagnostics:** Collect information across system, storage, services, hardware, local accounts and groups, shares, software, updates, tasks, firewall, events, and related categories. Some checks require particular remote services or privileges.
@@ -113,6 +114,12 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 - Adjusted recent report filename display while retaining full paths in tooltips.
 - Improved footer handling of technician and computer names when space is limited.
 - Updated `Toolkit-config.json` to version `1.27` on the development branch.
+
+**v1.27A follow-up — Window state persistence (implemented; Windows testing pending)**
+
+- Saves the main GUI's normal restore bounds, maximized state, and last opened page in the existing per-user `GUISettings.json` preferences.
+- Checks saved dimensions and monitor visibility before restoring; malformed or off-screen values use defaults.
+- Restores page navigation only, without automatically selecting or reconnecting to previous targets. The launcher remains independent.
 
 **v1.27B — Shared diagnostic status handling (first increment; Windows testing pending)**
 
