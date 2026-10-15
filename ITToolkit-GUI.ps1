@@ -1325,7 +1325,11 @@ foreach ($section in $requested) {
     } else {
         Get-ToolkitLocalDiagnostic -Section $section
     }
-    if ($elevated) { $lines.Add('Collection authorization: UAC-approved elevated local query (same Windows identity required).') }
+    if ($elevated) {
+        $lines.Add('Collection authorization: Windows UAC (explicit administrator approval).')
+        $lines.Add("Initiating technician: $($result.InitiatingIdentity)")
+        $lines.Add("Actual collection identity: $($result.CollectionIdentity)")
+    }
     $lines.Add("STATUS: $($result.Status)")
     $lines.Add("Status category: $($result.StatusCategory)")
     if ($result.Error) { $lines.Add("Error details: $($result.Error)") }
