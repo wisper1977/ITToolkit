@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software')]
         [string]$Section
     )
 
@@ -43,6 +43,50 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Software' {
+                # Read-only machine-wide uninstall registry entries in both registry
+                # views. Explicit views avoid 32-bit PowerShell missing 64-bit apps.
+                # Scope intentionally mirrors remote HKLM uninstall inventory; Store
+                # and portable apps are not comprehensively enumerated.
+                $subPath = 'SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall'
+                $views = if ([Environment]::Is64BitOperatingSystem) {
+                    @([Microsoft.Win32.RegistryView]::Registry64, [Microsoft.Win32.RegistryView]::Registry32)
+                } else {
+                    @([Microsoft.Win32.RegistryView]::Registry32)
+                }
+                $entries = New-Object System.Collections.Generic.List[object]
+                foreach ($view in $views) {
+                    $base = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
+                        [Microsoft.Win32.RegistryHive]::LocalMachine, $view)
+                    try {
+                        $root = $base.OpenSubKey($subPath, $false)
+                        if ($null -eq $root) { continue }
+                        try {
+                            foreach ($keyName in $root.GetSubKeyNames()) {
+                                $entry = $root.OpenSubKey($keyName, $false)
+                                if ($null -eq $entry) { continue }
+                                try {
+                                    $name = [string]$entry.GetValue('DisplayName', '')
+                                    if ([string]::IsNullOrWhiteSpace($name)) { continue }
+                                    $entries.Add([pscustomobject]@{
+                                        Name = $name
+                                        Version = [string]$entry.GetValue('DisplayVersion', '')
+                                        Publisher = [string]$entry.GetValue('Publisher', '')
+                                    })
+                                } finally {
+                                    $entry.Dispose()
+                                }
+                            }
+                        } finally {
+                            $root.Dispose()
+                        }
+                    } finally {
+                        $base.Dispose()
+                    }
+                }
+                $result.Data = @($entries | Sort-Object Name,Version,Publisher -Unique)
+                # No uninstall entries -> NoData, not proof that nothing is installed.
             }
             'Shares' {
                 # Read-only SMB share inventory (including built-in administrative shares).
