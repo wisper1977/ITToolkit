@@ -24,7 +24,7 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - The subsequent dashboard and footer layout refinements were reviewed in Windows and accepted.
 - Tool launching, favorites, report opening, and authentication behaviors were intended to remain unchanged; no comprehensive regression test of these areas is claimed.
 
-### v1.27A follow-up — Window state persistence (implemented; Windows testing pending)
+### v1.27A follow-up — Window state persistence (completed; Windows-tested)
 
 #### Added
 - Main GUI per-technician window size, position, maximized state, and last opened page saved in the existing `GUISettings.json` preferences.
@@ -32,9 +32,10 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - Invalid or off-screen saved placement falls back to default startup placement without blocking the GUI.
 - Page restoration does not automatically reconnect to a previous target; launcher behavior is unchanged.
 
-#### Validation pending
-- Check normal, resized, moved, and maximized restart behavior; multi-monitor disconnection and corrupted preferences should fall back safely.
-- Confirm favorites and recent-target preferences remain intact.
+#### Validation
+- Windows testing confirmed restoration of moved and resized windows, maximized state, and last opened page across GUI sessions.
+- Favorites and Recent Targets were preserved, and the GUI reopened without automatically selecting a target.
+- Multi-monitor disconnection and corrupted-preference recovery safeguards are implemented but have not been separately validated.
 
 ### v1.27B — Shared status classification (first increment; awaiting Windows testing)
 
