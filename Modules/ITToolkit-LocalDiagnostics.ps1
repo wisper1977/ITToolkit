@@ -644,3 +644,62 @@ function Get-ToolkitLocalDiagnostic {
     # Return a new result with no credential or process-token object embedded.
     return [pscustomobject]$result
 }
+
+
+# Explicit user-approved UAC handoff for restricted local report sections.
+# No credentials/recovery material pass through this helper.
+function Invoke-ToolkitElevatedLocalDiagnostic {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)]
+        [ValidateSet('BitLocker','Policy')]
+        [string]$Section
+    )
+    $caller = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+    $modulePath = Join-Path $PSScriptRoot 'ITToolkit-LocalDiagnostics.ps1'
+    $exe = Join-Path $PSHOME 'powershell.exe'
+    $directory = Join-Path $env:TEMP ('ITToolkit-Elevated-' + [guid]::NewGuid().ToString('N'))
+    [void](New-Item -ItemType Directory -Path $directory -ErrorAction Stop)
+    try {
+        # Restrict temporary results to the invoking identity, administrators and SYSTEM.
+        $acl = New-Object System.Security.AccessControl.DirectorySecurity
+        $acl.SetAccessRuleProtection($true,$false)
+        foreach ($account in @($caller,'BUILTIN\Administrators','NT AUTHORITY\SYSTEM')) {
+            $rule = New-Object System.Security.AccessControl.FileSystemAccessRule(
+                $account,'FullControl','ContainerInherit,ObjectInherit','None','Allow')
+            $acl.AddAccessRule($rule)
+        }
+        (Get-Item -LiteralPath $directory).SetAccessControl($acl)
+        $outputFile = Join-Path $directory 'report.clixml'
+        $safeModule = "'" + $modulePath.Replace("'","''") + "'"
+        $safeOutput = "'" + $outputFile.Replace("'","''") + "'"
+        $safeSection = "'" + $Section.Replace("'","''") + "'"
+        $child = @'
+$ErrorActionPreference = 'Stop'
+. __MODULE__
+$diagnosticIdentity = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+$diagnosticResult = Get-ToolkitLocalDiagnostic -Section __SECTION__
+[pscustomobject]@{ Identity = $diagnosticIdentity; Result = $diagnosticResult } |
+    Export-Clixml -LiteralPath __OUTPUT__
+'@
+        $child = $child.Replace('__MODULE__',$safeModule).Replace('__SECTION__',$safeSection).Replace('__OUTPUT__',$safeOutput)
+        $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($child))
+        $process = Start-Process -FilePath $exe -ArgumentList @(
+            '-NoProfile','-NonInteractive','-EncodedCommand',$encoded
+        ) -Verb RunAs -Wait -PassThru -ErrorAction Stop
+        if ($process.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $outputFile -PathType Leaf)) {
+            throw 'The elevated process did not provide a diagnostic result.'
+        }
+        $payload = Import-Clixml -LiteralPath $outputFile -ErrorAction Stop
+        if ([string]$payload.Identity -ine $caller) {
+            throw ('UAC selected a different Windows account (' + [string]$payload.Identity +
+                '). Results were discarded rather than attributed to the original user.')
+        }
+        if ($null -eq $payload.Result -or [string]$payload.Result.Section -ne $Section) {
+            throw 'The elevated diagnostic result was missing or did not match the requested section.'
+        }
+        return $payload.Result
+    } finally {
+        Remove-Item -LiteralPath $directory -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
