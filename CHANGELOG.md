@@ -616,3 +616,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - The underlying computer-scope `gpresult` query returned `ACCESS DENIED`. This is **not** a passed Policy data collection, and does not prove an implementation defect; verify gpresult permissions/RSoP behavior under the elevated token.
 - Clarified the GUI Local report banner: diagnostic queries are read-only, but a separately approved persistent PowerShell execution-policy configuration change may have occurred and is disclosed in the report.
 - GUI HTML save/open, workplace BitLocker UAC, Classic parity, and broader remote/security regression still require validation.
+
+### v1.27 — Workplace GUI BitLocker cross-account UAC validated (2026-10-15)
+
+- **Windows tested, SUCCESS:** `IT-7PY1M84` GUI BitLocker, initiated by standard `COCHISE\ccollins` and collected after Windows UAC authorization under `COCHISE\CCollinsadm`. Report preserved both account identities, collection status `SUCCESS` and volume findings (C: 100% encrypted, protection on, XTS-AES-256).
+- Confirmed persistent administrator `CurrentUser` execution policy needed no repeat modification: RemoteSigned → RemoteSigned, changed False.
+- **Still pending:** GUI Save HTML/reopen for this elevated report, Classic elevated reporting, cancellations, regression/security checks. Policy's `gpresult` query returns Access Denied even in a separately elevated administrator PowerShell session; preserve accurate failure rather than claim successful Policy data collection.
