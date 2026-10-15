@@ -500,3 +500,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Windows technician confirmed Local Groups in GUI and Classic, including successful HTML report save and reopening.
 - Added read-only direct membership inventory for the built-in Administrators group (SID S-1-5-32-544) to the shared local collector, including name, class, principal source, SID and summary. Nested group membership is not expanded.
 - Connected GUI and Classic local Administrators sections; updated single-file smoke test default to Administrators. Windows collector, interface and saved-report validation, edge cases and remote regression remain pending.
+
+### v1.27C — Startup verified; local BitLocker implemented (2026-10-15)
+
+- Windows technician confirmed Startup worked in GUI and Classic, including HTML report save and reopening.
+- Implemented direct-local read-only BitLocker volume status using `Get-BitLockerVolume`, with mount point, type, volume/encryption/protection/lock states and encryption percentage. No recovery keys, recovery passwords or key protector details are returned.
+- Enabled both local interfaces and made BitLocker the smoke-test default. Missing cmdlet or access restrictions are surfaced as unavailable/denied, not as unencrypted drives. Windows and regression testing pending.
