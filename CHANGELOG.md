@@ -526,3 +526,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Local Policy returned ACCESS DENIED on Windows, validating the permission-failure path only; applied-policy positive path remains unverified.
 - Added read-only ordinary local SMB share inventory, share permission entries, and root NTFS ACL entries. Excludes administrative shares and does not evaluate effective access or change access control lists. Individual ACL failures are shown as PARTIAL.
 - Enabled SharePermissions in GUI and Classic local routes; smoke-test default now SharePermissions. Windows UI, collector, HTML and remote regression remain pending. BitLocker positive path is also outstanding.
+
+### v1.27C — Share Permissions validated; local Health evidence implemented (2026-10-15)
+
+- **Windows technician confirmed:** SharePermissions succeeded in GUI and Classic with HTML saving/reopening. One ordinary SMB share was returned with share-level and NTFS root access lists; no effective-access calculation was claimed.
+- Added read-only direct-local Health evidence summary for system-drive free percentage, count of nonrunning automatic services, and the latest 24h System critical/error count (up to 100 events). Distinguishes per-check availability, `NoData`, and overall `PARTIAL` when a collection fails; does not assign a health score.
+- Enabled Health in both explicit local interfaces and changed smoke-test default to Health. Remote Health remains unchanged. Windows Health GUI/Classic/HTML and edge-case validation, plus authorized positive tests for BitLocker and Policy and remote regression, remain pending.
