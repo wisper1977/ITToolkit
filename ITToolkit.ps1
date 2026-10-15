@@ -121,7 +121,7 @@ while ($true) {
         '11' { Menu-Settings }
         '12' { Menu-ClassicCatalog }
         '13' { if ($script:LocalTargetMode) { Write-Host 'Alternate-admin local collection is not yet implemented. Switch to remote target mode first.' -ForegroundColor Yellow; Pause-Toolkit } else { Set-ClassicTargetCredential } }
-        '10' { Reset-ClassicAlternateCredential; $script:LocalTargetMode=$true; $script:TargetComputer=[string]$env:COMPUTERNAME; $script:TargetIPv4='(local collection)'; $script:AdminStatus='Local mode'; $script:AdminDetail='Direct local System, Firewall and Services; other sections and snapshots are not yet supported.'; $script:AdminCheckedAt=$null }
+        '10' { Reset-ClassicAlternateCredential; $script:LocalTargetMode=$true; $script:TargetComputer=[string]$env:COMPUTERNAME; $script:TargetIPv4='(local collection)'; $script:AdminStatus='Local mode'; $script:AdminDetail='All 20 local diagnostic sections and snapshots collect directly on this computer; BitLocker and Policy may require separate UAC approval.'; $script:AdminCheckedAt=$null }
         '14' {
             $guiScript = Join-Path $script:ToolkitRoot 'ITToolkit-GUI.ps1'
             if (-not (Test-Path -LiteralPath $guiScript -PathType Leaf)) {
