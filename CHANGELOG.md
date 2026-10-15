@@ -644,3 +644,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - **Technician-confirmed PASS:** remote snapshot creation still works after the change, supporting basic remote regression compatibility.
 - Snapshot comparison correctness, failure-category handling, archive reload, and optional Classic report snapshot sidecar are not independently confirmed by this report; retain these as final release-review checks rather than claiming they passed.
 - Development remains on `develop/v1.27`; stable production `main` is unchanged.
+
+### v1.27 — Elevated PowerShell built-in Tools entry (2026-10-15; Windows test pending)
+
+- Added **Windows PowerShell (Administrator)** to the shared GUI/Classic built-in Tools catalog; it can also be pinned as a Favorite without affecting the existing normal Windows PowerShell entry.
+- GUI and Classic require explicit user confirmation and use Windows UAC (`Start-Process -Verb RunAs`) to launch an independent elevated PowerShell 5.1 console, without elevating the toolkit, substituting remote credentials, collecting passwords, or changing execution policy.
+- **Validation pending:** Windows approved/denied UAC flows, separate admin account identity and token, GUI and Classic launch, Favorite shortcut, and non-elevated PowerShell regression. Not promoted to stable `main`.
