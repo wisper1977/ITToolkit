@@ -14,7 +14,6 @@
 
 ### Health analysis quality and parity
 
-- **Classic seven-check confirmation:** Verify the latest seven-check Health analysis in the Classic report for Local, remote Default, and remote Alternate where authorized. Classic will retain its streamlined reports; **do not add a persistent text dashboard** unless explicitly requested.
 - **Failure and negative cases:** Exercise inaccessible/denied and partial checks, unavailable WinRM, malformed/missing evidence, and a machine without the selected pending-restart indicators. Confirm unavailable data are not interpreted as healthy, and a detected pending-file-rename operation is not claimed to be an update-required reboot.
 - **Credential and target provenance:** Verify requested and actual remote identities where the transport exposes them. Changing target, authentication mode, or credentials must not display or save health evidence from the previous context; no silent local or default-identity fallback.
 - **Evidence rules:** Reconcile the current local system-drive review threshold (**below 10%**) and remote threshold (**below 15%**) with a documented rule. Keep installed-QFE inventory distinct from **missing-update compliance**. Do not present enabled firewall profiles as proof of full security compliance.
