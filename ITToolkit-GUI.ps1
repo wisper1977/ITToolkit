@@ -676,12 +676,17 @@ function Confirm-GUIAlternateCredential {
 }
 
 function Resolve-GUITarget {
-    $script:LocalTargetMode = $false
+    if ($null -ne $script:DiagnosticPS -or $null -ne $script:SnapshotPS) {
+        [Windows.MessageBox]::Show('Wait for the active collection to finish before changing targets.','Collection in progress') | Out-Null
+        return
+    }
     Clear-GUIReportState
     $value = $ui.TargetInput.Text.Trim()
     if (-not $value -or $value -notmatch '^[a-zA-Z0-9_.-]+$') { [Windows.MessageBox]::Show('Enter a valid hostname or IPv4 address.', 'Target computer') | Out-Null; return }
     if ($script:GUIAlternateTarget -and $script:GUIAlternateTarget -ine $value) { Clear-GUIAlternateContext }
     if ($script:GUIAlternateMode -and -not (Confirm-GUIAlternateCredential)) { return }
+    $script:LocalTargetMode = $false
+    Set-GUIAuthView
     $script:TargetComputer = $value
     $script:TargetPingState = 'Checking ICMP...'
     $script:TargetLastChecked = $null
@@ -1528,6 +1533,7 @@ $ui.ClearRecents.Add_Click({
 })
 $ui.MoreReports.Add_Click({ Refresh-Archive; Refresh-SnapshotArchive; Show-GUIPage 'Reports' })
 $ui.UseAlternate.Add_Checked({
+    if ($script:LocalTargetMode) { $ui.UseAlternate.IsChecked = $false; return }
     $script:GUIAlternateMode = $true
     Clear-GUIAlternateContext
     Clear-GUIReportState
@@ -1572,7 +1578,7 @@ $ui.UseLocalTarget.Add_Click({
     Update-TargetView
     $ui.Status.Text = 'Local computer selected — System and Firewall available.'
 })
-$ui.ClearTarget.Add_Click({ $script:LocalTargetMode=$false; Clear-GUIAlternateContext; $script:GUIAlternateMode=$false; $ui.UseAlternate.IsChecked=$false; Set-GUIAuthView; Clear-GUIReportState; $script:TargetPingState = 'Not checked'; $script:TargetLastChecked = $null; $script:LastDiagnosticSummary = 'None this session'; $script:TargetComputer = $null; $script:TargetIPv4 = '(not selected)'; $script:AdminStatus = 'Not checked'; $script:AdminDetail = 'Select a target first.'; $ui.TargetInput.Text = ''; Update-TargetView })
+$ui.ClearTarget.Add_Click({ if ($null -ne $script:DiagnosticPS -or $null -ne $script:SnapshotPS) { [Windows.MessageBox]::Show('Wait for the active collection to finish before clearing the target.','Collection in progress') | Out-Null; return }; $script:LocalTargetMode=$false; Clear-GUIAlternateContext; $script:GUIAlternateMode=$false; $ui.UseAlternate.IsChecked=$false; Set-GUIAuthView; Clear-GUIReportState; $script:TargetPingState = 'Not checked'; $script:TargetLastChecked = $null; $script:LastDiagnosticSummary = 'None this session'; $script:TargetComputer = $null; $script:TargetIPv4 = '(not selected)'; $script:AdminStatus = 'Not checked'; $script:AdminDetail = 'Select a target first.'; $ui.TargetInput.Text = ''; Update-TargetView })
 $ui.CheckAdmin.Add_Click({ if ($script:LocalTargetMode) { [Windows.MessageBox]::Show('ADMIN$ is a remote access check and is not applicable to direct-local collection.','Local mode') | Out-Null; return }; Clear-GUIReportState; if (-not $script:TargetComputer) { [Windows.MessageBox]::Show('Select a target on the Dashboard first.', 'No target') | Out-Null; return }; Test-GUIAdminShare; Update-GUIRecentTargetStatus; $ui.DiagnosticOutput.Text = "ADMIN`$: $($script:AdminStatus)`n$($script:AdminDetail)" })
 $ui.DnsTarget.Add_Click({ Clear-GUIReportState;
     if (-not $script:TargetComputer) { [Windows.MessageBox]::Show('Select a target on the Dashboard first.', 'No target') | Out-Null; return }
