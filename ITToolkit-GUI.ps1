@@ -199,6 +199,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
      <Button Name="NavTools" Content="Tools" Height="41"/>
      <Button Name="NavReports" Content="Reports" Height="41"/>
      <Button Name="NavSettings" Content="Settings" Height="41"/>
+     <Button Name="SwitchClassic" Content="Switch to Classic" Height="41" ToolTip="Start Classic with this Windows identity; targets and alternate credentials do not transfer."/>
      <Border Height="1" Background="#CAD5E1" Margin="0,12"/>
      <TextBlock Text="TARGET COMPUTER" FontWeight="SemiBold" FontSize="11" Foreground="#61748B" Margin="4,0,0,9"/>
      <Border Name="SideStatusCard" Background="#F1F5FA" BorderBrush="#CBD7E5" BorderThickness="1,1,1,1" CornerRadius="5" Padding="10,10,8,10">
@@ -447,7 +448,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $ui = @{}
-foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
+foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
 $window.Title = "$displayName - Graphical Interface"
 $ui.Heading.Text = $displayName
 $ui.Subtitle.Text = "Graphical Interface  |  Toolkit v$version"
@@ -1526,6 +1527,28 @@ $ui.NavDiagnostics.Add_Click({ Show-GUIPage 'Diagnostics' })
 $ui.NavTools.Add_Click({ Refresh-Tools; Show-GUIPage 'Tools' })
 $ui.NavReports.Add_Click({ Refresh-Archive; Refresh-SnapshotArchive; Show-GUIPage 'Reports' })
 $ui.NavSettings.Add_Click({ Show-GUIPage 'Settings' })
+$ui.SwitchClassic.Add_Click({
+    if ($null -ne $script:DiagnosticPS -or $null -ne $script:SnapshotPS) {
+        [Windows.MessageBox]::Show('Finish the active collection before switching interfaces.', 'Collection in progress') | Out-Null
+        return
+    }
+    $classicScript = Join-Path $PSScriptRoot 'ITToolkit.ps1'
+    if (-not (Test-Path -LiteralPath $classicScript -PathType Leaf)) {
+        [Windows.MessageBox]::Show('Classic script was not found; remaining in GUI.', 'Switch unavailable') | Out-Null
+        return
+    }
+    try {
+        # Launch under the current Windows token, without credential or target handoff.
+        $psExe = Join-Path $PSHOME 'powershell.exe'
+        $arguments = '-NoLogo -NoProfile -STA -NoExit -File "' + $classicScript + '"'
+        $process = Start-Process -FilePath $psExe -ArgumentList $arguments -WorkingDirectory $PSScriptRoot -PassThru -ErrorAction Stop
+        if ($null -eq $process) { throw 'Windows did not return a process.' }
+        $window.Close()
+    } catch {
+        [Windows.MessageBox]::Show("Could not open Classic; remaining in GUI: $($_.Exception.Message)", 'Switch failed') | Out-Null
+    }
+})
+
 $ui.EditPins.Add_Click({ Refresh-Tools; Show-GUIPage 'Tools' })
 $ui.ClearRecents.Add_Click({
     $script:RecentTargets = @()
