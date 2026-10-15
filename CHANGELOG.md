@@ -532,3 +532,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - **Windows technician confirmed:** SharePermissions succeeded in GUI and Classic with HTML saving/reopening. One ordinary SMB share was returned with share-level and NTFS root access lists; no effective-access calculation was claimed.
 - Added read-only direct-local Health evidence summary for system-drive free percentage, count of nonrunning automatic services, and the latest 24h System critical/error count (up to 100 events). Distinguishes per-check availability, `NoData`, and overall `PARTIAL` when a collection fails; does not assign a health score.
 - Enabled Health in both explicit local interfaces and changed smoke-test default to Health. Remote Health remains unchanged. Windows Health GUI/Classic/HTML and edge-case validation, plus authorized positive tests for BitLocker and Policy and remote regression, remain pending.
+
+### v1.27C — Local Health Windows validation (2026-10-15)
+
+- Technician confirmed GUI and Classic Health collection, plus HTML report save/open. C: free space 31.4% (145.72 GB), 324 services inspected with 6 automatic not running, and 8 System critical/error events in 24 hours.
+- 18/20 local diagnostic sections now have successful Windows positive-path validation. BitLocker and Policy have only access-denied negative-path verification, not successful inventory.
+- Health evidence does not establish system health. Other Windows environments, CSV/TXT formats, remote regression and authorized BitLocker/Policy positive-path tests remain outstanding. The v1.27D analysis milestone is not complete.
