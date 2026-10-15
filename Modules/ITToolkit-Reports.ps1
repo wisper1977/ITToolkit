@@ -426,8 +426,11 @@ function Get-RemoteScheduledTasks([string]$Target) {
 }
 function Get-SectionStatus([string]$Section,[string]$Content) {
     if ([string]::IsNullOrWhiteSpace($Content)) { return 'NO RESULTS' }
+    # The historical failure prefix lists multiple possible outcomes. Do not
+    # interpret its literal "ACCESS DENIED" label as evidence of a denied query.
     if ($Content -match '(?i)^UNAVAILABLE / ACCESS DENIED / ERROR:') {
-        if ($Content -match '(?i)access is denied|access denied|0x80070005|unauthorized') { return 'ACCESS DENIED' }
+        $actualError = $Content -replace '(?i)^UNAVAILABLE / ACCESS DENIED / ERROR:\s*', ''
+        if ($actualError -match '(?i)access is denied|access denied|0x80070005|unauthorized') { return 'ACCESS DENIED' }
         return 'UNAVAILABLE'
     }
     if ($Content -match '(?im)^STATUS:\s*(UNAVAILABLE|ACCESS DENIED|NO RESULTS)') { return $Matches[1].ToUpperInvariant() }
