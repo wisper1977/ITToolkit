@@ -83,6 +83,16 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 - **GUI report-save regression fix:** The Save Report handler now recognizes `Local` alongside `Default` and `Alternate`, without weakening its target/identity checks. Saved local reports use a `LOCAL DIAGNOSTIC REPORT` heading instead of `REMOTE`.
 - **Windows GUI Local save regression retest passed:** A Services diagnostic was collected and its report saved successfully. This validates saving under Local mode, **not** local Services data collection (still unsupported and expected to be `NOT TESTED`). The user subsequently confirmed that all saved reports tested opened successfully; exact per-format coverage remains unspecified. Additional GUI/Classic scenarios and remote regression testing remain pending; do **not** mark v1.27C complete.
 
+### v1.27C — Direct-local Services diagnostic (third increment; Windows validation pending)
+
+#### Added
+- Extended `Get-ToolkitLocalDiagnostic` to support `Services` through local `Win32_Service` CIM enumeration using the current Windows identity, with no WinRM/ADMIN$ dependency.
+- Like the existing remote Services diagnostic, report nonrunning services whose start mode is `Auto`, plus total service and finding counts. Query success with zero findings reports `SUCCESS`; zero enumerated service records is treated as `UNAVAILABLE`, not a healthy result.
+- Enabled the shared local Services path in GUI and Classic; other unsupported local sections remain explicitly `NOT TESTED`.
+
+#### Validation pending
+- Windows 11 / Windows PowerShell 5.1 GUI and Classic Services collection, stopped automatic service cases, saved reports, and regression tests; no changes to remote collectors, credential selection, or service state were intended.
+
 ### Documentation organization
 
 - Added [ROADMAP.md](ROADMAP.md) as the dedicated plan for pending v1.27B validation, v1.27C local diagnostics, v1.27D health analysis, the proposed Quick Fix menu, NIST/best-practices checks, and later enhancements.
