@@ -219,7 +219,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
       <TextBlock Text="Select a target computer, then open a diagnostic tool or your favorite shortcuts." TextWrapping="Wrap" Margin="0,6,0,17" Foreground="#60738A"/>
       <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="19" CornerRadius="5" Margin="0,0,0,15">
        <StackPanel><TextBlock Text="TARGET COMPUTER" FontWeight="SemiBold" Foreground="#17365D" Margin="0,0,0,9"/>
-        <WrapPanel><TextBox Name="TargetInput" Width="270" Height="34" Padding="9,5" Margin="0,0,9,8" ToolTip="Computer hostname or IPv4 address"/><Button Name="SetTarget" Content="Set target / Check access" Height="34"/><Button Name="ClearTarget" Content="Clear" Height="34"/></WrapPanel>
+        <WrapPanel><TextBox Name="TargetInput" Width="270" Height="34" Padding="9,5" Margin="0,0,9,8" ToolTip="Computer hostname or IPv4 address"/><Button Name="SetTarget" Content="Set target / Check access" Height="34"/><Button Name="UseLocalTarget" Content="Use Local Computer" Height="34"/><Button Name="ClearTarget" Content="Clear" Height="34"/></WrapPanel>
         <WrapPanel Margin="0,0,0,7" VerticalAlignment="Center">
           <CheckBox Name="UseAlternate" Content="Use alternate credentials" Margin="0,5,14,4" VerticalAlignment="Center"/>
           <TextBlock Name="AlternateUserLabel" Text="" Foreground="#42678E" VerticalAlignment="Center" Margin="0,4,12,4"/>
@@ -447,7 +447,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $ui = @{}
-foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
+foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
 $window.Title = "$displayName - Graphical Interface"
 $ui.Heading.Text = $displayName
 $ui.Subtitle.Text = "Graphical Interface  |  Toolkit v$version"
@@ -481,6 +481,7 @@ $script:GUIAlternateUser = ''
 $script:GUIAlternateMode = $false
 $script:GUIAlternateTarget = ''
 $script:TargetComputer = $null
+$script:LocalTargetMode = $false
 $script:TargetIPv4 = '(not selected)'
 $script:AdminStatus = 'Not checked'
 $script:AdminDetail = 'Select a target first.'
@@ -541,6 +542,7 @@ function Update-TargetView {
     Update-TargetInfo
 }
 function Test-GUIAdminShare {
+    if ($script:LocalTargetMode) { return }
     if (-not $script:TargetComputer) { return }
     $script:AdminStatus = 'Checking ADMIN$'
     $script:AdminDetail = 'Checking share access with the selected authentication mode.'
@@ -604,9 +606,10 @@ function Clear-GUIAlternateContext {
     $script:GUIAlternateTarget = ''
 }
 function Set-GUIAuthView {
+    $ui.UseAlternate.IsEnabled = -not $script:LocalTargetMode
     $ui.AlternateUserLabel.Text = if ($script:GUIAlternateMode -and $script:GUIAlternateUser) { [string]$script:GUIAlternateUser } else { '' }
     $ui.ChangeAlternate.IsEnabled = [bool]$script:GUIAlternateMode
-    $ui.CheckAdmin.IsEnabled = -not $script:GUIAlternateMode
+    $ui.CheckAdmin.IsEnabled = -not $script:GUIAlternateMode -and -not $script:LocalTargetMode
     # Health uses the same credential-aware diagnostic dispatcher as other checks.
     $ui.QuickHealth.IsEnabled = $true
     # Diagnostic execution is enabled for either mode; alternate runs require a live auth context.
@@ -673,6 +676,7 @@ function Confirm-GUIAlternateCredential {
 }
 
 function Resolve-GUITarget {
+    $script:LocalTargetMode = $false
     Clear-GUIReportState
     $value = $ui.TargetInput.Text.Trim()
     if (-not $value -or $value -notmatch '^[a-zA-Z0-9_.-]+$') { [Windows.MessageBox]::Show('Enter a valid hostname or IPv4 address.', 'Target computer') | Out-Null; return }
@@ -1142,7 +1146,7 @@ $script:DiagnosticTimer.Add_Tick({
         if (-not $ui.DiagnosticOutput.Text) { $ui.DiagnosticOutput.Text = '(The collector returned no output.)' }
         # Never save results under a target or identity different from the collection request.
         $completed = $script:PendingGUIReport
-        $activeMode = if ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+        $activeMode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
         $activeIdentity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
         if ($null -eq $completed -or $completed.Target -ine $script:TargetComputer -or
             $completed.Mode -ne $activeMode -or $completed.Identity -ine $activeIdentity) {
@@ -1179,10 +1183,10 @@ $script:DiagnosticTimer.Add_Tick({
     }
 })
 function Start-GUIDiagnostics([string[]]$sections) {
-    $mode = if ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $mode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
     $identity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
     $alternateCredential = $null
-    if ($script:GUIAlternateMode) {
+    if ($mode -eq 'Alternate') {
         if (-not $script:TargetComputer -or -not $script:GUIAuthContext -or
             $script:GUIAlternateTarget -ine $script:TargetComputer -or
             $script:GUIAuthContext.ComputerName -ine $script:TargetComputer -or
@@ -1254,6 +1258,39 @@ foreach ($section in $requested) {
 }
 return ($lines -join "`r`n")
 '@
+    if ($mode -eq 'Local') {
+        # Direct-local collection only; no remote fallback and no credential elevation.
+        $worker = @'
+param([string]$root,[string]$target,[string[]]$requested)
+$ErrorActionPreference = 'Stop'
+. (Join-Path $root 'Modules\ITToolkit-LocalDiagnostics.ps1')
+$lines = New-Object System.Collections.Generic.List[string]
+$lines.Add("Target: $target")
+$lines.Add('Collection mode: Local (current Windows identity)')
+$lines.Add("Collected: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
+$lines.Add('Read-only diagnostics; a successful query does not establish system health.')
+foreach ($section in $requested) {
+    $lines.Add('')
+    $lines.Add(('=' * 65))
+    $lines.Add("$section REPORT")
+    $lines.Add(('=' * 65))
+    if ($section -notin @('System','Firewall')) {
+        $lines.Add('STATUS: NOT TESTED')
+        $lines.Add('Status category: NotTested')
+        $lines.Add('Error details: Direct-local collection is not implemented for this section yet.')
+        continue
+    }
+    $result = Get-ToolkitLocalDiagnostic -Section $section
+    $lines.Add("STATUS: $($result.Status)")
+    $lines.Add("Status category: $($result.StatusCategory)")
+    if ($result.Error) { $lines.Add("Error details: $($result.Error)") }
+    foreach ($record in @($result.Data)) {
+        $lines.Add(($record | Format-List * | Out-String -Width 200).TrimEnd())
+    }
+}
+return ($lines -join "`r`n")
+'@
+    }
     if ($mode -eq 'Alternate') {
         # Credentials cross into the in-process runspace as PSCredential, never via a command line or file.
         $worker = @'
@@ -1363,6 +1400,7 @@ $script:SnapshotTimer.Add_Tick({
 $ui.CreateSnapshotGUI.Add_Click({
     if ($null -ne $script:SnapshotPS) { return }
     $target = [string]$script:TargetComputer
+    if ($script:LocalTargetMode) { [Windows.MessageBox]::Show('Local snapshots are not implemented yet. Choose a remote target for snapshot capture.','Snapshot not supported') | Out-Null; return }
     if ([string]::IsNullOrWhiteSpace($target)) { [Windows.MessageBox]::Show('Select a target on Dashboard first.','Snapshot') | Out-Null; return }
     $mode = if ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
     $identity = if ($mode -eq 'Alternate') { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
@@ -1512,8 +1550,30 @@ $ui.UseAlternate.Add_Unchecked({
 })
 $ui.ChangeAlternate.Add_Click({ [void](Confirm-GUIAlternateCredential) })
 $ui.SetTarget.Add_Click({ Resolve-GUITarget })
-$ui.ClearTarget.Add_Click({ Clear-GUIAlternateContext; $script:GUIAlternateMode=$false; $ui.UseAlternate.IsChecked=$false; Set-GUIAuthView; Clear-GUIReportState; $script:TargetPingState = 'Not checked'; $script:TargetLastChecked = $null; $script:LastDiagnosticSummary = 'None this session'; $script:TargetComputer = $null; $script:TargetIPv4 = '(not selected)'; $script:AdminStatus = 'Not checked'; $script:AdminDetail = 'Select a target first.'; $ui.TargetInput.Text = ''; Update-TargetView })
-$ui.CheckAdmin.Add_Click({ Clear-GUIReportState; if (-not $script:TargetComputer) { [Windows.MessageBox]::Show('Select a target on the Dashboard first.', 'No target') | Out-Null; return }; Test-GUIAdminShare; Update-GUIRecentTargetStatus; $ui.DiagnosticOutput.Text = "ADMIN`$: $($script:AdminStatus)`n$($script:AdminDetail)" })
+$ui.UseLocalTarget.Add_Click({
+    if ($null -ne $script:DiagnosticPS -or $null -ne $script:SnapshotPS) {
+        [Windows.MessageBox]::Show('Wait for the active collection to finish before changing targets.','Collection in progress') | Out-Null
+        return
+    }
+    Clear-GUIAlternateContext
+    $script:LocalTargetMode = $true
+    $script:GUIAlternateMode = $false
+    $ui.UseAlternate.IsChecked = $false
+    Clear-GUIReportState
+    $script:TargetComputer = [string]$env:COMPUTERNAME
+    $ui.TargetInput.Text = $script:TargetComputer
+    $script:TargetIPv4 = '(local collection)'
+    $script:TargetPingState = 'Not needed (local)'
+    $script:TargetLastChecked = Get-Date
+    $script:LastDiagnosticSummary = 'None this session'
+    $script:AdminStatus = 'Local mode'
+    $script:AdminDetail = 'System and Firewall collect directly under your current Windows identity. Other local checks and snapshots are not yet implemented.'
+    Set-GUIAuthView
+    Update-TargetView
+    $ui.Status.Text = 'Local computer selected — System and Firewall available.'
+})
+$ui.ClearTarget.Add_Click({ $script:LocalTargetMode=$false; Clear-GUIAlternateContext; $script:GUIAlternateMode=$false; $ui.UseAlternate.IsChecked=$false; Set-GUIAuthView; Clear-GUIReportState; $script:TargetPingState = 'Not checked'; $script:TargetLastChecked = $null; $script:LastDiagnosticSummary = 'None this session'; $script:TargetComputer = $null; $script:TargetIPv4 = '(not selected)'; $script:AdminStatus = 'Not checked'; $script:AdminDetail = 'Select a target first.'; $ui.TargetInput.Text = ''; Update-TargetView })
+$ui.CheckAdmin.Add_Click({ if ($script:LocalTargetMode) { [Windows.MessageBox]::Show('ADMIN$ is a remote access check and is not applicable to direct-local collection.','Local mode') | Out-Null; return }; Clear-GUIReportState; if (-not $script:TargetComputer) { [Windows.MessageBox]::Show('Select a target on the Dashboard first.', 'No target') | Out-Null; return }; Test-GUIAdminShare; Update-GUIRecentTargetStatus; $ui.DiagnosticOutput.Text = "ADMIN`$: $($script:AdminStatus)`n$($script:AdminDetail)" })
 $ui.DnsTarget.Add_Click({ Clear-GUIReportState;
     if (-not $script:TargetComputer) { [Windows.MessageBox]::Show('Select a target on the Dashboard first.', 'No target') | Out-Null; return }
     try { $all = [Net.Dns]::GetHostAddresses($script:TargetComputer); $ui.DiagnosticOutput.Text = "DNS: $($script:TargetComputer)`n" + (($all | ForEach-Object { $_.ToString() }) -join "`n") } catch { $ui.DiagnosticOutput.Text = $_.Exception.Message }
