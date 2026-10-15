@@ -637,3 +637,10 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Removed the local snapshot block in GUI and Classic. Expanded the shared seven-category structured GUI collector to support `Local`, keeping existing Default/Alternate remote paths unchanged. Local captures query WMI on the current system and enumerate installed software through the local registry.
 - Classic Create Snapshot now uses the same schema-compatible collector and archive naming; its optional saved-report snapshot sidecar also supports Local Computer. Target and identity checks prevent labeling a different computer or administrator identity as the local collector. Failed categories remain unavailable/NOT COMPARABLE, and all-failed collection is not saved.
 - **Release candidate revoked:** workplace checklist previously completed did not include successful local snapshot creation/comparison. Must validate GUI and Classic local snapshot creation, save/reload, two-snapshot comparison, partial failures, permissions and remote snapshot regression on Windows before promoting to production `main`.
+
+### v1.27 — Local and remote snapshot capture verified on Windows (2026-10-15)
+
+- **Technician-confirmed PASS:** local snapshot creation now works following the new Local collector integration.
+- **Technician-confirmed PASS:** remote snapshot creation still works after the change, supporting basic remote regression compatibility.
+- Snapshot comparison correctness, failure-category handling, archive reload, and optional Classic report snapshot sidecar are not independently confirmed by this report; retain these as final release-review checks rather than claiming they passed.
+- Development remains on `develop/v1.27`; stable production `main` is unchanged.
