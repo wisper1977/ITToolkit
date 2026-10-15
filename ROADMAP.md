@@ -1,6 +1,6 @@
 # IT Toolkit Development Roadmap
 
-> **Current development:** v1.27 on `develop/v1.27`. **Production:** v1.26 on `main`. This roadmap lists outstanding work and future proposals, **not completed feature history**. Completed implementations, technician-confirmed Windows checks, limitations, and commit history belong in [CHANGELOG.md](CHANGELOG.md). The [README.md](README.md) describes current usage.
+> **Current development:** v1.27 on `develop/v1.27`. **Production:** v1.26 on `main`. This roadmap lists outstanding work and future proposals, **not completed feature history**. Completed implementations, technician-confirmed Windows checks, limitations, and commit history belong under the single **v1.27** entry in [CHANGELOG.md](CHANGELOG.md) (not lettered subversions). The [README.md](README.md) describes current usage.
 
 ## Active milestones
 
