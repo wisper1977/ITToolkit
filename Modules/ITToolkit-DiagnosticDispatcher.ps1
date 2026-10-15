@@ -21,6 +21,17 @@ function Get-ToolkitDiagnosticStatusCategory {
     }
 }
 
+# Only explicit authorization failures are access denied. An unreachable target
+# or a failed transport remains UNAVAILABLE, even when the computer name is invalid.
+function Get-ToolkitDiagnosticExceptionStatus {
+    [CmdletBinding()]
+    param([AllowEmptyString()][string]$Message)
+    if ($Message -match '(?i)access is denied|access denied|0x80070005|unauthorized') {
+        return 'ACCESS DENIED'
+    }
+    return 'UNAVAILABLE'
+}
+
 function Get-ToolkitDiagnosticMap {
     [CmdletBinding()]
     param()
@@ -87,6 +98,8 @@ function Invoke-ToolkitDiagnostic {
             AdapterSection=[string]$m.AdapterSection
         }
     } catch {
-        [pscustomobject]@{ Target=[string]$Context.ComputerName; Mode=[string]$Context.Mode; UserName=[string]$Context.UserName; Section=$Section; CollectedAt=Get-Date; Status='UNAVAILABLE'; StatusCategory='Unavailable'; Data=@(); Error=[string]$_.Exception.Message; Adapter=[string]$m.Adapter; AdapterSection=[string]$m.AdapterSection }
+        $failureMessage = [string]$_.Exception.Message
+        $failureStatus = Get-ToolkitDiagnosticExceptionStatus -Message $failureMessage
+        [pscustomobject]@{ Target=[string]$Context.ComputerName; Mode=[string]$Context.Mode; UserName=[string]$Context.UserName; Section=$Section; CollectedAt=Get-Date; Status=$failureStatus; StatusCategory=(Get-ToolkitDiagnosticStatusCategory -Status $failureStatus); Data=@(); Error=$failureMessage; Adapter=[string]$m.Adapter; AdapterSection=[string]$m.AdapterSection }
     }
 }
