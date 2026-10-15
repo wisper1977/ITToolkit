@@ -177,7 +177,7 @@ See the [LICENSE](LICENSE) file for the full license text.
 
 ### Developer smoke test: local diagnostics
 
-On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **Hardware**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
+On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **Users**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
 
 **Local Storage direct collector validation (technician-confirmed, 2026-10-14):** Windows PowerShell returned `SUCCESS`/`Success` with no error and two fixed logical drives (C: and E:), including size, free GB, and percentage. GUI/Classic Storage output and report-save checks remain pending.
 
@@ -188,3 +188,7 @@ On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiag
 **v1.27C Local Network Windows validation (2026-10-15):** Technician confirmed Network reports work in GUI and Classic, and an HTML report saves and opens. The local report correctly displayed two IP-enabled adapters, including an Ethernet APIPA address and Wi-Fi configuration. CSV/TXT and remote regressions remain pending.
 
 **v1.27C Local Hardware implementation (Windows test pending):** Shared read-only Hardware collector now includes computer manufacturer/model, RAM, BIOS version and serial number, CPU model/core/thread counts, and physical disk model/size when enumerated. GUI and Classic both use the common local collector without requiring WinRM. The single-file test harness now defaults to Hardware. Hardware collector, both interfaces, and saved reports still need Windows validation.
+
+**2026-10-15 Windows validation:** Local Hardware ran successfully in GUI and Classic, and HTML reports saved and opened. The report showed ASUS system information, 31.9 GB RAM, AMI BIOS 2301, Intel i7-10700K (8 cores/16 threads), and a Samsung SSD. Physical disk listing can be cross-checked against the separately observed E: logical volume in later testing.
+
+**Local Users (Windows test pending):** Implemented read-only local account inventory (name, domain, SID, disabled and lockout state) with shared GUI/Classic collection. Test-LocalDiagnostics.ps1 now defaults to Users. Report and error-path verification are pending.
