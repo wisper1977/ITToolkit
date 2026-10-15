@@ -63,6 +63,12 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 - Changed only the GUI **Open Reports Folder** handler to start an independent, same-identity Windows PowerShell process, which launches Explorer with the tested `/n` argument. The launch command is supplied using Unicode `-EncodedCommand` to retain path quoting, not to bypass execution policy. No credentials, UAC elevation, ACLs, or security policy are changed.
 - **Windows GUI validation is pending.** Starting the child process is not proof that the Explorer window appeared. **Copy Folder Path** remains available. Production `main` unchanged.
 
+### Report Archive diagnostic launch result (2026-10-15)
+
+- Technician confirmed the previous separate-PowerShell Explorer attempt **still did not display the Reports folder** from the GUI; GUI status only reported that a launch had been requested.
+- Updated the **Open Reports Folder** handler to wait briefly for the child PowerShell process, capture its exit code and standard-error details, and distinguish a completed child (which does not prove a visible Explorer window) from launch failure or timeout. Existing Copy Folder Path remains the workaround. No credentials, ACLs, or execution policies are modified.
+- **Windows GUI test pending:** reproduce the failure using the instrumented handler and report the resulting status or error for diagnosis.
+
 ### Remaining release checks and limitations
 
 - Validate unavailable/denied and partial Health paths, negative pending-restart indicators, and alternate remote authentication **provenance** where observable. Check latest saved seven-check output in the relevant HTML/CSV/TXT workflows.
