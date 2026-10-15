@@ -664,3 +664,10 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Labeled System, Security and Updates explicitly **Not assessed** pending expanded evidence collection; avoids presenting uncollected evidence as passing. Health detail counters and category findings clear on target change.
 - Updated the stale local-mode detail in GUI and Classic: all 20 direct-local diagnostics and local snapshots are implemented; selected privileged checks may require explicit UAC.
 - Reused the shared Health report in both interfaces without changing remote diagnostic collection. **New GUI layout and displayed category extraction await Windows verification.**
+
+### v1.27 — Remote computer Health Dashboard parity (Windows validation pending)
+
+- Corrected the local-only dashboard implementation: Health analysis now processes credential-scoped remote Health evidence from Default and Alternate collection paths without substituting local data or implicitly changing authentication.
+- Added shared remote analysis for disk capacity, automatic services and 24-hour bounded System event counts. Remote failures and malformed evidence remain Unavailable; ADMIN$ is not inferred from health probes, and no overall health score is generated.
+- GUI Health cards now support local or remote results and retain selected target, auth mode and requested identity; changes clear prior health evidence. Classic Default and Alternate remote Health reports now include the same analysis. Remote Default retains its existing main report and labels the independently collected WinRM evidence.
+- **Not Windows-validated yet:** remote Health rendering, WinRM-unavailable cases, alternative identity and target switching, saved reports, full Classic/GUI parity. Local disk-review threshold is 10%, remote's existing health threshold is 15%; align rules in a later focused change after validation.
