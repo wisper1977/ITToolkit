@@ -4,7 +4,16 @@ Documented changes to **IT Toolkit** are recorded here. This file distinguishes 
 
 The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentation Foundation (WPF); the Classic interface uses a text menu.
 
-## [1.27] — In development
+## [1.27] — Release candidate (awaiting approval)
+
+### Workplace validation checklist completion — technician confirmation (2026-10-15)
+
+- Technician reports completing the agreed workplace test checklist: Classic/GUI switching, Classic BitLocker UAC, cancelled UAC handling, GUI elevated HTML/CSV/TXT save/open and report archive/recent reports, copied-report provenance, normal and alternate remote authentication, target/identity isolation, GUI startup/preferences, local collection without WinRM/ADMIN$, and endpoint-security checks.
+- This is a **technician-reported confirmation** of completion, not a newly executed automated suite or separately supplied test output for every item. The earlier GUI cross-account BitLocker SUCCESS result was explicitly provided.
+- **Environment limitation:** Policy computer RSoP queries continue to report ACCESS DENIED even when `gpresult.exe /SCOPE COMPUTER /R` runs in a separate elevated administrator console; preserve accurate status rather than interpreting as a toolkit malfunction or healthy result.
+- No changes to production `main`; v1.27 awaits explicit release approval and final branch review.
+
+
 
 ### v1.27 — Explicit CurrentUser RemoteSigned option for UAC diagnostics (Windows testing pending, 2026-10-15)
 
