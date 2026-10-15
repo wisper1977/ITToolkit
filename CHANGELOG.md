@@ -6,6 +6,13 @@ The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentati
 
 ## [1.27] — In development
 
+### v1.27C — Events verified; Local Startup implementation (2026-10-15)
+
+- **Windows technician confirmed:** Events worked in GUI and Classic and HTML reports saved and opened. The System log had 13 error events over seven days; the Application log returned no matching errors (`NoData`). The overall query reported `SUCCESS`. DCOM connection attempts to `WisperPC` and WindowsUpdateClient app install failures were observed but are not automatic health verdicts.
+- Added local read-only Startup program inventory via `Win32_StartupCommand`, exposing name, location, user, and command without starting or changing entries. This does not cover every possible Windows autostart mechanism.
+- Enabled Startup in GUI and Classic local section routing; updated reusable test script default to Startup. **Pending:** Windows collector, both interfaces, HTML report save/open, no-results/permission cases, and remote regression. Existing remote Startup behavior remains unchanged.
+
+
 ### v1.27C — Scheduled Tasks validated; Events implementation (2026-10-15)
 
 - **Windows technician confirmed:** Local Scheduled Tasks worked in GUI and Classic and HTML reports saved and reopened. Task Scheduler statuses, last/next runs and result codes were reported; nonzero codes and placeholder timestamps have not been labeled system failures.
