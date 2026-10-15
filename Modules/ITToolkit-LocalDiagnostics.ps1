@@ -8,7 +8,7 @@ function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)]
-        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events')]
+        [ValidateSet('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup')]
         [string]$Section
     )
 
@@ -43,6 +43,20 @@ function Get-ToolkitLocalDiagnostic {
                         OSArchitecture = [string]$os.OSArchitecture
                     })
                 }
+            }
+            'Startup' {
+                # Direct-local read-only startup command inventory. Mirrors the
+                # existing remote Win32_StartupCommand scope, not all startup mechanisms.
+                $entries = @(Get-CimInstance -ClassName Win32_StartupCommand -ErrorAction Stop)
+                $result.Data = @($entries | Sort-Object Name,Location | ForEach-Object {
+                    [pscustomobject]@{
+                        Name = [string]$_.Name
+                        Location = [string]$_.Location
+                        User = [string]$_.User
+                        Command = [string]$_.Command
+                    }
+                })
+                # A valid query with zero entries is NoData, not a health assessment.
             }
             'Events' {
                 # Bounded local System/Application error log inspection (past 7 days,
