@@ -19,6 +19,7 @@ if ($script:DependencyWarnings.Count -gt 0) {
     [void](Read-Host 'Press Enter to continue to the toolkit')
 }
 $script:TargetComputer = $null
+$script:LocalTargetMode = $false
 $script:TargetIPv4 = '(not selected)'
 $script:AdminStatus = 'Not checked'
 $script:AdminDetail = 'Select a target to run an access check.'
@@ -56,6 +57,10 @@ if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missin
 $componentPath = Join-Path $componentFolder 'ITToolkit-Authentication.ps1'
 if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missing toolkit component: $componentPath" }
 . $componentPath
+# Direct-local System and Firewall collector; no remote-management dependency.
+$componentPath = Join-Path $componentFolder 'ITToolkit-LocalDiagnostics.ps1'
+if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missing toolkit component: $componentPath" }
+. $componentPath
 $componentPath = Join-Path $componentFolder 'ITToolkit-ClassicAuthentication.ps1'
 if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missing toolkit component: $componentPath" }
 . $componentPath
@@ -87,12 +92,14 @@ while ($true) {
     Write-Host ' 7 Change Target Computer - Select a new remote computer'
     Write-Host ' 8 Clear Target Computer  - Remove selected computer'
     Write-Host ' 9 Recheck Admin Access    - Rerun admin share permission test'
+    Write-Host '13 Use Local Computer     - Direct System and Firewall diagnostics'
     Write-Host '------------------------------------------------------------' -ForegroundColor DarkGray
     Write-Host ' SETTINGS' -ForegroundColor Yellow
     Write-Host '10 Toolkit Settings       - Manage all application settings'
     Write-Host '11 Tools                  - Shared catalog, Favorites and downloads'
     Write-Host '12 Target Credentials     - Select and test remote identity'
     Write-Host " Authentication: $script:ToolkitAuthMode $script:ToolkitAuthUserName" -ForegroundColor Cyan
+    Write-Host " Collection mode: $(if ($script:LocalTargetMode) {'Local (current identity)'} else {'Remote'})" -ForegroundColor Cyan
     Write-Host '------------------------------------------------------------' -ForegroundColor DarkGray
     Write-Host ' B Refresh main menu'
     Write-Host '------------------------------------------------------------' -ForegroundColor DarkGray
@@ -106,12 +113,13 @@ while ($true) {
         '4' { if (Assert-ClassicDefaultAuthentication) { Menu-AD } }
         '5' { Menu-Reports }
         '6' { Menu-Comparison } # offline file comparison; no remote identity required
-        '7' { Reset-ClassicAlternateCredential; Change-Target }
-        '8' { Reset-ClassicAlternateCredential; $script:TargetComputer=$null; $script:TargetIPv4='(not selected)'; $script:AdminStatus='Not checked'; $script:AdminDetail='Select a target to run an access check.'; $script:AdminCheckedAt=$null }
-        '9' { if (-not (Assert-ClassicDefaultAuthentication)) { continue }; if ($script:TargetComputer) { Test-RemoteAdminAccess; Write-Host $script:AdminDetail; Pause-Toolkit } else { Write-Host 'Select a target first.' -ForegroundColor Yellow; Pause-Toolkit } }
+        '7' { Reset-ClassicAlternateCredential; $script:LocalTargetMode=$false; Change-Target }
+        '8' { Reset-ClassicAlternateCredential; $script:LocalTargetMode=$false; $script:TargetComputer=$null; $script:TargetIPv4='(not selected)'; $script:AdminStatus='Not checked'; $script:AdminDetail='Select a target to run an access check.'; $script:AdminCheckedAt=$null }
+        '9' { if ($script:LocalTargetMode) { Write-Host 'ADMIN$ check does not apply to direct-local collection.' -ForegroundColor Yellow; Pause-Toolkit; continue }; if (-not (Assert-ClassicDefaultAuthentication)) { continue }; if ($script:TargetComputer) { Test-RemoteAdminAccess; Write-Host $script:AdminDetail; Pause-Toolkit } else { Write-Host 'Select a target first.' -ForegroundColor Yellow; Pause-Toolkit } }
         '10' { Menu-Settings }
         '11' { Menu-ClassicCatalog }
-        '12' { Set-ClassicTargetCredential }
+        '12' { if ($script:LocalTargetMode) { Write-Host 'Alternate-admin local collection is not yet implemented. Switch to remote target mode first.' -ForegroundColor Yellow; Pause-Toolkit } else { Set-ClassicTargetCredential } }
+        '13' { Reset-ClassicAlternateCredential; $script:LocalTargetMode=$true; $script:TargetComputer=[string]$env:COMPUTERNAME; $script:TargetIPv4='(local collection)'; $script:AdminStatus='Local mode'; $script:AdminDetail='Direct local System and Firewall only; other sections and snapshots are not yet supported.'; $script:AdminCheckedAt=$null }
         '0' { return }
     }
 }
