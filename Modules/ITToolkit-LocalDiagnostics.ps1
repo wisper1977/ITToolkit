@@ -1,8 +1,9 @@
 # IT Toolkit v1.27C - direct local diagnostic collector foundation.
 # Windows PowerShell 5.1; dot-source when local collection is explicitly selected.
 # Used by explicit local mode in both GUI and Classic.
-# Local collection runs with the current process token. It does not elevate,
-# accept alternate credentials, open WinRM, or establish SMB sessions.
+# Default local collection uses the current process token. Only explicitly
+# authorized BitLocker/Policy UAC handoffs use a separate elevated process.
+# It does not use WinRM or open SMB sessions.
 
 function Get-ToolkitLocalDiagnostic {
     [CmdletBinding()]
@@ -713,11 +714,11 @@ try {
     exit 1
 }
 '@
-        $child = $child.Replace('__MODULE__',$safeModule).
-            Replace('__SECTION__',$safeSection).
-            Replace('__OUTPUT__',$safeOutput).
-            Replace('__ERROR__',$safeError).
-            Replace('__NONCE__',$safeNonce)
+        $child = $child.Replace('__MODULE__',$safeModule)
+        $child = $child.Replace('__SECTION__',$safeSection)
+        $child = $child.Replace('__OUTPUT__',$safeOutput)
+        $child = $child.Replace('__ERROR__',$safeError)
+        $child = $child.Replace('__NONCE__',$safeNonce)
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($child))
         try {
             $process = Start-Process -FilePath $exe -ArgumentList @(
@@ -738,9 +739,10 @@ try {
             }
         }
         if (-not (Test-Path -LiteralPath $outputFile -PathType Leaf)) {
-            throw ("Elevated diagnostic returned no accessible result (exit code {0}). " +
+            $message = ("Elevated diagnostic returned no accessible result (exit code {0}). " +
                 "Check UAC account rights, whether the administrator account can access the " +
-                "toolkit files and the protected temporary folder, and endpoint security events." -f $process.ExitCode)
+                "toolkit files and the protected temporary folder, and endpoint security events.")
+            throw ($message -f $process.ExitCode)
         }
         if ($process.ExitCode -ne 0) {
             throw ("Elevated process exited with code {0}; its output was discarded." -f $process.ExitCode)
