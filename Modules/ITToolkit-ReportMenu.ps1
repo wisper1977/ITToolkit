@@ -2,6 +2,51 @@
 # Cache the last collected results for this Classic session only.
 # Target changes invalidate the cache during Save-Last validation.
 $script:ClassicLastReport = $null
+# Local snapshots share the seven-category schema with GUI/remote snapshots.
+# They query the local machine directly and never accept alternate credentials.
+function New-ClassicLocalComparisonSnapshot {
+    $target = [string]$script:TargetComputer
+    if (-not $script:LocalTargetMode -or $target -ine $env:COMPUTERNAME) {
+        Write-Host 'Select the local computer before creating a local snapshot.' -ForegroundColor Yellow
+        Pause-Toolkit; return
+    }
+    try {
+        $module = Join-Path $PSScriptRoot 'ITToolkit-GUISnapshotCollector.ps1'
+        if (-not (Test-Path -LiteralPath $module -PathType Leaf)) { throw "Snapshot collector missing: $module" }
+        . $module
+        $requestIdentity = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+        $snapshot = Get-ToolkitGUISnapshot -Target $target -Mode Local -ToolkitVersion ([string]$script:ToolkitVersion)
+        if ([Security.Principal.WindowsIdentity]::GetCurrent().Name -ine $requestIdentity -or
+            $snapshot.Target -ine $target -or $snapshot.AuthenticationMode -ne 'Local' -or
+            $snapshot.DiagnosticIdentity -ine $requestIdentity) {
+            throw 'Local snapshot target or collecting identity changed; snapshot discarded.'
+        }
+        $available = @($snapshot.Categories.PSObject.Properties).Count
+        if ($available -lt 1) { throw 'All seven snapshot categories were unavailable; nothing saved.' }
+        if (-not (Test-Path -LiteralPath $script:ReportFolder -PathType Container)) {
+            [void](New-Item -ItemType Directory -Path $script:ReportFolder -Force -ErrorAction Stop)
+        }
+        $safeTarget = $target -replace '[^a-zA-Z0-9_.-]','_'
+        $file = Join-Path $script:ReportFolder ('{0}_Complete_{1}.snapshot.json' -f $safeTarget,(Get-Date -Format 'yyyyMMdd_HHmmss_fff'))
+        $temp = Join-Path $script:ReportFolder ('.snapshot-' + [guid]::NewGuid().ToString('N') + '.tmp')
+        try {
+            $json = ConvertTo-Json -InputObject $snapshot -Depth 16 -ErrorAction Stop
+            [IO.File]::WriteAllText($temp,$json + [Environment]::NewLine,(New-Object System.Text.UTF8Encoding($false)))
+            Move-Item -LiteralPath $temp -Destination $file -ErrorAction Stop
+        } finally {
+            if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue }
+        }
+        Write-Host "Local snapshot saved: $file ($available/7 categories)." -ForegroundColor Green
+        $failed = @($snapshot.Errors.PSObject.Properties | ForEach-Object { $_.Name })
+        if ($failed.Count -gt 0) {
+            Write-Host "Unavailable: $($failed -join ', '). These categories will be NOT COMPARABLE." -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "Local snapshot failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+    Pause-Toolkit
+}
+
 function Save-ClassicCollectedReport {
     if ($null -eq $script:ClassicLastReport) {
         Write-Host 'No completed diagnostic report is available. Run a report first.' -ForegroundColor Yellow
@@ -39,7 +84,16 @@ function Save-ClassicCollectedReport {
         $snapshotChoice = (Read-Host 'Also collect a JSON comparison snapshot? Requires fresh remote inventory (Y/N)').Trim()
         if ($snapshotChoice -ieq 'Y') {
             try {
-                $snapshot = Get-ComparisonSnapshot $cached.Target $cached.Sections
+                if ($script:LocalTargetMode) {
+                    $collectorPath = Join-Path $PSScriptRoot 'ITToolkit-GUISnapshotCollector.ps1'
+                    . $collectorPath
+                    $snapshot = Get-ToolkitGUISnapshot -Target $cached.Target -Mode Local -ToolkitVersion ([string]$script:ToolkitVersion)
+                } else {
+                    $snapshot = Get-ComparisonSnapshot $cached.Target $cached.Sections
+                }
+                if (@($snapshot.Categories.PSObject.Properties).Count -lt 1) {
+                    throw 'All snapshot categories failed. Nothing saved.'
+                }
                 $snapshotPath = Join-Path $script:ReportFolder ('{0}_{1}_{2}.snapshot.json' -f $safeTarget,$safeLabel,(Get-Date -Format 'yyyyMMdd_HHmmss_fff'))
                 [System.IO.File]::WriteAllText($snapshotPath,(ConvertTo-Json -InputObject $snapshot -Depth 8),(New-Object System.Text.UTF8Encoding($false)))
                 Write-Host "Comparison snapshot saved: $snapshotPath" -ForegroundColor Green
@@ -232,7 +286,7 @@ function Menu-Reports {
         if ($choice -eq 'B' -or $choice -eq '0') { return }
         if ($choice -eq '22') { Save-ClassicCollectedReport; continue }
         if ($choice -eq '23') { Menu-ReportArchive; continue }
-        if ($choice -eq '24') { if ($script:LocalTargetMode) { Write-Host 'Local snapshots are not yet supported. Select a remote target.' -ForegroundColor Yellow; Pause-Toolkit } else { New-ClassicComparisonSnapshot }; continue }
+        if ($choice -eq '24') { if ($script:LocalTargetMode) { New-ClassicLocalComparisonSnapshot } else { New-ClassicComparisonSnapshot }; continue }
         if ($choice -eq '1') { Save-DiagnosticReport $all 'Complete'; continue }
         if ($options.ContainsKey($choice)) {
             $sections = $options[$choice]
