@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — GUI/Classic System + Firewall paths implemented; Windows integration test pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, and Services implemented in both; Services Windows test pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -26,7 +26,7 @@ This document describes proposed work, design requirements, dependencies, and de
 
 ## v1.27C — Local Computer Diagnostics
 
-**Implementation progress:** Initial shared direct-local System and Firewall collector added in `Modules/ITToolkit-LocalDiagnostics.ps1` (current-user only; Windows collector success paths validated on Windows 11 Pro with WinRM stopped). The second increment adds explicit local target selection in GUI and Classic and routes System/Firewall diagnostic reports to the local collector; unsupported local sections are reported as `NOT TESTED` and local snapshot capture is blocked. **Partial Windows integration validation passed:** GUI local Firewall returned `SUCCESS`, local Users returned `NOT TESTED`, and Classic local reports saved. The GUI Local-mode report-save fix passed a Windows save test using an unsupported Services diagnostic (`NOT TESTED`); the user confirmed successful opening of all saved reports tested. Actual local Services collection and explicit per-format verification remain outstanding. Further GUI/Classic and remote regression checks remain pending. Still outstanding: remaining local collectors, secure alternate-admin process, full snapshot integration, and regression testing.
+**Implementation progress:** Initial shared direct-local System and Firewall collector added in `Modules/ITToolkit-LocalDiagnostics.ps1` (current-user only; Windows collector success paths validated on Windows 11 Pro with WinRM stopped). The second increment adds explicit local target selection in GUI and Classic and routes System/Firewall diagnostic reports to the local collector; unsupported local sections are reported as `NOT TESTED` and local snapshot capture is blocked. **Partial Windows integration validation passed:** GUI local Firewall returned `SUCCESS`, local Users returned `NOT TESTED`, and Classic local reports saved. The GUI Local-mode report-save fix passed a Windows save test using an unsupported Services diagnostic (`NOT TESTED`); the user confirmed successful opening of all saved reports tested. Local Services collection is implemented using `Win32_Service` with a count of nonrunning automatic-start services; Windows validation is pending. Explicit per-format verification remains outstanding. Further GUI/Classic and remote regression checks remain pending. Still outstanding: remaining local collectors, secure alternate-admin process, full snapshot integration, and regression testing.
 
 
 **Goal:** Diagnose the machine running IT Toolkit without requiring its remote WinRM or `ADMIN$` endpoints. Use a **shared implementation** in GUI and Classic.
