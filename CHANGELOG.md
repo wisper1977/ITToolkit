@@ -506,3 +506,9 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - Windows technician confirmed Startup worked in GUI and Classic, including HTML report save and reopening.
 - Implemented direct-local read-only BitLocker volume status using `Get-BitLockerVolume`, with mount point, type, volume/encryption/protection/lock states and encryption percentage. No recovery keys, recovery passwords or key protector details are returned.
 - Enabled both local interfaces and made BitLocker the smoke-test default. Missing cmdlet or access restrictions are surfaced as unavailable/denied, not as unencrypted drives. Windows and regression testing pending.
+
+### v1.27C — BitLocker permission handling and Sessions (2026-10-15)
+
+- Direct local BitLocker test returned ACCESS DENIED / AccessDenied on Windows. This confirms the negative path, not successful encryption inventory; positive-path validation remains outstanding.
+- Implemented read-only local Sessions enumeration via local `quser.exe`, preserving output lines and checking the process exit code. Added local support in GUI/Classic and updated the test script default to Sessions.
+- Windows Sessions and report testing, authorized BitLocker positive-path test, and remote regressions remain pending.
