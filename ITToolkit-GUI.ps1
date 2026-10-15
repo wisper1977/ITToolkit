@@ -1448,7 +1448,7 @@ Get-ToolkitGUISnapshot -Target $target -Mode $mode -Credential $credential -Tool
 $ui.SaveDiagnosticReport.Add_Click({
     if ($null -eq $script:LastGUIReport -or $null -ne $script:DiagnosticPS) { return }
     $captured = $script:LastGUIReport
-    $currentMode = if ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $currentMode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
     $currentIdentity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
     if ($captured.Target -ine $script:TargetComputer -or $captured.Mode -ne $currentMode -or
         $captured.Identity -ine $currentIdentity) {
@@ -1482,7 +1482,8 @@ $ui.SaveDiagnosticReport.Add_Click({
         } else {
             'Read-only diagnostics; a successful query does not establish system health.'
         }
-        $reportText = "${org} ${appTitle} - REMOTE DIAGNOSTIC REPORT`r`nReport: $label`r`nCollected: $($captured.CollectedAt.ToString('yyyy-MM-dd HH:mm:ss zzz'))`r`nSaved: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')`r`nTechnician account: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)`r`nDiagnostic authentication: $($captured.Mode)`r`nDiagnostic identity: $($captured.Identity)`r`n$disclaimer`r`n$($captured.Results)"
+        $reportScope = if ($captured.Mode -eq 'Local') { 'LOCAL' } else { 'REMOTE' }
+        $reportText = "${org} ${appTitle} - $reportScope DIAGNOSTIC REPORT`r`nReport: $label`r`nCollected: $($captured.CollectedAt.ToString('yyyy-MM-dd HH:mm:ss zzz'))`r`nSaved: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')`r`nTechnician account: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)`r`nDiagnostic authentication: $($captured.Mode)`r`nDiagnostic identity: $($captured.Identity)`r`n$disclaimer`r`n$($captured.Results)"
         $lines = [string[]]@($reportText -split '\r?\n')
         switch ($format) {
             'HTML' { $contents = Convert-ReportHtml $reportText $title }
