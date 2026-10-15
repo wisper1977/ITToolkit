@@ -654,7 +654,8 @@ function Invoke-ToolkitElevatedLocalDiagnostic {
     param(
         [Parameter(Mandatory=$true)]
         [ValidateSet('BitLocker','Policy')]
-        [string]$Section
+        [string]$Section,
+        [switch]$AllowCurrentUserRemoteSigned
     )
     $initiator = [Security.Principal.WindowsIdentity]::GetCurrent()
     $modulePath = Join-Path $PSScriptRoot 'ITToolkit-LocalDiagnostics.ps1'
@@ -684,6 +685,7 @@ function Invoke-ToolkitElevatedLocalDiagnostic {
         $safeError = "'" + $errorFile.Replace("'","''") + "'"
         $safeSection = "'" + $Section + "'"
         $safeNonce = "'" + $nonce + "'"
+        $allowPolicy = if ($AllowCurrentUserRemoteSigned.IsPresent) { '$true' } else { '$false' }
         # All generated parameters are escaped literals or validated choices.
         # Errors are returned as data, not hidden by a detached child process.
         $child = @'
@@ -694,6 +696,22 @@ try {
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
         throw 'The Windows UAC process does not have an elevated administrator token.'
     }
+    # Persistently changing CurrentUser execution policy is allowed only after
+    # the initiating technician explicitly approved that separate action.
+    $previousPolicy = [string](Get-ExecutionPolicy)
+    $policyChanged = $false
+    if ($previousPolicy -eq 'Restricted' -and __ALLOW_POLICY__) {
+        $scopes = Get-ExecutionPolicy -List
+        if ([string]$scopes.MachinePolicy -ne 'Undefined' -or
+            [string]$scopes.UserPolicy -ne 'Undefined') {
+            throw 'An organization-controlled PowerShell execution policy is configured. IT Toolkit will not change it.'
+        }
+        Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force -ErrorAction Stop
+        if ([string](Get-ExecutionPolicy) -ne 'RemoteSigned') {
+            throw 'RemoteSigned did not become the effective PowerShell policy. The module was not loaded.'
+        }
+        $policyChanged = $true
+    }
     . __MODULE__
     $diagnosticResult = Get-ToolkitLocalDiagnostic -Section __SECTION__
     [pscustomobject]@{
@@ -701,6 +719,9 @@ try {
         CollectionIdentity = $identity.Name
         CollectionSid = $identity.User.Value
         IsElevated = $true
+        PolicyChanged = $policyChanged
+        PreviousExecutionPolicy = $previousPolicy
+        EffectiveExecutionPolicy = [string](Get-ExecutionPolicy)
         Result = $diagnosticResult
     } | Export-Clixml -LiteralPath __OUTPUT__ -ErrorAction Stop
 } catch {
@@ -719,6 +740,7 @@ try {
         $child = $child.Replace('__OUTPUT__',$safeOutput)
         $child = $child.Replace('__ERROR__',$safeError)
         $child = $child.Replace('__NONCE__',$safeNonce)
+        $child = $child.Replace('__ALLOW_POLICY__',$allowPolicy)
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($child))
         try {
             $process = Start-Process -FilePath $exe -ArgumentList @(
@@ -774,6 +796,9 @@ try {
         $result | Add-Member -NotePropertyName CollectionIdentity -NotePropertyValue ([string]$payload.CollectionIdentity) -Force
         $result | Add-Member -NotePropertyName CollectionSid -NotePropertyValue ([string]$payload.CollectionSid) -Force
         $result | Add-Member -NotePropertyName Authorization -NotePropertyValue 'Windows UAC' -Force
+        $result | Add-Member -NotePropertyName ExecutionPolicyChanged -NotePropertyValue ([bool]$payload.PolicyChanged) -Force
+        $result | Add-Member -NotePropertyName ExecutionPolicyBefore -NotePropertyValue ([string]$payload.PreviousExecutionPolicy) -Force
+        $result | Add-Member -NotePropertyName ExecutionPolicyAfter -NotePropertyValue ([string]$payload.EffectiveExecutionPolicy) -Force
         return $result
     } finally {
         Remove-Item -LiteralPath $directory -Recurse -Force -ErrorAction SilentlyContinue
