@@ -9,7 +9,7 @@ This document describes proposed work, design requirements, dependencies, and de
 | Milestone | Focus | Status |
 | --- | --- | --- |
 | v1.27B | Shared diagnostic result handling and cross-interface validation | In progress |
-| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, and Storage validated locally; Network newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
+| v1.27C | Local computer diagnostics in GUI and Classic | In progress — System, Firewall, Services, Storage, and Network validated locally; Hardware newly implemented; independent Windows Services collector test passed, switch and report-save tests pending |
 | v1.27D | Evidence-based health analysis | Planned |
 | Later milestone | Technician-confirmed Quick Fix menu | Planned; version not assigned |
 | Later milestone | NIST / Best Practices Computer Check | Planned; version not assigned |
@@ -124,3 +124,7 @@ These have no assigned milestone or implementation commitment:
 **Storage GUI/Classic Windows confirmation (2026-10-14):** Both interfaces work, and the technician successfully saved and opened an HTML Storage report. CSV/TXT and remote regressions remain pending.
 
 **Local Network implementation (Windows validation pending):** Added shared IP-enabled adapter configuration inventory (addresses, subnets, gateways, DNS, MAC, DHCP) to local GUI/Classic with no remote fallback. Updated single-command test harness default to Network. Network output, report formats, edge cases, and remote regression are still pending.
+
+**Network GUI/Classic validation (2026-10-15):** Technician confirmed both local interfaces display Network successfully and HTML reports save and open. Remaining CSV/TXT and remote regression validation is pending.
+
+**Local Hardware implementation (Windows validation pending):** Shared local CIM collector includes computer, BIOS, CPU, and physical-disk inventory. GUI and Classic local allowlists include Hardware, and `Test-LocalDiagnostics.ps1` defaults to Hardware. Hardware Windows collector and interface validation, saving, and regression are pending.
