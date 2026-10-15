@@ -1953,14 +1953,17 @@ $ui.ArchiveFolder.Add_Click({
         return
     }
     try {
-        # Open the directory through the Windows shell, without /n or an alternate root.
-        # The launcher may run under a different administrator account from the desktop user.
-        $start = New-Object System.Diagnostics.ProcessStartInfo
-        $start.FileName = [IO.Path]::GetFullPath($folder)
-        $start.UseShellExecute = $true
-        $start.Verb = 'open'
-        $opened = [System.Diagnostics.Process]::Start($start)
-        $ui.ArchiveStatus.Text = "Folder open requested: $folder (if Explorer doesn't appear, use Copy Folder Path)."
+        # A folder path passed to ShellExecute can return Access Denied when
+        # this GUI was started with a separately authorized admin account.
+        # Invoke Windows Explorer itself, without changing identity, elevating,
+        # changing ACLs or relying on the folder's shell "open" association.
+        $fullFolder = [IO.Path]::GetFullPath($folder)
+        $explorer = Join-Path $env:WINDIR 'explorer.exe'
+        if (-not (Test-Path -LiteralPath $explorer -PathType Leaf)) {
+            throw "Windows Explorer executable not found: $explorer"
+        }
+        Start-Process -FilePath $explorer -ArgumentList ('"' + $fullFolder + '"') -ErrorAction Stop | Out-Null
+        $ui.ArchiveStatus.Text = "Explorer launch requested: $fullFolder (if Explorer doesn't appear, use Copy Folder Path)."
     } catch {
         $ui.ArchiveStatus.Text = "Explorer could not open this directory. Use Copy Folder Path: $folder"
         [Windows.MessageBox]::Show("Unable to open the reports folder in Explorer.`n$folder`n`n$($_.Exception.Message)`n`nYou can use Copy Folder Path and paste it in Explorer.", 'Report Archive') | Out-Null
