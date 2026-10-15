@@ -79,3 +79,81 @@ function Format-ToolkitHealthAnalysis {
     }
     return ($lines -join "`r`n")
 }
+
+# Remote Health adapter has different evidence names and explicit source/credential scope.
+# This formatter reuses the same review/available/unavailable presentation while
+# refusing to interpret transport errors, NOT TESTED checks, or missing rows as normal.
+function Get-ToolkitRemoteHealthAnalysis {
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)][object]$Result)
+    if ([string]$Result.Section -ne 'Health' -or [string]$Result.Mode -notin @('Default','Alternate')) {
+        throw 'Remote Health analysis requires a structured remote Health result.'
+    }
+    $findings = New-Object System.Collections.Generic.List[object]
+    $review = 0; $available = 0; $unavailable = 0
+    $mapping = @(
+        @{Check='SystemDrive';Source='System drive free space';Label='Storage'},
+        @{Check='AutomaticServices';Source='Automatic services not running';Label='Services'},
+        @{Check='RecentSystemEvents';Source='System critical/error events (24h, max 100)';Label='Events'}
+    )
+    foreach ($check in $mapping) {
+        $row = @($Result.Data | Where-Object { $_ -and [string]$_.Check -eq $check.Source } | Select-Object -First 1)
+        if ($row.Count -eq 0 -or [string]$row[0].Status -notin @('SUCCESS','REVIEW','NO RESULTS')) {
+            $unavailable++
+            $reason = if ($row.Count -gt 0) { [string]$row[0].Value } elseif ($Result.Error) { [string]$Result.Error } else { 'No verified remote data returned.' }
+            $findings.Add([pscustomobject]@{Check=$check.Check;Level='Unavailable';Evidence=$reason;NextStep='Verify authorized remote WinRM access and collector permissions.'})
+            continue
+        }
+        $value = [string]$row[0].Value
+        switch ($check.Check) {
+            'SystemDrive' {
+                $percent = 0.0
+                if ($value -notmatch '^([0-9]+(?:\.[0-9]+)?)%$' -or
+                    -not [double]::TryParse($Matches[1],[Globalization.NumberStyles]::Float,
+                        [Globalization.CultureInfo]::InvariantCulture,[ref]$percent) -or
+                    $percent -gt 100) {
+                    $unavailable++
+                    $findings.Add([pscustomobject]@{Check=$check.Check;Level='Unavailable';Evidence='Remote system-drive percentage could not be verified.';NextStep='Inspect remote drive capacity query.'})
+                    continue
+                }
+                $available++
+                $level = if ($percent -lt 15) { 'Review' } else { 'Observed' }
+                if ($level -eq 'Review') { $review++ }
+                $findings.Add([pscustomobject]@{Check=$check.Check;Level=$level;Evidence=("Remote C: has {0}% free (review threshold: below 15%)." -f $percent);NextStep='Check available capacity and growth; no cleanup is performed.'})
+            }
+            'AutomaticServices' {
+                $count = 0
+                if (-not [int]::TryParse($value,[ref]$count) -or $count -lt 0) {
+                    $unavailable++
+                    $findings.Add([pscustomobject]@{Check=$check.Check;Level='Unavailable';Evidence='Remote automatic-service count is not numeric.';NextStep='Inspect service inventory.'})
+                    continue
+                }
+                $available++
+                $level = if ($count -gt 0) { 'Review' } else { 'Observed' }
+                if ($level -eq 'Review') { $review++ }
+                $findings.Add([pscustomobject]@{Check=$check.Check;Level=$level;Evidence=("$count remote automatic-start services not running.");NextStep='Inspect service details before determining whether stops are expected.'})
+            }
+            'RecentSystemEvents' {
+                $count = 0
+                if (-not [int]::TryParse($value,[ref]$count) -or $count -lt 0 -or $count -gt 100) {
+                    $unavailable++
+                    $findings.Add([pscustomobject]@{Check=$check.Check;Level='Unavailable';Evidence='Remote event count is not a valid bounded value.';NextStep='Inspect remote event collection.'})
+                    continue
+                }
+                $available++
+                $level = if ($count -gt 0) { 'Review' } else { 'Observed' }
+                if ($level -eq 'Review') { $review++ }
+                $findings.Add([pscustomobject]@{Check=$check.Check;Level=$level;Evidence=("$count remote critical/error System events within 24h (max 100 sampled).");NextStep='Review event sources, IDs and recurrence before assigning severity.'})
+            }
+        }
+    }
+    return [pscustomobject]@{
+        Target=[string]$Result.Target
+        CollectionIdentity=[string]$Result.UserName
+        CollectedAt=$Result.CollectedAt
+        ReviewCount=$review
+        AvailableCount=$available
+        UnavailableCount=$unavailable
+        Findings=@($findings.ToArray())
+    }
+}
