@@ -17,7 +17,7 @@ The **IT Toolkit** is a portable, PowerShell-based utility for IT technicians wh
 - **Credential selection:** Run supported diagnostics with your current Windows identity or explicitly supplied alternate administrative credentials. Credentials are not intended to be stored in configuration files.
 - **Windows diagnostics:** Collect information across system, storage, services, hardware, local accounts and groups, shares, software, updates, tasks, firewall, events, and related categories. Some checks require particular remote services or privileges.
 - **Health-oriented reporting:** Review collected findings and access-check results; unavailable or unsuccessful checks are reported separately from successful results.
-- **Exportable reports:** Save diagnostic output in HTML, CSV, or TXT, and browse previously saved reports.
+- **Exportable reports:** Save diagnostic output in HTML, CSV, or TXT, and browse previously saved reports. In v1.27 development, GUI saved-report opening explicitly requests the Windows shell `Open` action for compatibility with alternate-credential sessions (launcher validation pending).
 - **Snapshots and comparisons:** Create structured JSON inventory snapshots from the GUI or Classic interface, then compare two captures to identify changes in services, installed software, updates, users, groups, administrators, and shares.
 - **Tool integration:** Locate and launch supported external troubleshooting utilities, including optional Microsoft Sysinternals tools and PortQry when installed.
 
