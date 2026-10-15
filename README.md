@@ -177,7 +177,7 @@ See the [LICENSE](LICENSE) file for the full license text.
 
 ### Developer smoke test: local diagnostics
 
-On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **BitLocker**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
+On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiagnostics.ps1` from the repository root. The test dot-sources the current collector on each invocation, checks section support, and displays fresh results. Default section: **Sessions**; optionally supply `-Section Services`, `-Section System`, or `-Section Firewall`. As new local collectors are added, update the script's default section. This smoke test is read-only; it does not replace GUI/Classic tests or establish host health. The test harness itself awaits Windows verification.
 
 **Local Storage direct collector validation (technician-confirmed, 2026-10-14):** Windows PowerShell returned `SUCCESS`/`Success` with no error and two fixed logical drives (C: and E:), including size, free GB, and percentage. GUI/Classic Storage output and report-save checks remain pending.
 
@@ -228,3 +228,7 @@ On Windows PowerShell 5.1, run `powershell.exe -NoProfile -File .\Test-LocalDiag
 **Local Startup validation (2026-10-15):** GUI and Classic ran successfully and HTML reports saved/opened; Run registry and Common Startup entries were shown.
 
 **Local BitLocker (Windows validation pending):** Shared read-only volume status inspection via `Get-BitLockerVolume` now works through both local interface routes. Reports volume protection/encryption/lock state and percentage but does not access or export recovery secrets or key protectors. The test harness defaults to BitLocker. Windows validation pending.
+
+**BitLocker Windows permission-path result (2026-10-15):** A local run returned ACCESS DENIED / AccessDenied. This validates honest permission-error reporting, not successful BitLocker inventory; positive-path testing remains pending.
+
+**Local Sessions implementation (Windows test pending):** Read-only local `quser.exe` output is now collected by GUI and Classic. The reusable smoke test defaults to Sessions. The query requires no credential substitution and fails visibly if local session enumeration is restricted.
