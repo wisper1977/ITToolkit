@@ -64,6 +64,23 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
                 $content = 'Error details: Direct-local collection is not implemented for this section yet.'
             } else {
                 $localResult = Get-ToolkitLocalDiagnostic -Section $section
+                if ($localResult.StatusCategory -eq 'AccessDenied' -and $section -in @('BitLocker','Policy')) {
+                    Write-Host "Local $section requires administrative authorization." -ForegroundColor Yellow
+                    $consent = (Read-Host 'Request Windows UAC approval for this check only? (Y/N)').Trim().ToUpperInvariant()
+                    if ($consent -eq 'Y') {
+                        try {
+                            $localResult = Invoke-ToolkitElevatedLocalDiagnostic -Section $section
+                            Write-Host "Elevated $section collection returned: $($localResult.Status)" -ForegroundColor Cyan
+                        } catch {
+                            $localResult = [pscustomobject]@{
+                                Status = 'UNAVAILABLE'
+                                StatusCategory = 'Unavailable'
+                                Error = 'Elevated collection failed or was cancelled: ' + [string]$_.Exception.Message
+                                Data = @()
+                            }
+                        }
+                    }
+                }
                 $status = [string]$localResult.Status
                 $parts = New-Object System.Collections.Generic.List[string]
                 $parts.Add("Status category: $($localResult.StatusCategory)")
