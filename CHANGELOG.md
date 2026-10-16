@@ -8,7 +8,8 @@ Meaningful IT Toolkit additions, changes, fixes, and release status are grouped 
 
 - Expanded local Network inventory to include connected/disconnected adapters, connection states, valid speeds, DHCP lease/server details, and DNS metadata. Enterprise testing accepted the adapter inventory and speed/state fixes.
 - Added read-only active IPv4/IPv6 route inventory with destinations, next hops, interface indices, and route/interface metrics. Active routes were observed in Enterprise Windows testing. Adapter-to-route interface index alignment and default-route summaries have passed local Enterprise Windows testing.
-- Extended remote Network diagnostics to return credential-bound adapter inventory and active IPv4/IPv6 routes alongside existing WinRM ipconfig /all evidence. This addition awaits Enterprise Windows testing; original WMI fallback remains unchanged and enhanced-collection failures preserve ipconfig results.
+- Extended remote Network diagnostics to return credential-bound adapter inventory and active IPv4/IPv6 routes alongside existing WinRM ipconfig /all evidence. Authorized Alternate collection succeeded on ML-PCSCALE and Default credential access denial was confirmed on CC-PCSCALE; HTML/Classic validation remains pending. Original WMI fallback remains unchanged and enhanced-collection failures preserve ipconfig results.
+- Clarified remote Network access-denied reporting for WinRM and WMI without changing credentials, fallback, or overall partial status; awaiting Enterprise Windows report validation.
 - Diagnostic completeness review continues; see [ROADMAP.md](ROADMAP.md) for outstanding validation.
 
 ## [1.27] — 2026-10-16
