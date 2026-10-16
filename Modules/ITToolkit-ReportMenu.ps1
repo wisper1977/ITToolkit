@@ -108,13 +108,13 @@ function Save-ClassicCollectedReport {
 function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
     $target = Get-Target
     if (-not $target) { return }
-    # First enforced boundary: a single direct-local System report only.
-    # No remote, batch, or elevated diagnostic routing is altered.
-    if ($script:LocalTargetMode -and $Sections.Count -eq 1 -and $Sections[0] -eq 'System') {
+    # Validate all local sections before beginning a single or batch report.
+    # Existing Classic BitLocker/Policy consent and UAC path remain unchanged.
+    if ($script:LocalTargetMode) {
         try {
-            $null = Assert-ToolkitLocalSystemAuthorization -TargetComputer ([string]$script:TargetComputer)
+            $null = Assert-ToolkitLocalDiagnosticAuthorization -Sections $Sections -TargetComputer ([string]$script:TargetComputer)
         } catch {
-            Write-Host ("Local System diagnostic was not started: " + [string]$_.Exception.Message) -ForegroundColor Yellow
+            Write-Host ("Local diagnostics were not started: " + [string]$_.Exception.Message) -ForegroundColor Yellow
             Pause-Toolkit
             return
         }
