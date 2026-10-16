@@ -1382,6 +1382,19 @@ function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,
             return
         }
     }
+    else {
+        try {
+            # The existing GUIAuthContext retains the typed PSCredential only in memory.
+            $remoteContext = if ($mode -eq 'Alternate') { $script:GUIAuthContext } else { $null }
+            $null = Assert-ToolkitRemoteDiagnosticAuthorization -Sections $sections -TargetComputer ([string]$script:TargetComputer) -Mode $mode -AuthenticationContext $remoteContext
+        } catch {
+            Clear-GUIReportState
+            $ui.DiagnosticOutput.Text = "Remote diagnostics were not started: $($_.Exception.Message)"
+            $ui.DiagnosticProgress.Text = 'Authorization preflight blocked remote collection.'
+            $ui.Status.Text = 'Diagnostics not started.'
+            return
+        }
+    }
     Clear-GUIReportState
     $script:PendingGUIReport = $null
     $reportModule = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-Reports.ps1'
