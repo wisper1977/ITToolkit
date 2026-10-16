@@ -499,7 +499,19 @@ function Get-RemoteIpConfig([string]$Target) {
         }
         throw 'WMI returned no IP-enabled adapters'
     } catch {
-        return "IPCONFIG /ALL: UNAVAILABLE - Remote WinRM failed: $winrmError; WMI fallback failed: $($_.Exception.Message)"
+        $wmiError = $_.Exception.Message
+        $deniedPattern = '(?i)access is denied|access denied|0x80070005|unauthorized'
+        $winrmStatus = if ($winrmError -match $deniedPattern) { 'ACCESS DENIED' } else { 'UNAVAILABLE' }
+        $wmiStatus = if ($wmiError -match $deniedPattern) { 'ACCESS DENIED' } else { 'UNAVAILABLE' }
+        $overall = if ($winrmStatus -eq 'ACCESS DENIED' -and $wmiStatus -eq 'ACCESS DENIED') {
+            'ACCESS DENIED'
+        } else { 'UNAVAILABLE' }
+        # Preserve the existing marker for partial Network section classification.
+        return ("IPCONFIG /ALL: UNAVAILABLE`r`n" +
+            "Remote IP configuration: $overall`r`n" +
+            "WinRM: $winrmStatus - $winrmError`r`n" +
+            "WMI fallback: $wmiStatus - $wmiError`r`n" +
+            'Remote configuration was not collected using the selected Windows identity.')
     }
 }
 # Remote systeminfo.exe uses an external process: bound it so RPC permission
