@@ -10,6 +10,8 @@ The **IT Toolkit** is a portable, PowerShell-based utility for IT technicians wh
 
 For v1.27 local BitLocker or Policy diagnostics in a non-elevated GUI, **Run Elevated (UAC)** replaces **Run selected check** rather than appearing beside it. Other checks and already-elevated processes show the normal selected-check action. Windows GUI retest pending.
 
+**Classic Windows test (October 15, 2026):** Local Group Policy prompted for UAC while Disk Space did not. Successful completion of the Policy check has not yet been independently confirmed in this Classic test.
+
 ## Features
 
 - **Two interfaces:** Windows GUI and numbered Classic PowerShell menus. On the v1.27 development branch, the Classic main menu numbers are grouped sequentially and both interfaces offer a switch to the other under the current Windows process identity (GUI → Classic operation technician-confirmed on home Windows; reverse direction and other launch identities still pending). No target selection or alternate credential is transferred.
