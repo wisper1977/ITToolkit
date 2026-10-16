@@ -13,7 +13,7 @@
 
 ## v1.27 — Remaining work
 
-- **Shared privilege registry regression (Windows pending):** Verify module import in GUI and Classic, 20 unique known diagnostics, strict unknown-section error, local non-elevated BitLocker/Policy selection of `RunElevatedUac`, normal selection elsewhere, and GUI target/section transitions. Confirm no behavior drift in Classic or remote Default/Alternate credentials. This phase is metadata plus GUI visibility/eligibility only, not centralized execution authorization.
+- **Shared privilege registry regression (partially verified on home Windows):** Standalone registry displayed all 20 sections with UAC availability only for BitLocker and Policy; local non-elevated BitLocker selected `RunElevatedUac`. Still verify uniqueness, strict unknown-section rejection, other section/mode/elevation combinations, GUI and Classic imports, and GUI target/section transitions. Confirm no behavior drift in Classic or remote Default/Alternate credentials. This phase is metadata plus GUI visibility/eligibility only, not centralized execution authorization.
 
 ### Health analysis quality and parity
 
