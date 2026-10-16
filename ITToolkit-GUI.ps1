@@ -2153,6 +2153,43 @@ $ui.ArchiveFolder.Add_Click({
         # Start-Process explorer.exe did not show a window. Keep the Explorer
         # window for drag-and-drop attachment into email or chat.
         $fullFolder = [IO.Path]::GetFullPath($folder)
+        if ($ExecutionMode -eq 'SeparateAccount' -and -not (Test-GUIProcessElevated)) {
+            # Scoped UAC: the GUI stays non-elevated; only the folder-open helper
+            # starts with an administrator token after explicit Windows consent.
+            # Never pass credentials or change execution-policy persistence.
+            $answer = [Windows.MessageBox]::Show(
+                'Opening the Reports folder in Separate Administrative Account mode requires a one-time Windows UAC approval on this workstation. IT Toolkit itself will remain non-elevated. Continue?',
+                'Open Reports folder with UAC',
+                [Windows.MessageBoxButton]::YesNo,
+                [Windows.MessageBoxImage]::Question)
+            if ($answer -ne [Windows.MessageBoxResult]::Yes) {
+                $ui.ArchiveStatus.Text = 'Open Reports folder cancelled. No elevation requested.'
+                return
+            }
+            $powerShell = Join-Path $PSHOME 'powershell.exe'
+            if (-not (Test-Path -LiteralPath $powerShell -PathType Leaf)) {
+                throw "Windows PowerShell executable not found: $powerShell"
+            }
+            # Encode a literal, single-quoted folder argument. This avoids
+            # interpreting user-configured folder names as PowerShell source.
+            $literalFolder = "'" + $fullFolder.Replace("'","''") + "'"
+            $openScript = '$ErrorActionPreference = ''Stop''; $shell = New-Object -ComObject Shell.Application; $shell.Explore(' + $literalFolder + ')'
+            $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($openScript))
+            try {
+                $helper = Start-Process -FilePath $powerShell -Verb RunAs -ArgumentList @(
+                    '-NoLogo','-NoProfile','-STA','-ExecutionPolicy','Bypass',
+                    '-WindowStyle','Hidden','-EncodedCommand',$encoded
+                ) -PassThru -ErrorAction Stop
+                $ui.ArchiveStatus.Text = "Requested UAC-approved Explorer folder window: $fullFolder. If nothing appears, use Copy Folder Path."
+            } catch {
+                if ($_.Exception -is [System.ComponentModel.Win32Exception] -and $_.Exception.NativeErrorCode -eq 1223) {
+                    $ui.ArchiveStatus.Text = 'Windows UAC was cancelled. No folder was opened.'
+                    return
+                }
+                throw
+            }
+            return
+        }
         $shell = New-Object -ComObject Shell.Application -ErrorAction Stop
         if ($null -eq $shell) { throw 'Windows Shell automation is unavailable.' }
         $shell.Explore($fullFolder)
