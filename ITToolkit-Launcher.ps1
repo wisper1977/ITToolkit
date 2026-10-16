@@ -230,7 +230,7 @@ $ui.Launch.Add_Click({
     $scriptFile = if ($selection -eq 'GUI') { $guiPath } else { $classicPath }
     $processInfo = New-Object System.Diagnostics.ProcessStartInfo
     $processInfo.FileName = Join-Path $PSHOME 'powershell.exe'
-    $processInfo.Arguments = '-NoLogo -NoProfile -STA -ExecutionPolicy Bypass -File "' + $scriptFile + '"'
+    $processInfo.Arguments = '-NoLogo -NoProfile -STA -ExecutionPolicy Bypass -File "' + $scriptFile + '" -ExecutionMode ' + $executionMode
     $processInfo.WorkingDirectory = $toolkitRoot
     $processInfo.UseShellExecute = $false
 
