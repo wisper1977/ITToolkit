@@ -76,7 +76,7 @@ A successful query does not guarantee that the machine is healthy. Unavailable c
 
 ## Development and release versions
 
-- **Development:** `Major.Minor.Commit` (current application-code version: `1.28.e42f7c5`), where the suffix identifies the verified Network collector source revision `e42f7c5`. Documentation-only commits do not change it.
+- **Development:** `Major.Minor.Commit` (current application-code version: `1.28.2ec9c30`), where the suffix identifies the verified Network collector source revision `2ec9c30`. Documentation-only commits do not change it.
 - **Stable:** `Major.Minor` (current production: `1.27`); v1.28 will use `1.28` only after Windows validation and explicit release approval.
 - GUI, Classic, Launcher, and generated report metadata should consistently identify their source build. A configured suffix must not be assumed to identify a newer commit until the build version is regenerated and verified.
 
