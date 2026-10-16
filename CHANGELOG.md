@@ -35,6 +35,9 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Fixed
 
+- **Elevated local diagnostic handoff instrumentation (Windows test pending):** Following a technician test where BitLocker UAC returned process exit code 0 but no accessible result file, added a temporary non-secret child execution-stage checkpoint to the existing restricted ACL folder. Missing-result failures now distinguish no checkpoint, child started, and report write reached. No access-control broadening, credential storage, or changes to UAC/collection behavior; checkpoints are deleted with the handoff directory. The cause of the missing report is **not yet confirmed**.
+
+
 - **GUI/Classic startup regression — Windows error reproduced (2026-10-15):** The shared execution-context integration assigned to PowerShell's built-in, read-only `$ExecutionContext` automatic variable, causing GUI startup to fail with `VariableNotWritable`. Renamed all application-specific references in both interfaces to `$script:ToolkitExecutionContext`. No security logic or privilege behavior changed. **Windows GUI and Classic launch retest pending.**
 
 
