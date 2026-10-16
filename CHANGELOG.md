@@ -2,47 +2,38 @@
 
 Meaningful IT Toolkit additions, changes, fixes, and release status are grouped by version. Git commits record implementation details and interim testing; the changelog is **not a development journal**. Pending tasks are tracked in [ROADMAP.md](ROADMAP.md).
 
-## [1.27] — In development (not released)
+## [1.27] — Release candidate (not released)
 
 ### Added
 
-- One-time GUI remote **Retry with Admin Credentials** after a single Default remote diagnostic returns ACCESS DENIED. The explicit target-bound retry reuses Alternate authorization and remote identity evidence without silently falling back or permanently changing the GUI authentication mode. Windows validation pending.
-
-- Read-only actual remote execution identity verification for GUI and Classic Alternate diagnostic reports, using the same target-bound credentials and displaying VERIFIED, MISMATCH, or NOT VERIFIED rather than assuming the requested account was used. County Windows validation pending.
-- Three explicit Launcher modes: **Current Windows User**, **Separate Administrative Account**, and **Standard Session + On-Demand Administration**, with per-user mode preference and no saved passwords.
-- Shared execution-context, privilege-requirements, and authorization-preflight modules for GUI and Classic. Target-bound remote Alternate authentication is checked before collection; invalid or mismatched requests are blocked without silent identity fallback.
-- Direct-local diagnostic collection for all 20 sections and local structured inventory snapshots alongside existing remote collection.
-- Scoped, separately approved local UAC diagnostic paths for BitLocker and Group Policy, including identity/provenance handling; optional, separately consented `CurrentUser` execution-policy adjustment when specifically eligible.
-- Evidence-based seven-check Computer Health interpretation across supported local and remote modes, including storage, services, System events, uptime, firewall profiles, installed hotfix inventory, and selected pending-restart indicators.
-- Compact GUI Computer Health sidebar showing review, checked, and unknown findings, and **Copy Report** for completed diagnostic output.
-- Explicitly confirmed Windows PowerShell (Administrator) entry in the GUI and Classic tools catalog, launching a separate UAC-authorized console without elevating the Toolkit.
-- Development build version format `Major.Minor.Commit`; version metadata in GUI diagnostic exports, Classic report headings, and structured snapshots.
+- Three explicit Launcher modes: Current Windows User, Separate Administrative Account, and On-Demand Administration, with per-user mode preference and no saved passwords.
+- Shared GUI/Classic execution context, privilege requirements, and authorization preflight for local and remote diagnostics.
+- Direct local collection across the 20 diagnostic sections; scoped Windows UAC requests for supported local BitLocker and Group Policy actions.
+- Explicit, target-bound remote Alternate credentials and read-only remote execution identity evidence (VERIFIED, MISMATCH, or NOT VERIFIED).
+- One-time GUI **Retry with Admin Credentials** after a single remote Default diagnostic returns ACCESS DENIED; no automatic fallback or persistent credential-mode substitution.
+- Seven-check Computer Health with evidence-based checked, review, partial, and unavailable results.
+- Development build identification using a source-commit suffix in interfaces, reports, and snapshots.
 
 ### Changed
 
-- Improved GUI/Classic feature alignment, menu organization, safe interface switching, diagnostic status classifications, and retained source/credential provenance.
-- Refined GUI layout, multiline labels, target/report display, adjustable window placement, last-page preference, and compact health-sidebar scrolling with fixed navigation.
-- Improved saved report presentation and HTML opening, report archive access, and supported snapshot comparison flows.
-- Reworked the README as release highlights and practical instructions rather than a diagnostic-test journal.
+- Improved GUI/Classic feature alignment, Classic menu navigation, interface switching, target state, and retained authentication provenance.
+- Refined dashboard layout, scrolling health details, saved window preferences, and report presentation.
+- Improved HTML/CSV/TXT report export, structured inventory snapshots, report archive reopening, and comparison presentation.
+- Updated tools/favorites access and added a separately authorized Windows PowerShell (Administrator) launch option.
 
 ### Fixed
 
-- **Remote failure recovery:** County testing confirmed Cancel Diagnostics restores target switching after a stalled, unauthorized remote request. Default-mode System Information now runs with a 30-second child-process deadline and cleanup; GUI single remote diagnostics request cancellation after 60 seconds. Windows regression of the new deadlines remains pending; timeouts are not assumed to mean access denied.
-- **GUI comparison HTML:** Restored collapsible category sections, jump links and added/changed/removed highlighting by routing HTML-only comparison headings through the existing shared report renderer. Underlying snapshot comparisons and TXT/CSV exports are unchanged. Windows GUI startup and HTML export validation remain pending.
-
-- Corrected RPC/transport failures previously presented as access-denied solely because of a generic error prefix.
-- Corrected startup failure caused by assigning to PowerShell's reserved `$ExecutionContext` variable.
-- Tightened context-sensitive local UAC button visibility and failure reporting, and preserved honest statuses for unavailable evidence.
-- Added non-secret elevated-child result-handoff diagnostics for investigating missing results without broadening permissions.
-- GUI Report Archive requests explicit Windows UAC approval to open a real Explorer Reports-folder window through a separately elevated helper when the Toolkit is running non-elevated under Separate Administrative Account. The GUI stays non-elevated; other launch modes retain the normal Shell route. Interactive Windows acceptance pending; Copy Folder Path remains available.
-- Corrected local-mode messaging and clearing of stale target/authentication health results.
+- Improved GUI diagnostic cancellation, target-switch recovery, and bounded remote diagnostic execution without misclassifying timeouts as access denied.
+- Corrected stale target output, local-mode labels, RPC/transport status interpretation, and UAC button visibility.
+- Restored comparison HTML navigation, collapsible categories, and added/changed/removed highlighting.
+- GUI **Open Folder** now opens an actual Explorer Reports directory in all three launcher modes; non-elevated Separate Administrative Account mode requires explicit UAC approval for a separate helper, leaving the GUI non-elevated. **Copy Folder Path** remains available.
 
 ### Validation and release status
 
-- Technician-confirmed Windows testing includes local diagnostic workflows, GUI/Classic navigation, selected UAC paths, local and remote snapshot capture, and seven-check Computer Health under local, Default remote, and reported Alternate remote use.
-- Automated PowerShell authorization/preflight tests passed for local and remote Default/Alternate scenarios. Those tests do **not** verify live remote transport or actual target authorization.
-- **Release not approved:** live county-network credential/identity and remote-report regression, negative/partial evidence cases, saved export formats, cross-session Explorer behavior, and full GUI/Classic parity remain open. See [ROADMAP.md](ROADMAP.md).
-- **Build traceability:** The configured development suffix `aa028e` was deliberately retained during later commits. It must be regenerated from the exact source revision before testing a new traceable build or promoting v1.27.
+- County technician accepted local and remote GUI/Classic diagnostic workflows, including 20-section Run All, verified remote Alternate identity, On-Demand retry success/cancellation, and expected partial/unavailable outcomes.
+- County Windows testing confirmed GUI Services HTML/CSV/TXT exports, remote seven-category snapshots, comparison output, archive persistence after restart, and Reports-folder opening in all three launcher modes. Elevated-folder Explorer drag-and-drop was also tested.
+- Windows PowerShell 5.1 static authorization and regression tests support the implementation but do not replace interactive or transport validation.
+- **Release candidate only:** version `1.27.b3bb971`; `main` remains at stable v1.26. A final clean-build smoke test and explicit promotion approval are outstanding. Untested negative and edge cases remain tracked in [ROADMAP.md](ROADMAP.md).
 
 ## [1.26] — 2026-10-14
 
