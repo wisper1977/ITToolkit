@@ -4,7 +4,7 @@
 
 ## v1.27 — Remaining release requirements
 
-- **Clean-build smoke test:** On a fresh Windows extraction or checkout, confirm `Launch.cmd`, GUI and Classic startup, a normal local diagnostic, Reports folder opening, and displayed build version `1.27.b3bb971`. Retest any impacted functionality if application code changes after acceptance.
+- **Clean-build smoke test — technician accepted (2026-10-16):** Technician reports the fresh-install smoke test is complete and the toolkit appears to run as intended. This is overall technician acceptance; individual checklist item results and displayed build identifier were not separately supplied. Application code has not changed since this acceptance.
 - **Release sign-off:** Review candidate source and documentation, record the approved release commit, obtain explicit authorization before updating stable version to `1.27`, promoting `develop/v1.27` to `main`, or tagging `v1.27`.
 
 ## Deferred regression and usability work
