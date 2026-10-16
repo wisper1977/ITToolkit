@@ -27,10 +27,10 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 - **Home GUI UAC BitLocker verified:** Technician confirmed `DESKTOP-8EHGAPD\wispe` launched a local BitLocker check through explicit Windows UAC and received a `SUCCESS` report under the same account. C: and E: reported FullyDecrypted, Protection Off, 0% encryption, and no encryption method. The report showed RemoteSigned → RemoteSigned, with no CurrentUser execution-policy change. Local Policy also succeeded through UAC. These validate the tested same-account paths, **not** separate-admin UAC, cancellation handling, or other Windows configurations. The earlier no-result error was not reproduced after the instrumentation change; its underlying cause remains unconfirmed.
 
-### Controlled authorization denial test (Windows validation pending)
+### Controlled authorization denial test (technician-confirmed on Windows)
 
 - Consolidated the already-enforced single local System diagnostic entry check into `Assert-ToolkitLocalSystemAuthorization` in the shared operation authorization module. GUI and Classic both call the same guard before starting their respective collectors. The guard throws for blocked or invalid preflight results; no additional diagnostics, remote modes, or UAC routes were changed.
-- Added `Tests/Test-LocalSystemAuthorization.ps1`, a Windows PowerShell 5.1 test that checks a valid local target, rejects an intentionally mismatched target, verifies no simulated collector ran after denial, and statically checks that both interface entry points reference the guard. This is not a live GUI/Classic denial simulation and must be Windows-tested before being marked passed.
+- Added `Tests/Test-LocalSystemAuthorization.ps1`, a Windows PowerShell 5.1 test that checks a valid local target, rejects an intentionally mismatched target, verifies no simulated collector ran after denial, and statically checks that both interface entry points reference the guard. Technician confirmed all three checks passed in Windows PowerShell: valid local target, denied mismatched target before simulated collection, and both interface source references. This is not a live GUI/Classic denial simulation; interactive regression is still pending.
 
 ### Changed
 
