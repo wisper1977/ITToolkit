@@ -26,7 +26,7 @@
 - **Shared execution-context Windows validation:** Verify all three launcher modes produce correct Windows identity, elevated-token status and session ID in GUI and Classic; verify mode metadata survives GUI ↔ Classic switching and direct script starts default to Current. Check failures and remote Default/Alternate authentication remain independent of launcher mode. No automatic UAC should occur from merely choosing a mode.
 
 
-- **UAC result-handoff regression:** Reproduce the missing BitLocker UAC result (exit 0) and capture the new stage indicator. Determine whether child code started, result export occurred, or protected-folder access failed; fix the confirmed cause without broadening ACLs. Test both same-user consent and separate-administrator UAC, as authorized.
+- **UAC result-handoff follow-up:** Home BitLocker and Policy UAC runs subsequently succeeded under the same initiating/collecting Windows user (October 15, 2026), with no execution-policy change. Earlier missing-result failure is not explained by this success; capture stage diagnostics if it recurs. Still test UAC cancellation, explicitly authorized separate-administrator UAC, and failure reporting without broadening ACLs.
 - **Context-sensitive elevation button validation:** On Windows, check GUI local BitLocker/Policy under non-elevated and elevated tokens, remote-mode and other-category hiding, switching targets and sections, UAC cancellation and reporting. Confirm an elevated standard diagnostic succeeds or accurately reports any access failure; validate Classic's explicit UAC workflow separately. Do not infer needed elevation solely from launcher mode.
 
 
