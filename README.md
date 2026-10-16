@@ -68,6 +68,8 @@ The example commands use a process-only execution-policy override; follow your o
 
 **Elevated local diagnostic troubleshooting (v1.27 development):** BitLocker and Policy UAC handoffs now report an internal child execution stage if a result file is missing. This distinguishes whether the privileged child reached its first checkpoint. The stage is non-secret and remains in the existing protected temporary handoff folder, which is removed after the operation. Process exit code alone does not prove collection success. Windows retest pending.
 
+**Home Windows validation (October 15, 2026):** The GUI's scoped local BitLocker and Policy UAC checks both returned results with the same initiating and collecting Windows account. BitLocker identified two fully decrypted, unprotected volumes without exposing recovery keys or changing PowerShell execution policy. Separate-admin UAC, cancellation, and other regression scenarios remain unverified.
+
 ## Basic workflow
 
 1. Select or enter a Windows computer or server as the target.
