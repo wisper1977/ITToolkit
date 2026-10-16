@@ -34,7 +34,7 @@ Meaningful IT Toolkit additions, changes, fixes, and release status are grouped 
 - Corrected startup failure caused by assigning to PowerShell's reserved `$ExecutionContext` variable.
 - Tightened context-sensitive local UAC button visibility and failure reporting, and preserved honest statuses for unavailable evidence.
 - Added non-secret elevated-child result-handoff diagnostics for investigating missing results without broadening permissions.
-- Improved Report Archive **Open Reports Folder** launch/error reporting. Opening Explorer remains unreliable in some separate-administrator desktop sessions; **Copy Folder Path** remains available.
+- Replaced GUI Report Archive's child-PowerShell Explorer handoff with `Shell.Application.Explore` to open a real Reports directory window for drag-and-drop, based on a successful separate-admin Windows PowerShell test. GUI acceptance remains pending; Copy Folder Path remains available.
 - Corrected local-mode messaging and clearing of stale target/authentication health results.
 
 ### Validation and release status
