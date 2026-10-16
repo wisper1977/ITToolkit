@@ -1369,6 +1369,22 @@ function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,
         return
     }
     if ($null -ne $script:DiagnosticPS) { return }
+    # First enforced boundary: only the single direct-local System diagnostic.
+    # This checks intent/target consistency; Windows still enforces actual access.
+    if ($mode -eq 'Local' -and $sections.Count -eq 1 -and $sections[0] -eq 'System' -and -not $elevatedLocal) {
+        try {
+            $authorization = Get-ToolkitOperationAuthorization -Section System -TargetMode Local -TargetComputer ([string]$script:TargetComputer) -RequestedRoute CurrentToken
+            if ($authorization.Assessment -ne 'ReadyForAttempt' -or $authorization.ProposedRoute -ne 'CurrentToken') {
+                throw ("Local System diagnostic blocked by preflight: {0}" -f $authorization.Reason)
+            }
+        } catch {
+            Clear-GUIReportState
+            $ui.DiagnosticOutput.Text = "Local System diagnostic was not started: $($_.Exception.Message)"
+            $ui.DiagnosticProgress.Text = 'Authorization preflight blocked local System collection.'
+            $ui.Status.Text = 'Diagnostic not started.'
+            return
+        }
+    }
     Clear-GUIReportState
     $script:PendingGUIReport = $null
     $reportModule = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-Reports.ps1'
