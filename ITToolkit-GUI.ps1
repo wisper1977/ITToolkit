@@ -2140,11 +2140,49 @@ $ui.ArchiveOpen.Add_Click({
         Open-GUISavedReport -Path $path
     } catch { [Windows.MessageBox]::Show($_.Exception.Message,'Unable to open report') | Out-Null }
 })
+# Explorer may silently redirect to another user's shell when launched with
+# separate administrative credentials on the same interactive desktop.
+# For that launcher mode, use an owned native Windows file dialog to browse and
+# open reports without crossing session/token boundaries or changing ACLs.
+if ($ExecutionMode -eq 'SeparateAccount') {
+    $ui.ArchiveFolder.Content = 'Browse Reports'
+    $ui.ArchiveFolder.ToolTip = 'Browse reports in this window; Explorer may not display across separate Windows accounts.'
+}
 $ui.ArchiveFolder.Add_Click({
     $folder = Get-GUIArchiveFolder
     if (-not (Test-Path -LiteralPath $folder -PathType Container)) {
         $ui.ArchiveStatus.Text = "Reports folder not found: $folder"
         [Windows.MessageBox]::Show("Reports folder does not exist:`n$folder", 'Report Archive') | Out-Null
+        return
+    }
+    if ($ExecutionMode -eq 'SeparateAccount') {
+        try {
+            $fullFolder = [IO.Path]::GetFullPath($folder)
+            $picker = New-Object Microsoft.Win32.OpenFileDialog
+            $picker.Title = 'Browse IT Toolkit Reports'
+            $picker.InitialDirectory = $fullFolder
+            $picker.Filter = 'Reports (*.html;*.csv;*.txt)|*.html;*.csv;*.txt|All files (*.*)|*.*'
+            $picker.FilterIndex = 1
+            $picker.Multiselect = $false
+            $picker.CheckFileExists = $true
+            if ($picker.ShowDialog($window) -eq $true) {
+                $root = $fullFolder.TrimEnd([IO.Path]::DirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+                $selected = [IO.Path]::GetFullPath([string]$picker.FileName)
+                if (-not $selected.StartsWith($root,[StringComparison]::OrdinalIgnoreCase)) {
+                    throw 'Selected report is outside the configured Reports folder.'
+                }
+                if ([IO.Path]::GetExtension($selected) -notin @('.html','.csv','.txt')) {
+                    throw 'Choose an HTML, CSV or TXT report.'
+                }
+                Open-GUISavedReport -Path $selected
+                $ui.ArchiveStatus.Text = "Opened report: $selected"
+            } else {
+                $ui.ArchiveStatus.Text = "Reports browse closed. Folder: $fullFolder"
+            }
+        } catch {
+            $ui.ArchiveStatus.Text = "Could not browse or open a report. Use Copy Folder Path: $folder"
+            [Windows.MessageBox]::Show("Unable to browse reports:`n$($_.Exception.Message)`n`nUse Copy Folder Path if needed.",'Report Archive') | Out-Null
+        }
         return
     }
     try {
