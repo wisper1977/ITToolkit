@@ -8,6 +8,8 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 - **Remote authorization integration implemented (Windows testing pending):** GUI and Classic now invoke the shared 20-section remote Default/Alternate preflight before diagnostic reporting. Classic explicitly routes Alternate reports through `Get-ClassicAlternateReportSection` and its credential-aware dispatcher rather than the Default report collector; unknown authentication modes are blocked, and new report attempts invalidate stale cached reports. Added `Tests/Test-RemoteAuthorization.ps1` for all-20 Default/Alternate preflight and negative-path tests plus PowerShell syntax parsing. These changes are not Windows-validated and must not be promoted until regression-tested. Remote transport still independently enforces access.
 
+- **Windows test startup fix (October 15):** Initial `Test-RemoteAuthorization.ps1` invocation stopped while loading `ITToolkit-OperationAuthorization.ps1` because two new comment lines mistakenly used `//` instead of PowerShell `#`. Corrected both lines. No authorization assertions executed in that failed attempt; rerun still required.
+
 ### Windows validation update — October 15, 2026
 
 - **Explicit Alternate preflight verified on home Windows:** Technician created a typed, target-bound in-memory Alternate authentication context for TESTSERVER; the read-only preflight returned `ReadyForAttempt`, `RequestedAuthenticationMode=Alternate`, and the supplied username (not proof of successful network authentication). Reusing that context for OTHERSERVER returned `Blocked` and left `RequestedIdentity` blank, with no silent Default fallback. Technician cleared the in-memory context after testing. The preflight did not contact either target.
