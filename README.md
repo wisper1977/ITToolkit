@@ -60,6 +60,8 @@ powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File "C:\ITToolkit\ITToo
 
 The example commands use a process-only execution-policy override; follow your organization's script-execution and code-signing requirements rather than bypassing enforced policies.
 
+**Launcher sizing (v1.27 development):** The execution-mode launcher uses a compact layout intended to fit without an internal scrollbar on normal desktop work areas. Optional organization artwork is preserved at a shorter height. On small displays or with high DPI/text scaling, the form can still scroll rather than clip essential fields. Windows layout validation is pending.
+
 ## Basic workflow
 
 1. Select or enter a Windows computer or server as the target.
