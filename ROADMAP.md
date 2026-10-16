@@ -13,6 +13,9 @@
 
 ## v1.27 — Remaining work
 
+- **Central authorization preflight (Windows validation pending):** Confirm GUI/Classic import and manually evaluate local System (ReadyForAttempt), non-elevated local BitLocker (ConsentRequired), denied local target mismatch, explicitly blocked local UAC on unsupported sections, remote Default (ReadyForAttempt, **not** proof of remote access), remote Alternate absent/mismatched context (Blocked), and properly typed, target-bound Alternate context (ReadyForAttempt, without returning credentials). Ensure this read-only preflight does not change execution behavior; enforce at operation boundaries only after further approval and testing.
+
+
 - **Shared privilege registry regression (partially verified on home Windows):** Standalone registry displayed all 20 sections with UAC availability only for BitLocker and Policy; local non-elevated BitLocker selected `RunElevatedUac`. Follow-up decisions passed for local Policy non-elevated (UAC), local BitLocker elevated (normal), remote Default BitLocker non-elevated (normal), and local System non-elevated (normal). Home On-Demand GUI integration now technician-confirmed for local BitLocker/Policy versus System/Storage button exclusivity and an ordinary diagnostic completing. Classic integration regression was also technician-confirmed with Disk Space running normally and Group Policy using UAC and returning its report. Still verify uniqueness, strict unknown-section rejection, remaining combinations, and remote target/authentication transitions. Confirm no behavior drift in Classic or remote Default/Alternate credentials. This phase is metadata plus GUI visibility/eligibility only, not centralized execution authorization.
 
 ### Health analysis quality and parity
