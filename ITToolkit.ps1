@@ -3,10 +3,19 @@
 # Remote operations require appropriate rights and firewall/service configuration.
 # No software is installed on remote hosts by this launcher.
 
+param(
+    [ValidateSet('Current','SeparateAccount','OnDemand')]
+    [string]$ExecutionMode = 'Current'
+)
 $ErrorActionPreference = 'Stop'
 
 # Components are dot-sourced in script scope to share configuration and target state.
 $script:ToolkitRoot = $PSScriptRoot
+# Shared process identity/elevation evidence. Mode is metadata, not permission.
+$executionContextPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-ExecutionContext.ps1'
+if (-not (Test-Path -LiteralPath $executionContextPath -PathType Leaf)) { throw "Missing toolkit execution context: $executionContextPath" }
+. $executionContextPath
+$script:ExecutionContext = Get-ToolkitExecutionContext -Mode $ExecutionMode
 $componentFolder = Join-Path $script:ToolkitRoot 'Modules'
 $componentPath = Join-Path $componentFolder 'ITToolkit-Config.ps1'
 if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missing toolkit component: $componentPath" }
@@ -136,7 +145,7 @@ while ($true) {
             # Do not pass selected targets, credentials, or transient session state.
             try {
                 $psExe = Join-Path $PSHOME 'powershell.exe'
-                $arguments = '-NoLogo -NoProfile -STA -File "' + $guiScript + '"'
+                $arguments = '-NoLogo -NoProfile -STA -File "' + $guiScript + '" -ExecutionMode ' + $script:ExecutionContext.Mode
                 $newProcess = Start-Process -FilePath $psExe -ArgumentList $arguments -WorkingDirectory $script:ToolkitRoot -PassThru -ErrorAction Stop
                 if ($null -eq $newProcess) { throw 'Windows did not return a process.' }
                 Reset-ClassicAlternateCredential
