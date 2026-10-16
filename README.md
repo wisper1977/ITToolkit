@@ -20,6 +20,8 @@ For v1.27 local BitLocker or Policy diagnostics in a non-elevated GUI, **Run Ele
 
 **v1.27 controlled authorization denial test (technician-confirmed Windows test passed):** `Tests/Test-LocalSystemAuthorization.ps1` runs a read-only preflight using the shared `Assert-ToolkitLocalSystemAuthorization` gate, confirms a mismatched local target is blocked before a simulated collector would execute, and checks GUI/Classic source integration. Run from the repository root using `powershell.exe -NoProfile -File .\\Tests\\Test-LocalSystemAuthorization.ps1`. No credentials, actual diagnostic collectors, or UAC are used. Following guard refactoring, the technician confirmed normal local System Information reports ran in both GUI and Classic. Interactive blocked-request/report-state behavior remains untested; the scripted mismatch uses a simulated collector.
 
+**v1.27 local authorization rollout (Windows validation pending):** GUI and Classic now preflight every section in a **local** diagnostic selection through shared `Assert-ToolkitLocalDiagnosticAuthorization` before collection. This includes Run All. Valid current-token queries retain existing collectors; explicit local BitLocker/Policy UAC is still a separate technician-approved action. Remote Default/Alternate behavior remains unchanged. Run the expanded `powershell.exe -NoProfile -File .\\Tests\\Test-LocalSystemAuthorization.ps1` matrix on Windows before treating this batch expansion as verified.
+
 ## Features
 **Home GUI Report Archive validation:** Technician confirmed **Open Reports Folder** opens successfully in the home interactive-user setup. The previously failing separate-administrator workplace desktop handoff remains a known limitation and requires its own Windows test.
 
