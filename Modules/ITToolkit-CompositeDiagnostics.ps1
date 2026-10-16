@@ -189,7 +189,22 @@ function Get-ToolkitCompositeDiagnostic {
                         if(-not $adapters.Count){throw 'No IP-enabled adapters returned.'}
                         $details=$adapters | Select-Object Description,MACAddress,DHCPEnabled,DHCPServer,IPAddress,IPSubnet,DefaultIPGateway,DNSServerSearchOrder,DNSDomain,DNSHostName | Format-List | Out-String -Width 220
                         $rows += [pscustomobject]@{Check='Remote IP configuration';Source='WMI fallback';Status='PARTIAL';Detail="WinRM unavailable: $winrmError`n$details"}
-                    } catch { $errors.Add('Remote IP: '+$_.Exception.Message);$rows += [pscustomobject]@{Check='Remote IP configuration';Source='WinRM/WMI';Status='UNAVAILABLE';Detail="WinRM: $winrmError; WMI: $($_.Exception.Message)"} }
+                    } catch {
+                        $wmiError=$_.Exception.Message
+                        $deniedPattern='(?i)access is denied|access denied|0x80070005|unauthorized'
+                        $winrmStatus=if($winrmError -match $deniedPattern){'ACCESS DENIED'}else{'UNAVAILABLE'}
+                        $wmiStatus=if($wmiError -match $deniedPattern){'ACCESS DENIED'}else{'UNAVAILABLE'}
+                        $failureStatus=if($winrmStatus -eq 'ACCESS DENIED' -and $wmiStatus -eq 'ACCESS DENIED'){'ACCESS DENIED'}else{'UNAVAILABLE'}
+                        $errors.Add('Remote IP: WinRM '+$winrmStatus+'; WMI '+$wmiStatus)
+                        $rows += [pscustomobject]@{
+                            Check='Remote IP configuration'
+                            Source='WinRM/WMI'
+                            Status=$failureStatus
+                            Detail=("WinRM: $winrmStatus - $winrmError`n"+
+                                "WMI fallback: $wmiStatus - $wmiError`n"+
+                                'Remote configuration was not collected using the selected Windows identity.')
+                        }
+                    }
                 }
             }
             'Health' {
@@ -276,7 +291,7 @@ function Get-ToolkitCompositeDiagnostic {
             }
         }
         $statuses=@($rows | ForEach-Object {$_.Status})
-        $status=if($errors.Count -gt 0 -or $statuses -contains 'UNAVAILABLE' -or $statuses -contains 'NOT TESTED' -or $statuses -contains 'PARTIAL'){'PARTIAL / UNAVAILABLE'}elseif($statuses -contains 'REVIEW'){'REVIEW'}elseif($rows.Count -eq 0){'NO RESULTS'}else{'SUCCESS'}
+        $status=if($errors.Count -gt 0 -or $statuses -contains 'UNAVAILABLE' -or $statuses -contains 'ACCESS DENIED' -or $statuses -contains 'NOT TESTED' -or $statuses -contains 'PARTIAL'){'PARTIAL / UNAVAILABLE'}elseif($statuses -contains 'REVIEW'){'REVIEW'}elseif($rows.Count -eq 0){'NO RESULTS'}else{'SUCCESS'}
         [pscustomobject]@{Target=[string]$Context.ComputerName;Mode=[string]$Context.Mode;UserName=[string]$Context.UserName;Section=$Section;CollectedAt=$stamp;Status=$status;Data=@($rows);Error=($errors -join ' | ')}
     } catch {
         [pscustomobject]@{Target=[string]$Context.ComputerName;Mode=[string]$Context.Mode;UserName=[string]$Context.UserName;Section=$Section;CollectedAt=$stamp;Status='UNAVAILABLE';Data=@();Error=$_.Exception.Message}
