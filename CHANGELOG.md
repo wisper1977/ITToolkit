@@ -2,7 +2,9 @@
 
 Meaningful IT Toolkit additions, changes, fixes, and release status are grouped by version. Git commits record implementation details and interim testing; the changelog is **not a development journal**. Pending tasks are tracked in [ROADMAP.md](ROADMAP.md).
 
-## [1.27] — Release candidate (not released)
+## [1.28] — Development
+
+## [1.27] — 2026-10-16
 
 ### Added
 
