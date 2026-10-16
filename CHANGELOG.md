@@ -24,6 +24,8 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Added
 
+- **Shared privilege-requirements registry (Windows retest pending):** Added `Modules/ITToolkit-PrivilegeRequirements.ps1` with explicit read-only diagnostic metadata for all 20 sections and a strict lookup/selection helper. GUI and Classic load the same module; GUI selected-check button visibility and UAC handler eligibility now consult its `RunElevatedUac` versus `RunSelected` recommendation. The existing UAC collector, remote authentication, and administrative checks remain unchanged. This metadata is not an authorization decision or a general privilege broker. Initial static coverage reviewed; Windows GUI/Classic regression testing pending.
+
 - **Shared execution-context foundation (Windows validation pending):** Added `Modules/ITToolkit-ExecutionContext.ps1` with an explicit validated launcher mode, actual process Windows identity/SID, administrator token state, and process session ID. GUI and Classic load the same module, and the mode follows GUI ↔ Classic switching without forwarding credentials or target state. Direct script execution defaults to Current mode. The launcher passes a non-secret mode argument. Mode is informational and never grants privileges; remote Default/Alternate selection and UAC remain separate. Existing GUI UAC visibility uses the shared token-elevation evidence.
 
 
