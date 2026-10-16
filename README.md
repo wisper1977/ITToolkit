@@ -22,6 +22,8 @@ For v1.27 local BitLocker or Policy diagnostics in a non-elevated GUI, **Run Ele
 
 **v1.27 local authorization rollout (Windows preflight and GUI/Classic interactive execution verified):** GUI and Classic now preflight every section in a **local** diagnostic selection through shared `Assert-ToolkitLocalDiagnosticAuthorization` before collection. This includes Run All. Valid current-token queries retain existing collectors; explicit local BitLocker/Policy UAC is still a separate technician-approved action. Remote Default/Alternate behavior remains unchanged. The technician ran the expanded `powershell.exe -NoProfile -File .\\Tests\\Test-LocalSystemAuthorization.ps1` matrix successfully on Windows. Technician also confirmed successful local GUI/Classic Storage and Services diagnostics, both full 20-section report workflows, and GUI BitLocker with explicit UAC. Remote Default/Alternate execution, separate-administrator workplace identity, and live interactive denial/report-state handling still require independent validation.
 
+**Remote authorization work in progress:** Shared remote preflight and GUI diagnostic entry checks have been added to `develop/v1.27`, but they have **not** been Windows-tested. Classic remote authorization integration is incomplete; existing collectors were not rewritten. Do not consider remote authorization complete or promote this development build until Classic Default/Alternate routing and both interfaces have been reviewed and tested.
+
 ## Features
 **Home GUI Report Archive validation:** Technician confirmed **Open Reports Folder** opens successfully in the home interactive-user setup. The previously failing separate-administrator workplace desktop handoff remains a known limitation and requires its own Windows test.
 
