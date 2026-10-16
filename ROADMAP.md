@@ -13,6 +13,9 @@
 
 ## v1.27 — Remaining work
 
+- **Remote authorization integration incomplete:** Shared remote preflight and GUI entry checks were committed but remain untested on Windows. Classic remote entry integration is not yet committed. Investigate Classic Alternate report routing versus default-identity collection before proceeding, then test both modes in GUI/Classic. Treat this as a release blocker; no production promotion.
+
+
 - **All-20 local preflight rollout (Windows preflight and interactive execution verified):** Technician-confirmed expanded `Tests/Test-LocalSystemAuthorization.ps1` results passed all 20 sections, 20-section batch, denied invalid targets/sections/UAC requests, simulated no-collection-after-denial, and shared GUI/Classic guard references. Technician subsequently confirmed individual GUI/Classic Storage and Services diagnostics, both full 20-section report workflows, and explicit GUI BitLocker UAC succeeded. The controlled denial test passed in PowerShell, but live interactive denial/report-state behavior and separate Policy UAC regression are not newly confirmed. Remote Default/Alternate and workplace separate-administrator mode still need independent regression tests. This rollout only enforces authorization preflight for local diagnostic operations; Windows remains the final permissions authority.
 
 
