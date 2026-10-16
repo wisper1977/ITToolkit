@@ -24,6 +24,8 @@ For v1.27 local BitLocker or Policy diagnostics in a non-elevated GUI, **Run Ele
 
 **Remote authorization integration (Windows regression pending):** GUI and Classic diagnostic entry points now use `Assert-ToolkitRemoteDiagnosticAuthorization` for each selected remote section, including full reports. Classic Alternate mode explicitly dispatches with the target-bound in-memory credential context rather than using Default report collectors. Invalid or mismatched contexts are rejected without substituting credentials. Run `powershell.exe -NoProfile -File .\\Tests\\Test-RemoteAuthorization.ps1` to test all 20 Default/Alternate preflights, refusal cases, static interface references, and PowerShell syntax. This test makes no network connections or UAC requests; actual remote authorization remains enforced by Windows and must be tested separately.
 
+**Windows test startup correction:** The first remote authorization test stopped before assertions because two comments in the remote authorization module used `//` rather than PowerShell `#`. This has been corrected on the development branch; run the test again after updating. No remote authorization result has yet been established.
+
 ## Features
 **Home GUI Report Archive validation:** Technician confirmed **Open Reports Folder** opens successfully in the home interactive-user setup. The previously failing separate-administrator workplace desktop handoff remains a known limitation and requires its own Windows test.
 
