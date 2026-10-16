@@ -346,6 +346,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
          <Button Name="RunDiagnostic" Content="Run selected check"/>
           <Button Name="RunElevatedLocalDiagnostic" Content="Run Elevated (UAC)" Visibility="Collapsed" ToolTip="Explicit administrator approval for this selected local diagnostic"/>
          <Button Name="RunAllDiagnostics" Content="Run all 20 checks"/>
+          <Button Name="CancelDiagnostic" Content="Cancel Diagnostics" IsEnabled="False" ToolTip="Request cancellation of active diagnostic collection"/>
          <Button Name="CreateSnapshotGUI" Content="Create Snapshot" ToolTip="Capture structured inventory for later comparison"/>
         </WrapPanel>
         <TextBlock Name="DiagnosticProgress" Text="Ready to run diagnostics." Foreground="#526B83" Margin="0,6,0,0" TextWrapping="Wrap"/>
@@ -495,7 +496,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $ui = @{}
-foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','DashboardHealthSummary','HealthReviewCount','HealthAvailableCount','HealthUnavailableCount','HealthStorageDetail','HealthServicesDetail','HealthEventsDetail','HealthSystemDetail','HealthSecurityDetail','HealthUpdatesDetail','HealthRestartDetail','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
+foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','DashboardHealthSummary','HealthReviewCount','HealthAvailableCount','HealthUnavailableCount','HealthStorageDetail','HealthServicesDetail','HealthEventsDetail','HealthSystemDetail','HealthSecurityDetail','HealthUpdatesDetail','HealthRestartDetail','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CancelDiagnostic','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
 $window.Title = "$displayName - Graphical Interface"
 $ui.Heading.Text = $displayName
 $ui.Subtitle.Text = "Graphical Interface  |  Toolkit v$version"
@@ -1263,13 +1264,53 @@ function Clear-GUIReportState {
 }
 $script:DiagnosticPS = $null
 $script:DiagnosticAsync = $null
+$script:DiagnosticCancelRequested = $false
+$script:DiagnosticCancelReason = ''
+$script:DiagnosticCancelHandle = $null
+# Remote time budget is a cancellation request, not a guaranteed network timeout.
+$script:DiagnosticRemoteSingleTimeoutSeconds = 120
+$script:DiagnosticRemoteBatchTimeoutSeconds = 600
+function Request-GUIDiagnosticCancellation([string]$Reason) {
+    if ($null -eq $script:DiagnosticPS -or $null -eq $script:DiagnosticAsync -or $script:DiagnosticCancelRequested) { return }
+    $script:DiagnosticCancelRequested = $true
+    $script:DiagnosticCancelReason = $Reason
+    Clear-GUIReportState
+    $ui.CancelDiagnostic.IsEnabled = $false
+    $ui.DiagnosticProgress.Text = "$Reason Waiting for the diagnostic worker to stop..."
+    $ui.Status.Text = 'Cancelling diagnostics...'
+    try {
+        # BeginStop returns immediately; synchronous Stop can freeze the WPF thread.
+        $script:DiagnosticCancelHandle = $script:DiagnosticPS.BeginStop($null,$null)
+    } catch {
+        $ui.DiagnosticProgress.Text = "Could not request cancellation: $($_.Exception.Message)"
+        $ui.Status.Text = 'Cancellation request failed.'
+    }
+}
 $script:DiagnosticTimer = New-Object Windows.Threading.DispatcherTimer
 $script:DiagnosticTimer.Interval = [TimeSpan]::FromMilliseconds(250)
 $script:DiagnosticTimer.Add_Tick({
     if ($null -eq $script:DiagnosticPS -or $null -eq $script:DiagnosticAsync) { return }
-    if (-not $script:DiagnosticAsync.IsCompleted) { return }
+    if (-not $script:DiagnosticAsync.IsCompleted) {
+        if (-not $script:DiagnosticCancelRequested -and $null -ne $script:PendingGUIReport -and
+            $script:PendingGUIReport.Mode -ne 'Local') {
+            $budget = if (@($script:PendingGUIReport.Sections).Count -gt 1) { $script:DiagnosticRemoteBatchTimeoutSeconds } else { $script:DiagnosticRemoteSingleTimeoutSeconds }
+            if (((Get-Date) - $script:PendingGUIReport.Started).TotalSeconds -ge $budget) {
+                Request-GUIDiagnosticCancellation "Remote diagnostic exceeded the $budget-second time budget."
+            }
+        }
+        return
+    }
     $script:DiagnosticTimer.Stop()
     try {
+        if ($script:DiagnosticCancelRequested) {
+            # Do not publish or save partial results from a cancelled operation.
+            try { $null = $script:DiagnosticPS.EndInvoke($script:DiagnosticAsync) } catch { }
+            Clear-GUIReportState
+            $ui.DiagnosticOutput.Text = 'Diagnostic collection cancelled. No report was created.'
+            $ui.DiagnosticProgress.Text = [string]$script:DiagnosticCancelReason
+            $ui.Status.Text = 'Diagnostics cancelled.'
+            return
+        }
         $output = @($script:DiagnosticPS.EndInvoke($script:DiagnosticAsync))
         $ui.DiagnosticOutput.Text = ($output | ForEach-Object { [string]$_ }) -join "`r`n"
         if (-not $ui.DiagnosticOutput.Text) { $ui.DiagnosticOutput.Text = '(The collector returned no output.)' }
@@ -1339,6 +1380,10 @@ $script:DiagnosticTimer.Add_Tick({
         $script:DiagnosticPS = $null
         $script:DiagnosticAsync = $null
         $script:PendingGUIReport = $null
+        $script:DiagnosticCancelRequested = $false
+        $script:DiagnosticCancelReason = ''
+        $script:DiagnosticCancelHandle = $null
+        $ui.CancelDiagnostic.IsEnabled = $false
         $ui.RunDiagnostic.IsEnabled = $true
         Update-GUIElevatedDiagnosticButton
         $ui.RunAllDiagnostics.IsEnabled = $true
@@ -1406,6 +1451,9 @@ function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,
             return
         }
     }
+    $script:DiagnosticCancelRequested = $false
+    $script:DiagnosticCancelReason = ''
+    $script:DiagnosticCancelHandle = $null
     $script:PendingGUIReport = [pscustomobject]@{
         Elevated = $elevatedLocal
         PolicyConsent = $allowRemoteSigned
@@ -1421,6 +1469,7 @@ function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,
     $ui.RunDiagnostic.IsEnabled = $false
     $ui.RunElevatedLocalDiagnostic.IsEnabled = $false
     $ui.RunAllDiagnostics.IsEnabled = $false
+    $ui.CancelDiagnostic.IsEnabled = $true
     $worker = @'
 param([string]$root,[string]$target,[string[]]$requested)
 $ErrorActionPreference = 'Stop'
@@ -1574,6 +1623,7 @@ return ($lines -join "`r`n")
         if ($script:DiagnosticPS) { $script:DiagnosticPS.Dispose() }
         $script:DiagnosticPS = $null
         $script:DiagnosticAsync = $null
+        $ui.CancelDiagnostic.IsEnabled = $false
         $ui.RunDiagnostic.IsEnabled = $true
         $ui.RunAllDiagnostics.IsEnabled = $true
         $script:PendingGUIReport = $null
@@ -1785,6 +1835,7 @@ $ui.RunElevatedLocalDiagnostic.Add_Click({
 $ui.RunAllDiagnostics.Add_Click({
     Start-GUIDiagnostics @($script:DiagnosticSections | ForEach-Object { [string]$_.Id })
 })
+$ui.CancelDiagnostic.Add_Click({ Request-GUIDiagnosticCancellation 'Technician requested cancellation.' })
 $window.Add_Closing({
     try { Save-GUIWindowPlacement; Save-GUIPreferences } catch { }
     Clear-GUIAlternateContext
