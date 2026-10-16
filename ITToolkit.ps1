@@ -16,6 +16,10 @@ $executionContextPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-Executi
 if (-not (Test-Path -LiteralPath $executionContextPath -PathType Leaf)) { throw "Missing toolkit execution context: $executionContextPath" }
 . $executionContextPath
 $script:ToolkitExecutionContext = Get-ToolkitExecutionContext -Mode $ExecutionMode
+# Shared read-only diagnostic privilege definitions; no credential or elevation side effects.
+$requirementsPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-PrivilegeRequirements.ps1'
+if (-not (Test-Path -LiteralPath $requirementsPath -PathType Leaf)) { throw "Missing toolkit privilege requirements: $requirementsPath" }
+. $requirementsPath
 $componentFolder = Join-Path $script:ToolkitRoot 'Modules'
 $componentPath = Join-Path $componentFolder 'ITToolkit-Config.ps1'
 if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missing toolkit component: $componentPath" }
