@@ -66,6 +66,8 @@ The example commands use a process-only execution-policy override; follow your o
 
 **Shared execution context (v1.27 development; startup fix pending Windows retest):** GUI and Classic load `Modules/ITToolkit-ExecutionContext.ps1`. The launcher passes the chosen mode, and interface switching retains that mode under the unchanged Windows process identity. The shared context reports the actual process account, SID, session and whether its token is elevated; it never stores or grants credentials. Direct script launch defaults to Current mode. Remote Default/Alternate authentication remains independently selected. On-Demand still means the existing explicitly authorized operations, not a universal privilege broker. Windows validation remains pending.
 
+**Elevated local diagnostic troubleshooting (v1.27 development):** BitLocker and Policy UAC handoffs now report an internal child execution stage if a result file is missing. This distinguishes whether the privileged child reached its first checkpoint. The stage is non-secret and remains in the existing protected temporary handoff folder, which is removed after the operation. Process exit code alone does not prove collection success. Windows retest pending.
+
 ## Basic workflow
 
 1. Select or enter a Windows computer or server as the target.
