@@ -8,6 +8,9 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Added
 
+- **Execution Mode dropdown (Windows validation pending):** Replaced the temporary current-user checkbox in the WPF launcher with three remembered choices: **Current Windows User**, **Separate Administrative Account**, and **Standard Session + On-Demand Administration**. The latter two current-token modes (Current and On-Demand) inherit the launcher's token and disable username/password fields; Separate Account retains the explicit credential process launch. On-Demand uses only the toolkit's existing explicitly authorized Alternate-credential and UAC operations, not an automatic privilege broker. Saved earlier checkbox preferences are migrated; passwords are never persisted. Both GUI and Classic start from the chosen process context. No change to collectors, remote authentication, or Explorer desktop handoff.
+
+
 - **Launcher execution mode (Windows test pending):** Added an explicit **Run as my current Windows user** checkbox for GUI and Classic. Checked mode starts without a second account or password and inherits the launcher's existing Windows token; unchecked mode retains the previous separate-account credential launch. The non-secret mode preference is stored per launcher user. No identity escalation, token handoff, or remote diagnostic credential change is implied. The separate-admin Reports-folder Explorer issue remains unresolved.
 
 - **Direct-local diagnostics:** Introduced explicit **Use Local Computer** mode and shared, read-only collectors for all 20 categories: Health, System, Hardware, Network, Storage, Services, Events, Policy, Users, Groups, Shares, Software, Updates, Tasks, Administrators, Sessions, SharePermissions, Firewall, BitLocker, and Startup. Local collection uses the current Windows identity and does not require local WinRM or `ADMIN$`.
