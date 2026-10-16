@@ -54,7 +54,7 @@ macOS and Linux are not supported. The launcher does not install an agent on rem
 ## Installation
 
 1. For the **stable v1.26 release**, download the package from [GitHub Releases](https://github.com/wisper1977/ITToolkit/releases/tag/v1.26). For the **v1.27 development build**, use the [development branch](https://github.com/wisper1977/ITToolkit/tree/develop/v1.27).
-2. Extract the Toolkit to a local directory such as `C:\ITToolkit`, preserving the `Modules`, `Branding`, scripts, and configuration file layout.
+2. **Install to a local folder on `C:\`**, such as `C:\ITToolkit` (not directly in the root of `C:\`). Do **not** run the Toolkit from the Desktop: technicians have encountered environments where a Desktop-based installation fails to launch or run correctly. Preserve the `Modules`, `Branding`, scripts, and configuration file layout.
 3. Review `Toolkit-config.json` and adapt the organization branding, default authentication domain, report directory, and optional tool paths.
 4. Run `Launch.cmd`, choose an execution mode, then open the graphical or Classic interface.
 
