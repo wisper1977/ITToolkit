@@ -4,6 +4,7 @@
 
 ## v1.27 — Release blockers
 
+- **GUI stalled diagnostic recovery — county test failure:** An administrator account completed System Information and Health against ML-PCSCALE; ML-DC1 access was denied and those diagnostics did not finish, preventing target changes. New GUI asynchronous Cancel Diagnostics and remote time budgets are committed but **not yet Windows-tested**. Verify cancel, remote expiry, report invalidation and target recovery; if underlying WMI/WinRM does not cooperate, evaluate a separate-process/transport timeout approach. Classic interruption behavior remains to be assessed.
 - **County-network authentication and reporting:** Validate actual remote Default and target-bound Alternate connections for all 20 diagnostic sections in GUI and Classic. Confirm the executing identity where observable, correct permission/transport failures, no implicit credential fallback, and no stale results after changing the target or credentials.
 - **Local authorization regression:** Check interactive refusals, invalid targets/sections, successful normal diagnostic paths, batch reporting, and local BitLocker/Policy UAC under appropriate Windows identities. Include UAC cancellation, different administrator identities, and correct report provenance.
 - **Launcher and interface identity:** Test Current Windows User, Separate Administrative Account, and On-Demand modes with the expected tokens and session identities. Verify startup, GUI ↔ Classic switching, preference migration, credential field behavior, and no automatic elevation or identity substitution.
