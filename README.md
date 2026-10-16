@@ -57,7 +57,8 @@ No agent is installed on remote target computers by the toolkit's launcher.
 
 The IT Toolkit provides a graphical dashboard for remote system diagnostics, administrative access checks, reporting, and favorite utilities.
 
-![IT Toolkit Dashboard](Screenshots/Dashboard.png)
+![IT Toolkit Login](Screenshots/login.png)
+![IT Toolkit Dashboard](Screenshots/dashboard.png)
 
 ## Installation
 
