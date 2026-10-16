@@ -13,6 +13,8 @@
 
 ## v1.27 — Remaining work
 
+- **Shared privilege registry regression (Windows pending):** Verify module import in GUI and Classic, 20 unique known diagnostics, strict unknown-section error, local non-elevated BitLocker/Policy selection of `RunElevatedUac`, normal selection elsewhere, and GUI target/section transitions. Confirm no behavior drift in Classic or remote Default/Alternate credentials. This phase is metadata plus GUI visibility/eligibility only, not centralized execution authorization.
+
 ### Health analysis quality and parity
 
 - **Failure and negative cases:** Exercise inaccessible/denied and partial checks, unavailable WinRM, malformed/missing evidence, and a machine without the selected pending-restart indicators. Confirm unavailable data are not interpreted as healthy, and a detected pending-file-rename operation is not claimed to be an update-required reboot.
