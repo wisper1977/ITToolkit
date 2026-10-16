@@ -1,5 +1,5 @@
 ﻿# IT Toolkit WPF launcher - branding and version come from Toolkit-config.json (Windows PowerShell 5.1, STA)
-# Supports current-session launch or explicitly supplied Windows credentials.
+# Supports Current, SeparateAccount, and OnDemand execution-mode selection.
 # No passwords are written to disk, logs, command lines, or preferences.
 # GUI selection is retained for later development; GUI does not launch until installed.
 
@@ -29,7 +29,7 @@ $defaultDomain = if (
 } else {
     ''
 }
-$settings = [ordered]@{ Username = ''; PreferredInterface = 'Classic'; RememberUsername = $true; RememberInterface = $true; UseCurrentSession = $false }
+$settings = [ordered]@{ Username = ''; PreferredInterface = 'Classic'; RememberUsername = $true; RememberInterface = $true; PreferredExecutionMode = 'SeparateAccount' }
 if (Test-Path -LiteralPath $settingsPath -PathType Leaf) {
     try {
         $saved = Get-Content -LiteralPath $settingsPath -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
@@ -37,7 +37,12 @@ if (Test-Path -LiteralPath $settingsPath -PathType Leaf) {
         if ($saved.PreferredInterface -in @('Classic','GUI')) { $settings.PreferredInterface = $saved.PreferredInterface }
         if ($null -ne $saved.RememberUsername) { $settings.RememberUsername = [bool]$saved.RememberUsername }
         if ($null -ne $saved.RememberInterface) { $settings.RememberInterface = [bool]$saved.RememberInterface }
-        if ($null -ne $saved.UseCurrentSession) { $settings.UseCurrentSession = [bool]$saved.UseCurrentSession }
+        if ($saved.PreferredExecutionMode -in @('Current','SeparateAccount','OnDemand')) {
+            $settings.PreferredExecutionMode = [string]$saved.PreferredExecutionMode
+        } elseif ($null -ne $saved.UseCurrentSession) {
+            # Migrate the earlier launcher checkbox preference.
+            $settings.PreferredExecutionMode = if ([bool]$saved.UseCurrentSession) { 'Current' } else { 'SeparateAccount' }
+        }
     } catch { Write-Warning "Could not load personal launcher preferences: $($_.Exception.Message)" }
 }
 
@@ -66,8 +71,13 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
     </Border>
     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
       <StackPanel Margin="25,20,25,4">
-        <CheckBox Name="UseCurrentSession" Content="Run as my current Windows user" FontWeight="SemiBold" Foreground="#24364A" Margin="0,0,0,5" ToolTip="Do not use another account. Toolkit will inherit the launcher Windows identity and its available permissions."/>
-        <TextBlock Name="ExecutionNote" TextWrapping="Wrap" FontSize="11" Foreground="#526477" Margin="0,0,0,12" Text="Unchecked: launch under a separate administrative Windows account."/>
+        <TextBlock Text="Execution mode" FontWeight="SemiBold" Foreground="#24364A"/>
+        <ComboBox Name="ExecutionMode" Height="33" Margin="0,6,0,6" SelectedIndex="1">
+          <ComboBoxItem Content="Current Windows User" Tag="Current"/>
+          <ComboBoxItem Content="Separate Administrative Account" Tag="SeparateAccount"/>
+          <ComboBoxItem Content="Standard Session + On-Demand Administration" Tag="OnDemand"/>
+        </ComboBox>
+        <TextBlock Name="ExecutionNote" TextWrapping="Wrap" FontSize="11" Foreground="#526477" Margin="0,0,0,12"/>
         <TextBlock Text="Administrative username (separate-account mode)" FontWeight="SemiBold" Foreground="#24364A"/>
         <TextBox Name="Username" Height="32" Margin="0,6,0,12" Padding="8,5" ToolTip="Enter username, DOMAIN\username, or username@domain"/>
         <TextBlock Text="Password" FontWeight="SemiBold" Foreground="#24364A"/>
@@ -95,7 +105,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $ui = @{}
-foreach ($name in @('Heading','Subheading','Username','Password','Interface','RememberUser','RememberInterface','UseCurrentSession','ExecutionNote','Message','Launch','Cancel','Footer','OrganizationLogo','LoginBackground','BannerRow')) {
+foreach ($name in @('Heading','Subheading','Username','Password','Interface','RememberUser','RememberInterface','ExecutionMode','ExecutionNote','Message','Launch','Cancel','Footer','OrganizationLogo','LoginBackground','BannerRow')) {
     $ui[$name] = $window.FindName($name)
 }
 $window.Title = "$orgName $appName - Launcher"
@@ -105,20 +115,32 @@ $ui.Footer.Text = 'Your password is never saved. Classic mode uses the existing 
 $ui.Username.Text = [string]$settings.Username
 $ui.RememberUser.IsChecked = [bool]$settings.RememberUsername
 $ui.RememberInterface.IsChecked = [bool]$settings.RememberInterface
-$ui.UseCurrentSession.IsChecked = [bool]$settings.UseCurrentSession
-function Update-LauncherIdentityFields {
-    $usingCurrent = [bool]$ui.UseCurrentSession.IsChecked
-    $ui.Username.IsEnabled = -not $usingCurrent
-    $ui.Password.IsEnabled = -not $usingCurrent
-    $ui.RememberUser.IsEnabled = -not $usingCurrent
-    $ui.ExecutionNote.Text = if ($usingCurrent) {
-        "Toolkit runs as $([Security.Principal.WindowsIdentity]::GetCurrent().Name). This does not elevate or grant administrator permissions."
-    } else {
-        'Toolkit runs as the supplied Windows account. Windows Explorer may still belong to a different signed-in user.'
+# Restore a validated per-user mode, including migrations from the older checkbox.
+foreach ($item in $ui.ExecutionMode.Items) {
+    if ([string]$item.Tag -eq [string]$settings.PreferredExecutionMode) {
+        $ui.ExecutionMode.SelectedItem = $item
+        break
     }
 }
-$ui.UseCurrentSession.Add_Checked({ Update-LauncherIdentityFields })
-$ui.UseCurrentSession.Add_Unchecked({ Update-LauncherIdentityFields })
+function Update-LauncherIdentityFields {
+    $selectedMode = [string]$ui.ExecutionMode.SelectedItem.Tag
+    $needsCredentials = $selectedMode -eq 'SeparateAccount'
+    $ui.Username.IsEnabled = $needsCredentials
+    $ui.Password.IsEnabled = $needsCredentials
+    $ui.RememberUser.IsEnabled = $needsCredentials
+    switch ($selectedMode) {
+        'Current' {
+            $ui.ExecutionNote.Text = "Runs as $([Security.Principal.WindowsIdentity]::GetCurrent().Name); no elevation or secondary authentication."
+        }
+        'OnDemand' {
+            $ui.ExecutionNote.Text = "Runs as $([Security.Principal.WindowsIdentity]::GetCurrent().Name). Existing explicit Alternate credentials and UAC workflows remain available where supported; no automatic admin sign-in."
+        }
+        default {
+            $ui.ExecutionNote.Text = 'Launches under the separately supplied Windows account; desktop Explorer may run under another user.'
+        }
+    }
+}
+$ui.ExecutionMode.Add_SelectionChanged({ Update-LauncherIdentityFields })
 Update-LauncherIdentityFields
 if ($settings.PreferredInterface -eq 'GUI') { $ui.Interface.SelectedIndex = 1 }
 
@@ -180,9 +202,10 @@ $ui.Launch.Add_Click({
     $ui.Message.Text = ''
     $selection = [string]$ui.Interface.SelectedItem.Tag
     $userEntry = $ui.Username.Text.Trim()
-    $usingCurrent = [bool]$ui.UseCurrentSession.IsChecked
-    if (-not $usingCurrent -and [string]::IsNullOrWhiteSpace($userEntry)) { $ui.Message.Text = 'Enter an administrative username.'; return }
-    if (-not $usingCurrent -and $ui.Password.SecurePassword.Length -eq 0) { $ui.Message.Text = 'Enter the password for that account.'; return }
+    $executionMode = [string]$ui.ExecutionMode.SelectedItem.Tag
+    $needsCredentials = $executionMode -eq 'SeparateAccount'
+    if ($needsCredentials -and [string]::IsNullOrWhiteSpace($userEntry)) { $ui.Message.Text = 'Enter an administrative username.'; return }
+    if ($needsCredentials -and $ui.Password.SecurePassword.Length -eq 0) { $ui.Message.Text = 'Enter the password for that account.'; return }
     if ($selection -eq 'GUI' -and -not (Test-Path -LiteralPath $guiPath -PathType Leaf)) {
         $ui.Message.Text = 'The graphical interface is not installed yet. Select Classic PowerShell for now.'
         return
@@ -196,7 +219,7 @@ $ui.Launch.Add_Click({
             PreferredInterface = if ([bool]$ui.RememberInterface.IsChecked) { $selection } else { 'Classic' }
             RememberUsername = [bool]$ui.RememberUser.IsChecked
             RememberInterface = [bool]$ui.RememberInterface.IsChecked
-            UseCurrentSession = $usingCurrent
+            PreferredExecutionMode = $executionMode
         }
         [IO.File]::WriteAllText($settingsPath, (ConvertTo-Json -InputObject $newSettings -Depth 3), (New-Object Text.UTF8Encoding($false)))
     } catch {
@@ -210,10 +233,10 @@ $ui.Launch.Add_Click({
     $processInfo.WorkingDirectory = $toolkitRoot
     $processInfo.UseShellExecute = $false
 
-    # Explicitly selected current-session mode inherits the launcher's Windows
-    # identity and token. It does not elevate, authenticate, or substitute users.
-    # Separate-account mode preserves the existing credential-based process launch.
-    if (-not $usingCurrent) {
+    # Current and OnDemand inherit the launcher's Windows token without elevation.
+    # OnDemand relies only on existing explicit in-app credential/UAC workflows.
+    # SeparateAccount preserves the previous Windows credential launch path.
+    if ($needsCredentials) {
         $domain = $defaultDomain
         $username = $userEntry
         if ($userEntry.Contains('\')) {
@@ -245,5 +268,5 @@ $ui.Launch.Add_Click({
         if ($null -ne $processInfo.Password) { $processInfo.Password.Dispose() }
     }
 })
-$ui.Username.Focus() | Out-Null
+if ([string]$ui.ExecutionMode.SelectedItem.Tag -eq 'SeparateAccount') { $ui.Username.Focus() | Out-Null } else { $ui.Launch.Focus() | Out-Null }
 [void]$window.ShowDialog()
