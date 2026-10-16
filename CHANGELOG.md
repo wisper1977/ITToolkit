@@ -33,7 +33,7 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Changed
 
-- **First enforced authorization boundary (Windows validation pending):** Single **direct-local System Information** diagnostic entry points in GUI and Classic now invoke shared `Get-ToolkitOperationAuthorization` before collection, requiring `ReadyForAttempt` and `CurrentToken`. A blocked/error preflight prevents that single diagnostic from running and reports the reason. Batch, remote Default/Alternate, and BitLocker/Policy UAC paths are intentionally unchanged. This does not grant privilege or prove Windows authorization; Windows still enforces actual collector access.
+- **First enforced authorization boundary (home Windows GUI/Classic successful-report test passed):** Single **direct-local System Information** diagnostic entry points in GUI and Classic now invoke shared `Get-ToolkitOperationAuthorization` before collection, requiring `ReadyForAttempt` and `CurrentToken`. A blocked/error preflight prevents that single diagnostic from running and reports the reason. Batch, remote Default/Alternate, and BitLocker/Policy UAC paths are intentionally unchanged. This does not grant privilege or prove Windows authorization; Windows still enforces actual collector access.
 
 ### Added
 
