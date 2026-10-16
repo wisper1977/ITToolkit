@@ -345,6 +345,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
         <WrapPanel>
          <Button Name="RunDiagnostic" Content="Run selected check"/>
           <Button Name="RunElevatedLocalDiagnostic" Content="Run Elevated (UAC)" Visibility="Collapsed" ToolTip="Explicit administrator approval for this selected local diagnostic"/>
+          <Button Name="RetryRemoteWithAdmin" Content="Retry with Admin Credentials" Visibility="Collapsed" ToolTip="Explicit one-time retry of the denied remote check using credentials authorized for this target"/>
          <Button Name="RunAllDiagnostics" Content="Run all 20 checks"/>
           <Button Name="CancelDiagnostic" Content="Cancel Diagnostics" IsEnabled="False" ToolTip="Request cancellation of active diagnostic collection"/>
          <Button Name="CreateSnapshotGUI" Content="Create Snapshot" ToolTip="Capture structured inventory for later comparison"/>
@@ -496,7 +497,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $ui = @{}
-foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','DashboardHealthSummary','HealthReviewCount','HealthAvailableCount','HealthUnavailableCount','HealthStorageDetail','HealthServicesDetail','HealthEventsDetail','HealthSystemDetail','HealthSecurityDetail','HealthUpdatesDetail','HealthRestartDetail','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RunAllDiagnostics','CancelDiagnostic','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
+foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','DashboardHealthSummary','HealthReviewCount','HealthAvailableCount','HealthUnavailableCount','HealthStorageDetail','HealthServicesDetail','HealthEventsDetail','HealthSystemDetail','HealthSecurityDetail','HealthUpdatesDetail','HealthRestartDetail','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RetryRemoteWithAdmin','RunAllDiagnostics','CancelDiagnostic','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
 $window.Title = "$displayName - Graphical Interface"
 $ui.Heading.Text = $displayName
 $ui.Subtitle.Text = "Graphical Interface  |  Toolkit v$version"
@@ -1263,6 +1264,7 @@ function Clear-GUIReportState {
     $script:LastGUIReport = $null
     $ui.SaveDiagnosticReport.IsEnabled = $false
     $ui.CopyDiagnosticReport.IsEnabled = $false
+    $ui.RetryRemoteWithAdmin.Visibility = [Windows.Visibility]::Collapsed
     $ui.DiagnosticOutput.Clear()
     $ui.DiagnosticSaveStatus.Text = 'Run a diagnostic to enable Save Report.'
 }
@@ -1320,8 +1322,8 @@ $script:DiagnosticTimer.Add_Tick({
         if (-not $ui.DiagnosticOutput.Text) { $ui.DiagnosticOutput.Text = '(The collector returned no output.)' }
         # Never save results under a target or identity different from the collection request.
         $completed = $script:PendingGUIReport
-        $activeMode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
-        $activeIdentity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+        $activeMode = if ($completed.IsOnDemand -and -not $script:LocalTargetMode -and -not $script:GUIAlternateMode) { 'Alternate' } elseif ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+        $activeIdentity = if ($completed.IsOnDemand -and -not $script:LocalTargetMode -and -not $script:GUIAlternateMode) { [string]$completed.Identity } elseif ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
         if ($null -eq $completed -or $completed.Target -ine $script:TargetComputer -or
             $completed.Mode -ne $activeMode -or $completed.Identity -ine $activeIdentity) {
             throw 'Target or credentials changed during collection. Results discarded; run diagnostics again.'
@@ -1360,6 +1362,7 @@ $script:DiagnosticTimer.Add_Tick({
         # Keep exactly the completed, displayed output; no collection occurs when saving.
         $script:LastGUIReport = [pscustomobject]@{
             Mode = $script:PendingGUIReport.Mode
+            IsOnDemand = [bool]$script:PendingGUIReport.IsOnDemand
             Identity = $script:PendingGUIReport.Identity
             Target = $script:PendingGUIReport.Target
             Sections = @($script:PendingGUIReport.Sections)
@@ -1368,6 +1371,10 @@ $script:DiagnosticTimer.Add_Tick({
         }
         $ui.SaveDiagnosticReport.IsEnabled = $true
         $ui.CopyDiagnosticReport.IsEnabled = $true
+        # Offer a one-time explicit retry only for a denied single remote Default check.
+        $canRetry = ($completed.Mode -eq 'Default' -and @($completed.Sections).Count -eq 1 -and
+            $ui.DiagnosticOutput.Text -match '(?im)^STATUS:\s*ACCESS DENIED\b')
+        $ui.RetryRemoteWithAdmin.Visibility = if ($canRetry) { [Windows.Visibility]::Visible } else { [Windows.Visibility]::Collapsed }
         $ui.DiagnosticSaveStatus.Text = 'Results ready. Choose a format and click Save Report.'
         $script:LastDiagnosticSummary = if ($script:LastGUIReport.Sections.Count -eq 1) { [string]$script:LastGUIReport.Sections[0] } else { "All $($script:LastGUIReport.Sections.Count) checks" }
         $script:LastDiagnosticSummary += ' - ' + (Get-Date).ToString('g')
@@ -1393,16 +1400,20 @@ $script:DiagnosticTimer.Add_Tick({
         $ui.RunAllDiagnostics.IsEnabled = $true
     }
 })
-function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,[bool]$allowRemoteSigned = $false) {
+function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,[bool]$allowRemoteSigned = $false,[System.Management.Automation.PSCredential]$onDemandCredential = $null) {
+    $onDemand = $null -ne $onDemandCredential
+    if ($onDemand -and ($script:LocalTargetMode -or $script:GUIAlternateMode -or $sections.Count -ne 1 -or $elevatedLocal -or $allowRemoteSigned)) {
+        throw 'On-demand credentials require exactly one remote Default diagnostic without local UAC.'
+    }
     if ($allowRemoteSigned -and -not $elevatedLocal) { throw 'Execution-policy consent requires a selected elevated local diagnostic.' }
     if ($elevatedLocal -and (-not $script:LocalTargetMode -or $sections.Count -ne 1 -or $sections[0] -notin @('BitLocker','Policy'))) {
         [Windows.MessageBox]::Show('UAC handoff is available only for one local BitLocker or Policy check.','Invalid elevation request') | Out-Null
         return
     }
-    $mode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
-    $identity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
-    $alternateCredential = $null
-    if ($mode -eq 'Alternate') {
+    $mode = if ($onDemand) { 'Alternate' } elseif ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $identity = if ($onDemand) { [string]$onDemandCredential.UserName } elseif ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+    $alternateCredential = if ($onDemand) { $onDemandCredential } else { $null }
+    if ($mode -eq 'Alternate' -and -not $onDemand) {
         if (-not $script:TargetComputer -or -not $script:GUIAuthContext -or
             $script:GUIAlternateTarget -ine $script:TargetComputer -or
             $script:GUIAuthContext.ComputerName -ine $script:TargetComputer -or
@@ -1434,7 +1445,7 @@ function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,
     else {
         try {
             # The existing GUIAuthContext retains the typed PSCredential only in memory.
-            $remoteContext = if ($mode -eq 'Alternate') { $script:GUIAuthContext } else { $null }
+            $remoteContext = if ($onDemand) { New-ToolkitAuthContext -ComputerName ([string]$script:TargetComputer) -Mode Alternate -Credential $onDemandCredential } elseif ($mode -eq 'Alternate') { $script:GUIAuthContext } else { $null }
             $null = Assert-ToolkitRemoteDiagnosticAuthorization -Sections $sections -TargetComputer ([string]$script:TargetComputer) -Mode $mode -AuthenticationContext $remoteContext
         } catch {
             Clear-GUIReportState
@@ -1461,6 +1472,7 @@ function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,
     $script:PendingGUIReport = [pscustomobject]@{
         Elevated = $elevatedLocal
         PolicyConsent = $allowRemoteSigned
+        IsOnDemand = $onDemand
         Mode = $mode
         Identity = $identity
         Target = [string]$script:TargetComputer
@@ -1734,8 +1746,9 @@ Get-ToolkitGUISnapshot -Target $target -Mode $mode -Credential $credential -Tool
 $ui.CopyDiagnosticReport.Add_Click({
     if ($null -eq $script:LastGUIReport -or $null -ne $script:DiagnosticPS) { return }
     $captured = $script:LastGUIReport
-    $currentMode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
-    $currentIdentity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+    $validRetry = [bool]$captured.IsOnDemand -and -not $script:LocalTargetMode -and -not $script:GUIAlternateMode
+    $currentMode = if ($validRetry) { 'Alternate' } elseif ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $currentIdentity = if ($validRetry) { [string]$captured.Identity } elseif ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
     if ($captured.Target -ine $script:TargetComputer -or $captured.Mode -ne $currentMode -or
         $captured.Identity -ine $currentIdentity -or $ui.DiagnosticOutput.Text -cne $captured.Results) {
         Clear-GUIReportState
@@ -1753,8 +1766,9 @@ $ui.CopyDiagnosticReport.Add_Click({
 $ui.SaveDiagnosticReport.Add_Click({
     if ($null -eq $script:LastGUIReport -or $null -ne $script:DiagnosticPS) { return }
     $captured = $script:LastGUIReport
-    $currentMode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
-    $currentIdentity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+    $validRetry = [bool]$captured.IsOnDemand -and -not $script:LocalTargetMode -and -not $script:GUIAlternateMode
+    $currentMode = if ($validRetry) { 'Alternate' } elseif ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $currentIdentity = if ($validRetry) { [string]$captured.Identity } elseif ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
     if ($captured.Target -ine $script:TargetComputer -or $captured.Mode -ne $currentMode -or
         $captured.Identity -ine $currentIdentity) {
         Clear-GUIReportState
@@ -1837,6 +1851,62 @@ $ui.RunElevatedLocalDiagnostic.Add_Click({
         [Windows.MessageBoxImage]::Warning)
     if ($policyChoice -eq [Windows.MessageBoxResult]::Cancel) { return }
     Start-GUIDiagnostics @($section) $true ($policyChoice -eq [Windows.MessageBoxResult]::Yes)
+})
+# A remote denial can be retried only after an explicit, scoped credential prompt.
+# The GUI remains in Default mode; the PSCredential is handed only to this one
+# Alternate worker invocation and is not saved as the target's normal identity.
+$ui.RetryRemoteWithAdmin.Add_Click({
+    $captured = $script:LastGUIReport
+    if ($null -ne $script:DiagnosticPS -or $script:LocalTargetMode -or $script:GUIAlternateMode -or
+        $null -eq $captured -or $captured.Mode -ne 'Default' -or @($captured.Sections).Count -ne 1 -or
+        $captured.Target -ine $script:TargetComputer -or
+        $captured.Identity -ine [Security.Principal.WindowsIdentity]::GetCurrent().Name -or
+        $captured.Results -cne $ui.DiagnosticOutput.Text -or
+        $captured.Results -notmatch '(?im)^STATUS:\s*ACCESS DENIED\b') {
+        Clear-GUIReportState
+        $ui.DiagnosticSaveStatus.Text = 'Report context changed. Run the denied check again.'
+        return
+    }
+    $dlg = New-Object Windows.Window
+    $dlg.Title = 'One-time remote admin retry - ' + $captured.Target
+    $dlg.Width = 440; $dlg.Height = 270; $dlg.MinWidth = 400
+    $dlg.WindowStartupLocation = 'CenterOwner'; $dlg.Owner = $window
+    $dlg.ResizeMode = 'NoResize'; $dlg.Background = '#F4F7FB'
+    $stack = New-Object Windows.Controls.StackPanel; $stack.Margin = '22'
+    $txt = New-Object Windows.Controls.TextBlock
+    $txt.Text = 'Authorized remote account (DOMAIN\\user or UPN)'
+    $txt.Margin = '0,0,0,6'; [void]$stack.Children.Add($txt)
+    $nameInput = New-Object Windows.Controls.TextBox
+    $nameInput.Height = 30; $nameInput.Padding = '6,4'
+    if ($cfg.AuthenticationDomain) { $nameInput.Text = [string]$cfg.AuthenticationDomain + '\\' }
+    [void]$stack.Children.Add($nameInput)
+    $pt = New-Object Windows.Controls.TextBlock; $pt.Text = 'Password (not saved)'
+    $pt.Margin = '0,14,0,6'; [void]$stack.Children.Add($pt)
+    $passwordInput = New-Object Windows.Controls.PasswordBox
+    $passwordInput.Height = 30; $passwordInput.Padding = '6,4'; [void]$stack.Children.Add($passwordInput)
+    $buttons = New-Object Windows.Controls.StackPanel
+    $buttons.Orientation = 'Horizontal'; $buttons.HorizontalAlignment = 'Right'; $buttons.Margin = '0,19,0,0'
+    $ok = New-Object Windows.Controls.Button; $ok.Content = 'Retry selected check'; $ok.Width = 160; $ok.Height = 32; $ok.IsDefault = $true
+    $cancel = New-Object Windows.Controls.Button; $cancel.Content = 'Cancel'; $cancel.Width = 90; $cancel.Height = 32; $cancel.IsCancel = $true
+    [void]$buttons.Children.Add($ok); [void]$buttons.Children.Add($cancel); [void]$stack.Children.Add($buttons)
+    $dlg.Content = $stack
+    $ok.Add_Click({
+        try {
+            $user = Resolve-ToolkitAuthUserName -UserName $nameInput.Text -DefaultDomain ([string]$cfg.AuthenticationDomain)
+            if ($passwordInput.SecurePassword.Length -eq 0) { throw 'Enter a password.' }
+            $dlg.Tag = [System.Management.Automation.PSCredential]::new($user,$passwordInput.SecurePassword.Copy())
+            $dlg.DialogResult = $true
+        } catch { [Windows.MessageBox]::Show($_.Exception.Message,'Invalid credentials') | Out-Null }
+    })
+    if ($dlg.ShowDialog() -ne $true) { return }
+    $credential = [System.Management.Automation.PSCredential]$dlg.Tag
+    if ($script:TargetComputer -ine $captured.Target) {
+        Clear-GUIReportState
+        return
+    }
+    # No automatic fallback or account substitution, even if the retry fails.
+    Start-GUIDiagnostics @([string]$captured.Sections[0]) $false $false $credential
+    $credential = $null
 })
 $ui.RunAllDiagnostics.Add_Click({
     Start-GUIDiagnostics @($script:DiagnosticSections | ForEach-Object { [string]$_.Id })
