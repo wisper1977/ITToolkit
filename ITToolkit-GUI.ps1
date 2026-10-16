@@ -2108,14 +2108,12 @@ function Convert-GUIComparisonCsv([string]$comparison) {
     return ($rows | ConvertTo-Csv -NoTypeInformation) -join "`r`n"
 }
 function Convert-GUIComparisonHtml([string]$comparison) {
-    $title = [System.Net.WebUtility]::HtmlEncode("$displayName - Snapshot Comparison")
-    $body = [System.Net.WebUtility]::HtmlEncode($comparison)
-    return @"
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><title>$title</title>
-<style>body{font-family:Segoe UI,Arial,sans-serif;margin:36px;background:#f4f7fb;color:#17365d}main{background:white;border:1px solid #d7e0eb;border-radius:8px;padding:24px}h1{font-size:23px}pre{color:#24364a;font:13px/1.65 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}</style>
-</head><body><main><h1>$title</h1><pre>$body</pre></main></body></html>
-"@
+    # Reuse the shared report renderer; keep snapshot comparison, TXT, and CSV untouched.
+    # HTML-only section headings follow the existing 'CATEGORY CHANGES' report format.
+    $formatted = [regex]::Replace($comparison, '(?m)^--- (Services|Software|Updates|Users|Groups|Administrators|Shares) ---\r?$', '$1 CHANGES')
+    $script:Config = $cfg
+    . (Join-Path $script:ToolkitRoot 'Modules\ITToolkit-Reports.ps1')
+    return Convert-ReportHtml $formatted "$displayName - Snapshot Comparison"
 }
 $ui.SaveComparisonGUI.Add_Click({
     if ([string]::IsNullOrWhiteSpace($script:GUIComparisonText)) { return }
