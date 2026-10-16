@@ -15,6 +15,10 @@ $executionContextPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-Executi
 if (-not (Test-Path -LiteralPath $executionContextPath -PathType Leaf)) { throw "Missing toolkit execution context: $executionContextPath" }
 . $executionContextPath
 $script:ToolkitExecutionContext = Get-ToolkitExecutionContext -Mode $ExecutionMode
+# Shared read-only diagnostic privilege definitions; no credential or elevation side effects.
+$requirementsPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-PrivilegeRequirements.ps1'
+if (-not (Test-Path -LiteralPath $requirementsPath -PathType Leaf)) { throw "Missing toolkit privilege requirements: $requirementsPath" }
+. $requirementsPath
 $configPath = Join-Path $script:ToolkitRoot 'Toolkit-config.json'
 if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { throw "Missing configuration: $configPath" }
 $cfg = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
@@ -1226,8 +1230,12 @@ function Test-GUIProcessElevated {
 }
 function Update-GUIElevatedDiagnosticButton {
     $selected = if ($null -ne $ui.DiagnosticSection.SelectedItem) { [string]$ui.DiagnosticSection.SelectedItem.Tag } else { '' }
-    $supported = [bool]$script:LocalTargetMode -and $selected -in @('BitLocker','Policy')
-    $needed = $supported -and -not (Test-GUIProcessElevated)
+    $needed = $false
+    if (-not [string]::IsNullOrWhiteSpace($selected)) {
+        $targetMode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+        $choice = Get-ToolkitDiagnosticExecutionChoice -Section $selected -TargetMode $targetMode -IsElevated (Test-GUIProcessElevated)
+        $needed = $choice.RunAction -eq 'RunElevatedUac'
+    }
     # Exactly one selected-check action is visible. UAC replaces the normal
     # action only for scoped local checks needing an elevated token.
     $ui.RunDiagnostic.Visibility = if ($needed) { [Windows.Visibility]::Collapsed } else { [Windows.Visibility]::Visible }
@@ -1722,7 +1730,8 @@ $ui.RunDiagnostic.Add_Click({
 $ui.RunElevatedLocalDiagnostic.Add_Click({
     if ($null -eq $ui.DiagnosticSection.SelectedItem) { return }
     $section = [string]$ui.DiagnosticSection.SelectedItem.Tag
-    if (-not $script:LocalTargetMode -or $section -notin @('BitLocker','Policy') -or (Test-GUIProcessElevated)) {
+    $choice = Get-ToolkitDiagnosticExecutionChoice -Section $section -TargetMode $(if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }) -IsElevated (Test-GUIProcessElevated)
+    if ($choice.RunAction -ne 'RunElevatedUac') {
         [Windows.MessageBox]::Show('Run Elevated is applicable only to supported local BitLocker or Policy checks when the current process is not elevated.','Elevation scope') | Out-Null
         return
     }
