@@ -145,3 +145,24 @@ function Assert-ToolkitLocalDiagnosticAuthorization {
     }
     return $accepted.ToArray()
 }
+
+// Remote preflight for one or more sections. No connection, elevation, or
+// credentials in returned assessments. Never replace Alternate with Default.
+function Assert-ToolkitRemoteDiagnosticAuthorization {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string[]]$Sections,
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$TargetComputer,
+        [Parameter(Mandatory=$true)][ValidateSet('Default','Alternate')][string]$Mode,
+        [AllowNull()][object]$AuthenticationContext
+    )
+    $accepted = New-Object 'System.Collections.Generic.List[object]'
+    foreach ($section in $Sections) {
+        $assessment = Get-ToolkitOperationAuthorization -Section $section -TargetMode $Mode -TargetComputer $TargetComputer -RequestedRoute CurrentToken -AuthenticationContext $AuthenticationContext
+        if ($assessment.Assessment -ne 'ReadyForAttempt' -or $assessment.ProposedRoute -ne 'CurrentToken') {
+            throw ('Remote ' + $section + ' diagnostic blocked by preflight: ' + [string]$assessment.Reason)
+        }
+        [void]$accepted.Add($assessment)
+    }
+    return $accepted.ToArray()
+}
