@@ -13,6 +13,8 @@ For v1.27 local BitLocker or Policy diagnostics in a non-elevated GUI, **Run Ele
 **Classic Windows test (October 15, 2026):** Local Group Policy prompted for UAC and returned an accurate report after approval; Disk Space ran without UAC. Other authorization identities and UAC cancellation are still pending.
 
 ## Features
+**Home GUI Report Archive validation:** Technician confirmed **Open Reports Folder** opens successfully in the home interactive-user setup. The previously failing separate-administrator workplace desktop handoff remains a known limitation and requires its own Windows test.
+
 
 - **Two interfaces:** Windows GUI and numbered Classic PowerShell menus. On the v1.27 development branch, the Classic main menu numbers are grouped sequentially and both interfaces offer a switch to the other under the current Windows process identity (both GUI → Classic and Classic → GUI technician-confirmed on home Windows; other launch identities and explicit mode inspection still pending). No target selection or alternate credential is transferred.
 - **v1.27A GUI refinements (development branch):** Multiline labels on Tools and Dashboard favorite buttons; improved display of long target names, recent reports, and footer text in narrower windows.
