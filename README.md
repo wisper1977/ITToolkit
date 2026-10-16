@@ -14,6 +14,8 @@ For v1.27 local BitLocker or Policy diagnostics in a non-elevated GUI, **Run Ele
 
 **v1.27 privilege requirements (standalone, On-Demand GUI and Classic home Windows tests passed; remote retest pending):** `Modules/ITToolkit-PrivilegeRequirements.ps1` provides shared read-only metadata and selection helpers for the twenty diagnostic sections. GUI uses this registry to decide whether to show the existing local BitLocker/Policy UAC button; Classic imports the same definitions but retains its current execution behavior. The module never elevates or selects credentials, and remote access still requires explicit authorization.
 
+**v1.27 centralized authorization foundation (development; Windows tests pending):** The new `Modules/ITToolkit-OperationAuthorization.ps1` is imported by GUI and Classic and provides the read-only `Get-ToolkitOperationAuthorization` preflight. It evaluates the current Windows identity and elevation, target/mode consistency, and explicit remote Alternate context when supplied. A `ReadyForAttempt` result means only that preflight inputs are coherent; Windows and remote endpoints still enforce access. The module never grants privileges, prompts for credentials, initiates UAC, or changes an operation's execution route. Existing diagnostic behavior is unchanged.
+
 ## Features
 **Home GUI Report Archive validation:** Technician confirmed **Open Reports Folder** opens successfully in the home interactive-user setup. The previously failing separate-administrator workplace desktop handoff remains a known limitation and requires its own Windows test.
 
