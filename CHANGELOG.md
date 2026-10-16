@@ -30,8 +30,8 @@ Meaningful IT Toolkit additions, changes, fixes, and release status are grouped 
 
 ### Validation and release status
 
-- County technician accepted local and remote GUI/Classic diagnostic workflows, including 20-section Run All, verified remote Alternate identity, On-Demand retry success/cancellation, and expected partial/unavailable outcomes.
-- County Windows testing confirmed GUI Services HTML/CSV/TXT exports, remote seven-category snapshots, comparison output, archive persistence after restart, and Reports-folder opening in all three launcher modes. Elevated-folder Explorer drag-and-drop was also tested.
+- Enterprise technician accepted local and remote GUI/Classic diagnostic workflows, including 20-section Run All, verified remote Alternate identity, On-Demand retry success/cancellation, and expected partial/unavailable outcomes.
+- Enterprise Windows testing confirmed GUI Services HTML/CSV/TXT exports, remote seven-category snapshots, comparison output, archive persistence after restart, and Reports-folder opening in all three launcher modes. Elevated-folder Explorer drag-and-drop was also tested.
 - Windows PowerShell 5.1 static authorization and regression tests support the implementation but do not replace interactive or transport validation.
 - **Release candidate only:** version `1.27.b3bb971`; `main` remains at stable v1.26. A final clean-build smoke test and explicit promotion approval are outstanding. Untested negative and edge cases remain tracked in [ROADMAP.md](ROADMAP.md).
 
