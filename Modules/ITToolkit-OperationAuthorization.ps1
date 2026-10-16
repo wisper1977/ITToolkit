@@ -100,3 +100,15 @@ function Get-ToolkitOperationAuthorization {
         ExecutionIdentityVerified = $false
     }
 }
+
+# Narrow enforcement guard shared by GUI and Classic for a single local System
+# report. Throws before the caller starts any collector on a denied preflight.
+function Assert-ToolkitLocalSystemAuthorization {
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$TargetComputer)
+    $assessment = Get-ToolkitOperationAuthorization -Section System -TargetMode Local -TargetComputer $TargetComputer -RequestedRoute CurrentToken
+    if ($assessment.Assessment -ne 'ReadyForAttempt' -or $assessment.ProposedRoute -ne 'CurrentToken') {
+        throw ('Local System diagnostic blocked by preflight: ' + [string]$assessment.Reason)
+    }
+    return $assessment
+}
