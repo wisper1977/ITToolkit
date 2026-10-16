@@ -1,30 +1,16 @@
 # IT Toolkit
 
-**v1.28 — Development release candidate** · Windows PowerShell 5.1 · Windows administration and diagnostics
+**v1.28 — Active development** · Windows PowerShell 5.1 · Windows administration and diagnostics
 
-> **Release status:** v1.28 is under final validation on [`develop/v1.28`](https://github.com/wisper1977/ITToolkit/tree/develop/v1.28). **v1.26** on `main` remains the stable release until v1.28 passes testing and is approved. See [CHANGELOG.md](CHANGELOG.md) for development history and [ROADMAP.md](ROADMAP.md) for outstanding validation.
+> **Release status:** v1.28 is in active development on [`develop/v1.28`](https://github.com/wisper1977/ITToolkit/tree/develop/v1.28). **v1.27** on `main` is the published stable Enterprise release. No v1.28 diagnostic enhancements have been implemented or validated yet. See [CHANGELOG.md](CHANGELOG.md) for completed changes and [ROADMAP.md](ROADMAP.md) for planned work.
 
 IT Toolkit is a portable, PowerShell-based Windows administration utility for technicians. It combines system diagnostics, access checks, reporting, inventory comparisons, and frequently used tools in graphical and Classic console interfaces.
 
-## What's new in v1.28
+## v1.28 development focus
 
-- **Updated Launcher:** Choose Current Windows User, Separate Administrative Account, or Standard Session + On-Demand Administration.
-- **Scoped elevation:** Run supported local BitLocker and Group Policy diagnostics through an explicit Windows UAC request without automatically elevating the entire Toolkit. For a single remote Default diagnostic that returns ACCESS DENIED, the GUI can offer an explicit one-time **Retry with Admin Credentials** using target-bound remote authentication (Enterprise-tested for the supported single-diagnostic workflow).
-- **Shared execution and authorization:** GUI and Classic use consistent execution context, privilege requirements, and diagnostic preflight checks; mismatched or invalid authentication requests are blocked before collection.
-- **Diagnostic cancellation and remote failure recovery:** Enterprise-tested GUI Cancel Diagnostics requests a non-blocking stop and restores target switching when the worker stops. Single remote checks now request cancellation after 60 seconds; Run All remains ten minutes. Default remote System Information has a 30-second process deadline, exercised against an inaccessible Enterprise target. A blocked underlying Windows call can still delay cancellation.
-- **Remote identity evidence:** GUI and Classic Alternate reports separately show the requested remote account and a read-only identity returned from the target, or NOT VERIFIED if the verification call fails.
-- **Remote credential handling:** Explicit, target-bound Alternate credentials are supported for applicable diagnostics without silently falling back to another identity.
-- **GUI and Classic alignment:** Shared diagnostic capabilities, simpler interface switching, and a reorganized Classic menu.
-- **Local diagnostics:** Direct local collection is available for the supported diagnostic sections, without unnecessarily routing local checks through remote-management protocols.
-- **Computer Health:** Evidence-based local and remote health checks with review, checked, and unavailable states, including storage, services, events, uptime, firewall, updates inventory, and pending-restart indicators.
-- **Improved dashboard:** Compact, independently scrollable health details, better navigation and sizing, clearer target status, and remembered window preferences.
-- **Reports and comparisons:** Improved saved-report handling, HTML/CSV/TXT export, structured inventory snapshots, and side-by-side changes between captures.
-- **Reports folder:** Open Folder requests an actual Windows Explorer directory for dragging reports into email or chat. A non-elevated Separate Administrative Account GUI requests one-time UAC approval for a separate folder-opening helper (not elevation of the toolkit). Other launch modes use the normal route; Copy Folder Path remains available. All three folder-opening modes were Enterprise-tested; Separate Admin requires UAC when not already elevated.
-- **Version traceability:** Development versions include an abbreviated source commit identifier; diagnostic exports and structured snapshots include version information.
-- **Tools and Favorites:** More flexible tool access, favorites, and an explicitly authorized Windows PowerShell (Administrator) launch option.
-- **Refined branding and usability:** Updated Launcher presentation, improved long-label display, and revised README screenshots.
+The v1.28 milestone is a **diagnostic completeness review** of all 20 sections, beginning with Network. We plan to compare direct-local, remote Default, and remote Alternate evidence; improve completeness and readability while maintaining GUI/Classic parity, existing authentication boundaries, and snapshot compatibility. Work will be implemented and validated incrementally on Enterprise Windows systems. These are plans, **not implemented v1.28 features**.
 
-Core GUI and Classic diagnostic, authentication, reporting, snapshot, and Reports-folder workflows have been accepted in Enterprise Windows testing. This development release candidate is **not yet approved for production**; see the [roadmap](ROADMAP.md) for final release requirements and deferred edge cases.
+The v1.27 stable baseline already includes three launcher modes, shared authorization, verified remote identity evidence, seven-check Computer Health, HTML/CSV/TXT reports, structured inventory snapshots and comparisons, and the scoped UAC Reports-folder helper. See the [v1.27 release notes](CHANGELOG.md) for established features and testing.
 
 ## Features
 
@@ -53,7 +39,7 @@ macOS and Linux are not supported. The launcher does not install an agent on rem
 
 ## Installation
 
-1. For the **stable v1.26 release**, download the package from [GitHub Releases](https://github.com/wisper1977/ITToolkit/releases/tag/v1.26). For the **v1.28 development build**, use the [development branch](https://github.com/wisper1977/ITToolkit/tree/develop/v1.28).
+1. For the **stable v1.27 release**, use [GitHub Releases](https://github.com/wisper1977/ITToolkit/releases/tag/v1.27). For ongoing **v1.28 development**, use the [development branch](https://github.com/wisper1977/ITToolkit/tree/develop/v1.28).
 2. **Install to a local folder on `C:\`**, such as `C:\ITToolkit` (not directly in the root of `C:\`). Do **not** run the Toolkit from the Desktop: technicians have encountered environments where a Desktop-based installation fails to launch or run correctly. Preserve the `Modules`, `Branding`, scripts, and configuration file layout.
 3. Review `Toolkit-config.json` and adapt the organization branding, default authentication domain, report directory, and optional tool paths.
 4. Run `Launch.cmd`, choose an execution mode, then open the graphical or Classic interface.
@@ -90,8 +76,8 @@ A successful query does not guarantee that the machine is healthy. Unavailable c
 
 ## Development and release versions
 
-- **Development:** `Major.Minor.Commit` (current candidate: `1.28.b3bb971`), where the suffix identifies the verified Git source revision used for the build.
-- **Stable:** `Major.Minor` (example: `1.28`), after required Windows validation and formal release approval.
+- **Development:** `Major.Minor.Commit` (initial v1.28 baseline: `1.28.b3bb971`), where the suffix identifies the latest inherited application-code commit, `b3bb971` (from v1.27). Update the suffix only when a newer application-code commit is made; docs-only commits do not change it.
+- **Stable:** `Major.Minor` (current production: `1.27`); v1.28 will use `1.28` only after Windows validation and explicit release approval.
 - GUI, Classic, Launcher, and generated report metadata should consistently identify their source build. A configured suffix must not be assumed to identify a newer commit until the build version is regenerated and verified.
 
 ## Project layout
