@@ -6,7 +6,7 @@ Meaningful IT Toolkit additions, changes, fixes, and release status are grouped 
 
 ### Changed (awaiting Enterprise Windows validation)
 
-- Expanded local Network inventory to include named connected/disconnected adapters, connection state, speed, DHCP server/lease information, and DNS metadata while retaining established configuration fields. Remote Network collection and routing are unchanged.
+- Expanded local Network inventory to include named connected/disconnected adapters, connection state, speed, DHCP server/lease information, and DNS metadata while retaining established configuration fields. Remote Network collection and routing are unchanged. Invalid or inactive adapter link speeds are suppressed, and hardware-not-present adapter states are labeled.
 - The diagnostic completeness review continues, beginning with Network; see [ROADMAP.md](ROADMAP.md) for planned follow-up and validation.
 
 ## [1.27] — 2026-10-16
