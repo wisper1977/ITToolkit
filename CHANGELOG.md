@@ -8,6 +8,9 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Windows validation update — October 15, 2026
 
+- **Explicit Alternate preflight verified on home Windows:** Technician created a typed, target-bound in-memory Alternate authentication context for TESTSERVER; the read-only preflight returned `ReadyForAttempt`, `RequestedAuthenticationMode=Alternate`, and the supplied username (not proof of successful network authentication). Reusing that context for OTHERSERVER returned `Blocked` and left `RequestedIdentity` blank, with no silent Default fallback. Technician cleared the in-memory context after testing. The preflight did not contact either target.
+
+
 - **Authorization preflight edge cases technician-verified on home Windows:** Local System targeting another hostname returned `Blocked`; unsupported `ElevatedLocal` request for System returned `Blocked`; remote Default System preflight returned `ReadyForAttempt` with Default authentication selected. This is configuration validation only, not evidence of remote host availability or authorization.
 
 
