@@ -32,6 +32,8 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Fixed
 
+- **Context-sensitive UAC action (GUI, Windows test pending):** The existing **Run Elevated (UAC)** diagnostic button is now hidden by default and appears only for local **BitLocker** or **Policy** selections when the current toolkit token is not elevated. Its visibility refreshes on target/section changes, and the handler independently enforces its scope. Windows continues to own UAC approval; no automatic elevation or credential reuse is introduced. An already elevated toolkit uses the normal diagnostic button. Other diagnostics are not represented as having a generic UAC execution path. Classic's existing explicit UAC menu behavior is unchanged pending parity review.
+
 - **Launcher vertical scrollbar (layout change, Windows retest pending):** Increased the default launcher window height and compacted execution-mode, credential, interface, message, and footer spacing. Reduced the optional banner height and constrained the window to the usable screen area. Ordinary desktop layouts should show the full form without a scrollbar; scrolling remains an accessibility fallback on small/high-DPI screens. No authentication or login-mode logic changed.
 
 - Corrected diagnostic exception classification so an RPC/transport error is **Unavailable**, not **Access Denied**, merely because the legacy generic error label contains that phrase.
