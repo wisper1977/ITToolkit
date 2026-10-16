@@ -180,7 +180,13 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
             }
         } else {
             try {
-                $content = [string](Get-ReportSection $section $target)
+                if ($script:ToolkitAuthMode -eq 'Alternate') {
+                    $alternateReport = Get-ClassicAlternateReportSection -Section $section
+                    $content = [string]$alternateReport.Content
+                    $status = [string]$alternateReport.Status
+                } else {
+                    $content = [string](Get-ReportSection $section $target)
+                }
                 if ($section -eq 'Health' -and $script:ToolkitAuthMode -ne 'Alternate') {
                     $healthContext = New-ToolkitAuthContext -ComputerName $target -Mode Default
                     $healthResult = Get-ToolkitCompositeDiagnostic -Context $healthContext -Section Health
@@ -189,7 +195,8 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
                 }
             }
             catch { $content = "Error details: $($_.Exception.Message)" }
-            $status = Get-SectionStatus $section $content
+            if ($script:ToolkitAuthMode -ne 'Alternate') { $status = Get-SectionStatus $section $content }
+            elseif (-not $status) { $status = 'UNAVAILABLE' }
         }
         $results.Add([pscustomobject]@{ Section=$section; Status=$status; Content=$content })
     }
