@@ -41,6 +41,146 @@ function Get-ToolkitCompositeDiagnostic {
                         [pscustomobject]@{ Check='Remote ipconfig /all';Source='WinRM';Status='SUCCESS';Detail=($lines -join "`n") }
                     })
                     $rows+=@($remote)
+                    # Additional WinRM evidence is independent of ipconfig /all.
+                    # A failed expansion must not trigger WMI fallback or lose the
+                    # already successful IP configuration record.
+                    try {
+                        $extended = @(Invoke-ToolkitCompositeRemote $Context {
+                            $records = New-Object System.Collections.Generic.List[object]
+                            try {
+                                $configs = @(Get-CimInstance Win32_NetworkAdapterConfiguration -ErrorAction Stop)
+                                $byIndex = @{}
+                                foreach ($c in $configs) { $byIndex[[int]$c.Index] = $c }
+                                $adapters = @(Get-CimInstance Win32_NetworkAdapter -ErrorAction Stop |
+                                    Where-Object {
+                                        (-not [string]::IsNullOrWhiteSpace([string]$_.NetConnectionID)) -or
+                                        ($byIndex.ContainsKey([int]$_.Index) -and [bool]$byIndex[[int]$_.Index].IPEnabled)
+                                    } | Sort-Object Index)
+                                foreach ($a in $adapters) {
+                                    $c = $byIndex[[int]$a.Index]
+                                    $code = $a.NetConnectionStatus
+                                    $state = if ($null -eq $code) {'Unknown'}
+                                        elseif ([int]$code -eq 2) {'Connected'}
+                                        elseif ([int]$code -eq 7) {'Media disconnected'}
+                                        elseif ([int]$code -eq 0) {'Disconnected'}
+                                        elseif ([int]$code -eq 4) {'Hardware not present'}
+                                        elseif ([int]$code -eq 5) {'Hardware disabled'}
+                                        else {'State code '+[string]$code}
+                                    $speed = if ($state -eq 'Connected' -and $null -ne $a.Speed -and
+                                        [decimal]$a.Speed -gt 0 -and
+                                        [decimal]$a.Speed -ne [decimal][long]::MaxValue -and
+                                        [decimal]$a.Speed -ne [decimal][uint64]::MaxValue) {
+                                        [math]::Round([double]$a.Speed / 1000000,1)
+                                    } else {$null}
+                                    $fields = [ordered]@{
+                                        Name=[string]$a.NetConnectionID
+                                        Description=[string]$a.Description
+                                        InterfaceIndex=if($null -ne $a.InterfaceIndex){[int]$a.InterfaceIndex}else{$null}
+                                        WmiAdapterIndex=[int]$a.Index
+                                        MACAddress=[string]$a.MACAddress
+                                        ConnectionStatus=$state
+                                        NetEnabled=$a.NetEnabled
+                                        PhysicalAdapter=$a.PhysicalAdapter
+                                        SpeedMbps=$speed
+                                        IPEnabled=if($null -ne $c){[bool]$c.IPEnabled}else{$false}
+                                        DHCPEnabled=if($null -ne $c){[bool]$c.DHCPEnabled}else{$false}
+                                        DHCPServer=if($null -ne $c){[string]$c.DHCPServer}else{''}
+                                        DHCPLeaseObtained=if($null -ne $c -and $c.DHCPEnabled){[string]$c.DHCPLeaseObtained}else{''}
+                                        DHCPLeaseExpires=if($null -ne $c -and $c.DHCPEnabled){[string]$c.DHCPLeaseExpires}else{''}
+                                        IPAddresses=if($null -ne $c){(@($c.IPAddress | Where-Object {$_}) -join ', ')}else{''}
+                                        SubnetMasks=if($null -ne $c){(@($c.IPSubnet | Where-Object {$_}) -join ', ')}else{''}
+                                        DefaultGateways=if($null -ne $c){(@($c.DefaultIPGateway | Where-Object {$_}) -join ', ')}else{''}
+                                        DNSServers=if($null -ne $c){(@($c.DNSServerSearchOrder | Where-Object {$_}) -join ', ')}else{''}
+                                        DNSDomain=if($null -ne $c){[string]$c.DNSDomain}else{''}
+                                        DNSHostName=if($null -ne $c){[string]$c.DNSHostName}else{''}
+                                        DNSDomainSuffixSearchOrder=if($null -ne $c){(@($c.DNSDomainSuffixSearchOrder | Where-Object {$_}) -join ', ')}else{''}
+                                    }
+                                    $detail = ($fields.GetEnumerator() | ForEach-Object {
+                                        '{0}: {1}' -f $_.Key,$_.Value
+                                    }) -join "`n"
+                                    $records.Add([pscustomobject]@{
+                                        Check=('Remote adapter: '+[string]$a.NetConnectionID)
+                                        RecordType='NetworkAdapter'
+                                        Source='WinRM'
+                                        Status='SUCCESS'
+                                        Detail=$detail
+                                    })
+                                }
+                                if($adapters.Count -eq 0) {
+                                    $records.Add([pscustomobject]@{Check='Remote adapter inventory';Source='WinRM';Status='NO RESULTS';Detail='No named or IP-enabled network adapters returned.'})
+                                }
+                            } catch {
+                                $records.Add([pscustomobject]@{Check='Remote adapter inventory';Source='WinRM';Status='UNAVAILABLE';Detail=$_.Exception.Message})
+                            }
+                            try {
+                                $routes = @(Get-NetRoute -PolicyStore ActiveStore -ErrorAction Stop |
+                                    Sort-Object AddressFamily,DestinationPrefix,InterfaceIndex,RouteMetric,NextHop)
+                                $interfaces = @{}
+                                foreach ($ni in @(Get-NetIPInterface -ErrorAction Stop)) {
+                                    $interfaces[([string]$ni.InterfaceIndex+'|'+[string]$ni.AddressFamily)] = $ni
+                                }
+                                $defaults = @($routes | Where-Object {
+                                    $_.DestinationPrefix -eq '0.0.0.0/0' -or $_.DestinationPrefix -eq '::/0'
+                                } | Sort-Object AddressFamily,InterfaceAlias,NextHop)
+                                foreach ($r in $defaults) {
+                                    $ni=$interfaces[([string]$r.InterfaceIndex+'|'+[string]$r.AddressFamily)]
+                                    $im=if($null -ne $ni){$ni.InterfaceMetric}else{$null}
+                                    $detail = @(
+                                        'AddressFamily: '+[string]$r.AddressFamily
+                                        'DestinationPrefix: '+[string]$r.DestinationPrefix
+                                        'NextHop: '+[string]$r.NextHop
+                                        'InterfaceIndex: '+[string]$r.InterfaceIndex
+                                        'InterfaceAlias: '+[string]$r.InterfaceAlias
+                                        'ConnectionState: '+$(if($null -ne $ni){[string]$ni.ConnectionState}else{'Unknown'})
+                                        'RouteMetric: '+[string]$r.RouteMetric
+                                        'InterfaceMetric: '+[string]$im
+                                        'CombinedMetric: '+$(if($null -ne $im){[string]([long]$im+[long]$r.RouteMetric)}else{'Unknown'})
+                                        'Note: Listed route; not verified path selection or gateway reachability.'
+                                    ) -join "`n"
+                                    $records.Add([pscustomobject]@{
+                                        Check=('Remote default route: '+[string]$r.InterfaceAlias)
+                                        RecordType='DefaultRoute';Source='WinRM';Status='SUCCESS';Detail=$detail
+                                    })
+                                }
+                                $records.Add([pscustomobject]@{
+                                    Check='Remote active routing table'
+                                    RecordType='RouteSummary';Source='WinRM';Status='SUCCESS'
+                                    Detail=('ActiveStore routes: '+$routes.Count+'; default routes: '+$defaults.Count+
+                                        '. All entries below are Windows route evidence, not confirmed traffic paths.')
+                                })
+                                foreach ($r in $routes) {
+                                    $ni=$interfaces[([string]$r.InterfaceIndex+'|'+[string]$r.AddressFamily)]
+                                    $im=if($null -ne $ni){$ni.InterfaceMetric}else{$null}
+                                    $detail = @(
+                                        'AddressFamily: '+[string]$r.AddressFamily
+                                        'DestinationPrefix: '+[string]$r.DestinationPrefix
+                                        'NextHop: '+[string]$r.NextHop
+                                        'InterfaceIndex: '+[string]$r.InterfaceIndex
+                                        'InterfaceAlias: '+[string]$r.InterfaceAlias
+                                        'RouteMetric: '+[string]$r.RouteMetric
+                                        'InterfaceMetric: '+[string]$im
+                                        'CombinedMetric: '+$(if($null -ne $im){[string]([long]$im+[long]$r.RouteMetric)}else{'Unknown'})
+                                        'State: '+[string]$r.State
+                                        'PolicyStore: ActiveStore'
+                                    ) -join "`n"
+                                    $records.Add([pscustomobject]@{
+                                        Check='Remote active route';RecordType='ActiveRoute'
+                                        Source='WinRM';Status='SUCCESS';Detail=$detail
+                                    })
+                                }
+                            } catch {
+                                $records.Add([pscustomobject]@{Check='Remote routing inventory';Source='WinRM';Status='UNAVAILABLE';Detail=$_.Exception.Message})
+                            }
+                            $records.ToArray()
+                        })
+                        $rows+=@($extended)
+                    } catch {
+                        $rows += [pscustomobject]@{
+                            Check='Remote enhanced Network inventory'
+                            Source='WinRM';Status='UNAVAILABLE'
+                            Detail=('Existing ipconfig /all succeeded; optional adapter/route expansion failed: '+$_.Exception.Message)
+                        }
+                    }
                 } catch {
                     # Credential-aware WMI fallback; never queries using caller identity in alternate mode.
                     $winrmError=$_.Exception.Message
