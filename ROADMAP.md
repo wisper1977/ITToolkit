@@ -13,6 +13,9 @@
 
 ## v1.27 — Remaining work
 
+- **All-20 local preflight rollout (Windows validation pending):** Execute expanded `Tests/Test-LocalSystemAuthorization.ps1` matrix, then verify GUI/Classic individual local Storage/Services, GUI/Classic all-20 Run All, and BitLocker/Policy scoped UAC regression. Confirm denial prevents any collection and stale reports are not marked as fresh. Remote Default/Alternate and workplace separate-administrator mode still need independent regression tests. This rollout only enforces authorization preflight for local diagnostic operations; Windows remains the final permissions authority.
+
+
 - **Shared local System guard negative-path test (technician-confirmed on Windows):** `Tests/Test-LocalSystemAuthorization.ps1` passed valid local target acceptance, mismatched target denial before simulated collection, and static GUI/Classic guard-reference checks. This validates the shared denial boundary, **not** a live WPF/Classic denial flow. Normal local System reports were subsequently technician-confirmed in both GUI and Classic after guard refactoring. Still confirm report state after an interactive failure. Avoid injecting invalid targets into live GUI or changing system permissions.
 
 
