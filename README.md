@@ -8,6 +8,8 @@ The **IT Toolkit** is a portable, PowerShell-based utility for IT technicians wh
 
 > **Platform support:** The current toolkit is designed for **Windows**. Its graphical interface uses Windows Presentation Foundation (WPF), and several collectors use Windows-specific management APIs. **macOS and Linux are not supported by this release.** A cross-platform edition is a potential future project.
 
+For v1.27 local BitLocker or Policy diagnostics in a non-elevated GUI, **Run Elevated (UAC)** replaces **Run selected check** rather than appearing beside it. Other checks and already-elevated processes show the normal selected-check action. Windows GUI retest pending.
+
 ## Features
 
 - **Two interfaces:** Windows GUI and numbered Classic PowerShell menus. On the v1.27 development branch, the Classic main menu numbers are grouped sequentially and both interfaces offer a switch to the other under the current Windows process identity (Windows validation pending). No target selection or alternate credential is transferred.
