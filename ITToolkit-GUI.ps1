@@ -1,11 +1,20 @@
 ﻿# IT Toolkit graphical interface - current build version is read from Toolkit-config.json
 # Windows PowerShell 5.1 / WPF / STA. Works from the toolkit root folder.
 # Shared built-in Tools catalog is loaded from Modules\ITToolkit-BuiltInCatalog.ps1.
+param(
+    [ValidateSet('Current','SeparateAccount','OnDemand')]
+    [string]$ExecutionMode = 'Current'
+)
 $ErrorActionPreference = 'Stop'
 if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne [Threading.ApartmentState]::STA) {
     throw 'GUI requires an STA thread. Start through the Toolkit launcher or powershell.exe -STA -File ITToolkit-GUI.ps1.'
 }
 $script:ToolkitRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+# Shared process identity/elevation evidence. Mode is metadata, not permission.
+$executionContextPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-ExecutionContext.ps1'
+if (-not (Test-Path -LiteralPath $executionContextPath -PathType Leaf)) { throw "Missing toolkit execution context: $executionContextPath" }
+. $executionContextPath
+$script:ExecutionContext = Get-ToolkitExecutionContext -Mode $ExecutionMode
 $configPath = Join-Path $script:ToolkitRoot 'Toolkit-config.json'
 if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { throw "Missing configuration: $configPath" }
 $cfg = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
@@ -1212,9 +1221,8 @@ $ui.DiagnosticSection.SelectedIndex = 0
 # when the current process does not already have an elevated administrator token.
 # The launcher choice is not itself evidence of privilege.
 function Test-GUIProcessElevated {
-    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
-    $principal = New-Object Security.Principal.WindowsPrincipal($identity)
-    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    # This is evidence from the process token, not from the launcher selection.
+    return [bool]$script:ExecutionContext.IsElevated
 }
 function Update-GUIElevatedDiagnosticButton {
     $selected = if ($null -ne $ui.DiagnosticSection.SelectedItem) { [string]$ui.DiagnosticSection.SelectedItem.Tag } else { '' }
@@ -1763,7 +1771,7 @@ $ui.SwitchClassic.Add_Click({
     try {
         # Launch under the current Windows token, without credential or target handoff.
         $psExe = Join-Path $PSHOME 'powershell.exe'
-        $arguments = '-NoLogo -NoProfile -STA -File "' + $classicScript + '"'
+        $arguments = '-NoLogo -NoProfile -STA -File "' + $classicScript + '" -ExecutionMode ' + $script:ExecutionContext.Mode
         $process = Start-Process -FilePath $psExe -ArgumentList $arguments -WorkingDirectory $PSScriptRoot -PassThru -ErrorAction Stop
         if ($null -eq $process) { throw 'Windows did not return a process.' }
         $window.Close()
