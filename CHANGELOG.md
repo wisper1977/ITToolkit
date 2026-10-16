@@ -32,6 +32,8 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Fixed
 
+- **Launcher vertical scrollbar (layout change, Windows retest pending):** Increased the default launcher window height and compacted execution-mode, credential, interface, message, and footer spacing. Reduced the optional banner height and constrained the window to the usable screen area. Ordinary desktop layouts should show the full form without a scrollbar; scrolling remains an accessibility fallback on small/high-DPI screens. No authentication or login-mode logic changed.
+
 - Corrected diagnostic exception classification so an RPC/transport error is **Unavailable**, not **Access Denied**, merely because the legacy generic error label contains that phrase.
 - Improved scoped UAC failure reporting for cancelled approvals, process-launch failures, script-policy restrictions, and missing elevated results.
 - Corrected outdated GUI/Classic messages that had claimed most local diagnostics and local snapshots were unsupported.
