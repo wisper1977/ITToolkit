@@ -7,7 +7,7 @@ Meaningful IT Toolkit additions, changes, fixes, and release status are grouped 
 ### Changed
 
 - Expanded local Network inventory to include connected/disconnected adapters, connection states, valid speeds, DHCP lease/server details, and DNS metadata. Enterprise testing accepted the adapter inventory and speed/state fixes.
-- Added read-only active IPv4/IPv6 route inventory with destinations, next hops, interface indices, and route/interface metrics. Routing output awaits Enterprise Windows validation; existing remote Network collection remains unchanged.
+- Added read-only active IPv4/IPv6 route inventory with destinations, next hops, interface indices, and route/interface metrics. Active routes were observed in Enterprise Windows testing. Adapter-to-route interface index alignment and a default-route summary were added and await retesting; existing remote Network collection remains unchanged.
 - Diagnostic completeness review continues; see [ROADMAP.md](ROADMAP.md) for outstanding validation.
 
 ## [1.27] — 2026-10-16
