@@ -1257,9 +1257,13 @@ for ($i = 0; $i -lt $ui.DiagnosticReportFormat.Items.Count; $i++) {
     if ([string]$ui.DiagnosticReportFormat.Items[$i].Content -eq $defaultFormat) { $ui.DiagnosticReportFormat.SelectedIndex = $i; break }
 }
 function Clear-GUIReportState {
+    # Invalidate both the saved report and its visible evidence. Keeping old
+    # diagnostic text after a target/credential change is misleading even when
+    # Save/Copy are disabled and separately reject a mismatched context.
     $script:LastGUIReport = $null
     $ui.SaveDiagnosticReport.IsEnabled = $false
     $ui.CopyDiagnosticReport.IsEnabled = $false
+    $ui.DiagnosticOutput.Clear()
     $ui.DiagnosticSaveStatus.Text = 'Run a diagnostic to enable Save Report.'
 }
 $script:DiagnosticPS = $null
