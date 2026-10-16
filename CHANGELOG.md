@@ -4,8 +4,10 @@ Meaningful IT Toolkit additions, changes, fixes, and release status are grouped 
 
 ## [1.28] — In development (not released)
 
-- No new diagnostic functionality has been implemented or validated for v1.28 yet. The diagnostic completeness review, beginning with Network, is tracked in [ROADMAP.md](ROADMAP.md).
-- Initial development baseline inherits the v1.27 application code at `b3bb971`; documentation-only changes are not new application-code revisions.
+### Changed (awaiting Enterprise Windows validation)
+
+- Expanded local Network inventory to include named connected/disconnected adapters, connection state, speed, DHCP server/lease information, and DNS metadata while retaining established configuration fields. Remote Network collection and routing are unchanged.
+- The diagnostic completeness review continues, beginning with Network; see [ROADMAP.md](ROADMAP.md) for planned follow-up and validation.
 
 ## [1.27] — 2026-10-16
 
