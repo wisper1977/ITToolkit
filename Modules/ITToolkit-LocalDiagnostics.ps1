@@ -640,6 +640,7 @@ function Get-ToolkitLocalDiagnostic {
                         elseif ([int]$connectionCode -eq 2) { 'Connected' }
                         elseif ([int]$connectionCode -eq 7) { 'Media disconnected' }
                         elseif ([int]$connectionCode -eq 0) { 'Disconnected' }
+                        elseif ([int]$connectionCode -eq 4) { 'Hardware not present' }
                         elseif ([int]$connectionCode -eq 5) { 'Hardware disabled' }
                         else { 'State code ' + [string]$connectionCode }
                     [pscustomobject]@{
@@ -651,7 +652,10 @@ function Get-ToolkitLocalDiagnostic {
                         ConnectionStatus = $connectionState
                         NetEnabled = if ($null -ne $adapter.NetEnabled) { [bool]$adapter.NetEnabled } else { $null }
                         PhysicalAdapter = if ($null -ne $adapter.PhysicalAdapter) { [bool]$adapter.PhysicalAdapter } else { $null }
-                        SpeedMbps = if ($null -ne $adapter.Speed -and [double]$adapter.Speed -gt 0) {
+                        SpeedMbps = if ($connectionState -eq 'Connected' -and $null -ne $adapter.Speed -and
+                            [decimal]$adapter.Speed -gt 0 -and
+                            [decimal]$adapter.Speed -ne [decimal][long]::MaxValue -and
+                            [decimal]$adapter.Speed -ne [decimal][uint64]::MaxValue) {
                             [math]::Round([double]$adapter.Speed / 1000000, 1)
                         } else { $null }
                         IPEnabled = if ($null -ne $config) { [bool]$config.IPEnabled } else { $false }
