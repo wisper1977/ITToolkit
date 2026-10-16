@@ -146,6 +146,8 @@ This toolkit is intended for **authorized administration only**. Remote checks c
 
 **Known v1.27 development limitation:** Report Archive → Open Reports Folder can launch a child PowerShell process successfully without showing an Explorer window in the tested alternate-admin GUI context. Copy Folder Path remains usable. The Explorer desktop-session issue is still being investigated.
 
+**Development report traceability:** GUI saved diagnostic reports now include `Toolkit version: <configured version>` in HTML, CSV, and TXT exports. Classic diagnostic reports already include the version in their heading, and structured snapshots carry version metadata. The configured development version is intentionally unchanged during this focused report fix; a future verified build must update the commit suffix to identify its actual source commit. Windows export-format regression testing remains pending.
+
 ## Version history
 
 ### v1.27 (in development)
