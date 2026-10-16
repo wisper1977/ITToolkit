@@ -6,6 +6,8 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ## [1.27] — In development (not released)
 
+- **Remote authorization integration in progress (not Windows-tested):** Shared remote preflight helper and GUI entry-point integration committed. Classic entry-point integration remains incomplete and must not be treated as validated. Remote collectors and authentication behavior still require independent regression, especially Classic Alternate identity consistency. Do not promote the branch until the incomplete work has been reviewed and tested.
+
 ### Windows validation update — October 15, 2026
 
 - **Explicit Alternate preflight verified on home Windows:** Technician created a typed, target-bound in-memory Alternate authentication context for TESTSERVER; the read-only preflight returned `ReadyForAttempt`, `RequestedAuthenticationMode=Alternate`, and the supplied username (not proof of successful network authentication). Reusing that context for OTHERSERVER returned `Blocked` and left `RequestedIdentity` blank, with no silent Default fallback. Technician cleared the in-memory context after testing. The preflight did not contact either target.
