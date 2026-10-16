@@ -2,6 +2,51 @@
 # Cache the last collected results for this Classic session only.
 # Target changes invalidate the cache during Save-Last validation.
 $script:ClassicLastReport = $null
+# Local snapshots share the seven-category schema with GUI/remote snapshots.
+# They query the local machine directly and never accept alternate credentials.
+function New-ClassicLocalComparisonSnapshot {
+    $target = [string]$script:TargetComputer
+    if (-not $script:LocalTargetMode -or $target -ine $env:COMPUTERNAME) {
+        Write-Host 'Select the local computer before creating a local snapshot.' -ForegroundColor Yellow
+        Pause-Toolkit; return
+    }
+    try {
+        $module = Join-Path $PSScriptRoot 'ITToolkit-GUISnapshotCollector.ps1'
+        if (-not (Test-Path -LiteralPath $module -PathType Leaf)) { throw "Snapshot collector missing: $module" }
+        . $module
+        $requestIdentity = [Security.Principal.WindowsIdentity]::GetCurrent().Name
+        $snapshot = Get-ToolkitGUISnapshot -Target $target -Mode Local -ToolkitVersion ([string]$script:ToolkitVersion)
+        if ([Security.Principal.WindowsIdentity]::GetCurrent().Name -ine $requestIdentity -or
+            $snapshot.Target -ine $target -or $snapshot.AuthenticationMode -ne 'Local' -or
+            $snapshot.DiagnosticIdentity -ine $requestIdentity) {
+            throw 'Local snapshot target or collecting identity changed; snapshot discarded.'
+        }
+        $available = @($snapshot.Categories.PSObject.Properties).Count
+        if ($available -lt 1) { throw 'All seven snapshot categories were unavailable; nothing saved.' }
+        if (-not (Test-Path -LiteralPath $script:ReportFolder -PathType Container)) {
+            [void](New-Item -ItemType Directory -Path $script:ReportFolder -Force -ErrorAction Stop)
+        }
+        $safeTarget = $target -replace '[^a-zA-Z0-9_.-]','_'
+        $file = Join-Path $script:ReportFolder ('{0}_Complete_{1}.snapshot.json' -f $safeTarget,(Get-Date -Format 'yyyyMMdd_HHmmss_fff'))
+        $temp = Join-Path $script:ReportFolder ('.snapshot-' + [guid]::NewGuid().ToString('N') + '.tmp')
+        try {
+            $json = ConvertTo-Json -InputObject $snapshot -Depth 16 -ErrorAction Stop
+            [IO.File]::WriteAllText($temp,$json + [Environment]::NewLine,(New-Object System.Text.UTF8Encoding($false)))
+            Move-Item -LiteralPath $temp -Destination $file -ErrorAction Stop
+        } finally {
+            if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Force -ErrorAction SilentlyContinue }
+        }
+        Write-Host "Local snapshot saved: $file ($available/7 categories)." -ForegroundColor Green
+        $failed = @($snapshot.Errors.PSObject.Properties | ForEach-Object { $_.Name })
+        if ($failed.Count -gt 0) {
+            Write-Host "Unavailable: $($failed -join ', '). These categories will be NOT COMPARABLE." -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "Local snapshot failed: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+    Pause-Toolkit
+}
+
 function Save-ClassicCollectedReport {
     if ($null -eq $script:ClassicLastReport) {
         Write-Host 'No completed diagnostic report is available. Run a report first.' -ForegroundColor Yellow
@@ -39,7 +84,16 @@ function Save-ClassicCollectedReport {
         $snapshotChoice = (Read-Host 'Also collect a JSON comparison snapshot? Requires fresh remote inventory (Y/N)').Trim()
         if ($snapshotChoice -ieq 'Y') {
             try {
-                $snapshot = Get-ComparisonSnapshot $cached.Target $cached.Sections
+                if ($script:LocalTargetMode) {
+                    $collectorPath = Join-Path $PSScriptRoot 'ITToolkit-GUISnapshotCollector.ps1'
+                    . $collectorPath
+                    $snapshot = Get-ToolkitGUISnapshot -Target $cached.Target -Mode Local -ToolkitVersion ([string]$script:ToolkitVersion)
+                } else {
+                    $snapshot = Get-ComparisonSnapshot $cached.Target $cached.Sections
+                }
+                if (@($snapshot.Categories.PSObject.Properties).Count -lt 1) {
+                    throw 'All snapshot categories failed. Nothing saved.'
+                }
                 $snapshotPath = Join-Path $script:ReportFolder ('{0}_{1}_{2}.snapshot.json' -f $safeTarget,$safeLabel,(Get-Date -Format 'yyyyMMdd_HHmmss_fff'))
                 [System.IO.File]::WriteAllText($snapshotPath,(ConvertTo-Json -InputObject $snapshot -Depth 8),(New-Object System.Text.UTF8Encoding($false)))
                 Write-Host "Comparison snapshot saved: $snapshotPath" -ForegroundColor Green
@@ -54,22 +108,118 @@ function Save-ClassicCollectedReport {
 function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
     $target = Get-Target
     if (-not $target) { return }
+    # A blocked or failed new request must not retain an older savable report.
     $script:ClassicLastReport = $null
+    # Validate all local sections before beginning a single or batch report.
+    # Existing Classic BitLocker/Policy consent and UAC path remain unchanged.
+    if ($script:LocalTargetMode) {
+        try {
+            $null = Assert-ToolkitLocalDiagnosticAuthorization -Sections $Sections -TargetComputer ([string]$script:TargetComputer)
+        } catch {
+            Write-Host ("Local diagnostics were not started: " + [string]$_.Exception.Message) -ForegroundColor Yellow
+            Pause-Toolkit
+            return
+        }
+    }
+    if (-not $script:LocalTargetMode) {
+        try {
+            if ($script:ToolkitAuthMode -notin @('Default','Alternate')) {
+                throw 'Unknown remote authentication mode; select credentials again.'
+            }
+            $authMode = [string]$script:ToolkitAuthMode
+            $authContext = if ($authMode -eq 'Alternate') { $script:ToolkitAuthContext } else { $null }
+            $null = Assert-ToolkitRemoteDiagnosticAuthorization -Sections $Sections -TargetComputer $target -Mode $authMode -AuthenticationContext $authContext
+        } catch {
+            Write-Host ('Remote preflight rejected the request: ' + $_.Exception.Message)
+            Pause-Toolkit
+            return
+        }
+    }
+    $remoteIdentityEvidence = $null
+    if (-not $script:LocalTargetMode -and $script:ToolkitAuthMode -eq 'Alternate') {
+        # One remote identity attestation per report, using the same target-bound credentials.
+        $remoteIdentityEvidence = Test-ToolkitRemoteExecutionIdentity -Context $script:ToolkitAuthContext
+    }
     $results = New-Object System.Collections.Generic.List[object]
     foreach ($section in $Sections) {
         Write-Host "Collecting $section ..." -ForegroundColor Cyan
-        try { $content = [string](Get-ReportSection $section $target) }
-        catch { $content = "UNAVAILABLE / ACCESS DENIED / ERROR: $($_.Exception.Message)" }
-        $status = Get-SectionStatus $section $content
+        if ($script:LocalTargetMode) {
+            if ($section -notin @('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup','BitLocker','Sessions','Policy','SharePermissions','Health')) {
+                $status = 'NOT TESTED'
+                $content = 'Error details: Direct-local collection is not implemented for this section yet.'
+            } else {
+                $localResult = Get-ToolkitLocalDiagnostic -Section $section
+                if ($localResult.StatusCategory -eq 'AccessDenied' -and $section -in @('BitLocker','Policy')) {
+                    Write-Host "Local $section requires administrative authorization." -ForegroundColor Yellow
+                    $consent = (Read-Host 'Request Windows UAC approval for this check only? (Y/N)').Trim().ToUpperInvariant()
+                    if ($consent -eq 'Y') {
+                        Write-Host 'Optional persistent change: for a Restricted UAC account, set only that account''s CurrentUser PowerShell policy to RemoteSigned.' -ForegroundColor Yellow
+                        $policyConsent = (Read-Host 'Approve this account-level policy change if needed? (Y/N)').Trim().ToUpperInvariant() -eq 'Y'
+                        try {
+                            $localResult = Invoke-ToolkitElevatedLocalDiagnostic -Section $section -AllowCurrentUserRemoteSigned:$policyConsent
+                            Write-Host "Elevated $section collection returned: $($localResult.Status)" -ForegroundColor Cyan
+                        } catch {
+                            $localResult = [pscustomobject]@{
+                                Status = 'UNAVAILABLE'
+                                StatusCategory = 'Unavailable'
+                                Error = 'Elevated collection failed or was cancelled: ' + [string]$_.Exception.Message
+                                Data = @()
+                            }
+                        }
+                    }
+                }
+                $status = [string]$localResult.Status
+                $parts = New-Object System.Collections.Generic.List[string]
+                $parts.Add("Status category: $($localResult.StatusCategory)")
+                if ($localResult.Authorization -eq 'Windows UAC') {
+                    $parts.Add('Collection authorization: Windows UAC (explicit administrator approval).')
+                    $parts.Add("Initiating technician: $($localResult.InitiatingIdentity)")
+                    $parts.Add("Actual collection identity: $($localResult.CollectionIdentity)")
+                    $parts.Add("PowerShell execution policy: $($localResult.ExecutionPolicyBefore) -> $($localResult.ExecutionPolicyAfter)")
+                    $parts.Add("CurrentUser policy changed for elevated account: $([bool]$localResult.ExecutionPolicyChanged)")
+                }
+                if ($localResult.Error) { $parts.Add("Error details: $($localResult.Error)") }
+                foreach ($record in @($localResult.Data)) { $parts.Add(($record | Format-List * | Out-String -Width 200).TrimEnd()) }
+                if ($section -eq 'Health') {
+                    . (Join-Path $PSScriptRoot 'ITToolkit-HealthAnalysis.ps1')
+                    $parts.Add('')
+                    $parts.Add((Format-ToolkitHealthAnalysis -Analysis (Get-ToolkitLocalHealthAnalysis -Result $localResult)))
+                }
+                $content = $parts -join "`r`n"
+            }
+        } else {
+            $status = $null
+            try {
+                if ($script:ToolkitAuthMode -eq 'Alternate') {
+                    $alternateReport = Get-ClassicAlternateReportSection -Section $section
+                    $content = [string]$alternateReport.Content
+                    $status = [string]$alternateReport.Status
+                } else {
+                    $content = [string](Get-ReportSection $section $target)
+                }
+                if ($section -eq 'Health' -and $script:ToolkitAuthMode -ne 'Alternate') {
+                    $healthContext = New-ToolkitAuthContext -ComputerName $target -Mode Default
+                    $healthResult = Get-ToolkitCompositeDiagnostic -Context $healthContext -Section Health
+                    $content += "`r`n`r`nRemote Health evidence collected separately under Default identity over WinRM.`r`n" +
+                        (Format-ToolkitHealthAnalysis -Analysis (Get-ToolkitRemoteHealthAnalysis -Result $healthResult))
+                }
+            }
+            catch { $content = "Error details: $($_.Exception.Message)" }
+            if ($script:ToolkitAuthMode -ne 'Alternate') { $status = Get-SectionStatus $section $content }
+            elseif (-not $status) { $status = 'UNAVAILABLE' }
+        }
         $results.Add([pscustomobject]@{ Section=$section; Status=$status; Content=$content })
     }
     $lines = New-Object System.Collections.Generic.List[string]
-    $lines.Add("$($script:ToolkitDisplayName.ToUpperInvariant()) v$script:ToolkitVersion - REMOTE DIAGNOSTIC REPORT")
+    $lines.Add("$($script:ToolkitDisplayName.ToUpperInvariant()) v$script:ToolkitVersion - $(if ($script:LocalTargetMode) {'LOCAL'} else {'REMOTE'}) DIAGNOSTIC REPORT")
     $lines.Add("Report: $Label")
     $lines.Add("Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')")
     $lines.Add("Technician account: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)")
+    if ($null -ne $remoteIdentityEvidence) {
+        $lines.Add((Format-ToolkitRemoteExecutionIdentity -Result $remoteIdentityEvidence))
+    }
     $lines.Add("Target hostname: $target")
-    $lines.Add("Target IPv4: $(Resolve-TargetIPv4 $target)")
+    $lines.Add("Target IPv4: $(if ($script:LocalTargetMode) {'(not needed for local collection)'} else {Resolve-TargetIPv4 $target})")
     $lines.Add('Read-only queries. UNAVAILABLE does not establish that an issue does not exist.')
     $lines.Add('SUCCESS means a query returned successfully, not that configuration is healthy.')
     $lines.Add('')
@@ -82,6 +232,7 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
         $lines.Add(('=' * 68))
         $lines.Add("$($item.Section) REPORT")
         $lines.Add("STATUS: $($item.Status)")
+        if ($script:LocalTargetMode -and $item.Status -eq 'NOT TESTED') { $lines.Add('Status category: NotTested') }
         $lines.Add(('=' * 68))
         $lines.Add($item.Content)
         $lines.Add('')
@@ -190,7 +341,7 @@ function Menu-Reports {
         if ($choice -eq 'B' -or $choice -eq '0') { return }
         if ($choice -eq '22') { Save-ClassicCollectedReport; continue }
         if ($choice -eq '23') { Menu-ReportArchive; continue }
-        if ($choice -eq '24') { New-ClassicComparisonSnapshot; continue }
+        if ($choice -eq '24') { if ($script:LocalTargetMode) { New-ClassicLocalComparisonSnapshot } else { New-ClassicComparisonSnapshot }; continue }
         if ($choice -eq '1') { Save-DiagnosticReport $all 'Complete'; continue }
         if ($options.ContainsKey($choice)) {
             $sections = $options[$choice]

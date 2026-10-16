@@ -1,75 +1,103 @@
 # IT Toolkit
 
-**Version 1.26** · Windows PowerShell 5.1 · Windows administration and diagnostics
+**v1.27 — Stable release** · Windows PowerShell 5.1 · Windows administration and diagnostics
 
-The **IT Toolkit** is a portable, PowerShell-based utility for IT technicians who troubleshoot and document Windows workstations and servers. It provides a graphical interface and a Classic console menu for remote diagnostics, access checks, reporting, and system inventory comparisons.
+> **Release status:** v1.27 is the approved stable release on `main`. See [CHANGELOG.md](CHANGELOG.md) for release history and [ROADMAP.md](ROADMAP.md) for future development.
 
-> **Platform support:** Version 1.26 is designed for **Windows**. Its graphical interface uses Windows Presentation Foundation (WPF), and several collectors use Windows-specific management APIs. **macOS and Linux are not supported by this release.** A cross-platform edition is a potential future project.
+IT Toolkit is a portable, PowerShell-based Windows administration utility for technicians. It combines system diagnostics, access checks, reporting, inventory comparisons, and frequently used tools in graphical and Classic console interfaces.
+
+## What's new in v1.27
+
+- **Updated Launcher:** Choose Current Windows User, Separate Administrative Account, or Standard Session + On-Demand Administration.
+- **Scoped elevation:** Run supported local BitLocker and Group Policy diagnostics through an explicit Windows UAC request without automatically elevating the entire Toolkit. For a single remote Default diagnostic that returns ACCESS DENIED, the GUI can offer an explicit one-time **Retry with Admin Credentials** using target-bound remote authentication (county-tested for the supported single-diagnostic workflow).
+- **Shared execution and authorization:** GUI and Classic use consistent execution context, privilege requirements, and diagnostic preflight checks; mismatched or invalid authentication requests are blocked before collection.
+- **Diagnostic cancellation and remote failure recovery:** County-tested GUI Cancel Diagnostics requests a non-blocking stop and restores target switching when the worker stops. Single remote checks now request cancellation after 60 seconds; Run All remains ten minutes. Default remote System Information has a 30-second process deadline, exercised against an inaccessible county target. A blocked underlying Windows call can still delay cancellation.
+- **Remote identity evidence:** GUI and Classic Alternate reports separately show the requested remote account and a read-only identity returned from the target, or NOT VERIFIED if the verification call fails.
+- **Remote credential handling:** Explicit, target-bound Alternate credentials are supported for applicable diagnostics without silently falling back to another identity.
+- **GUI and Classic alignment:** Shared diagnostic capabilities, simpler interface switching, and a reorganized Classic menu.
+- **Local diagnostics:** Direct local collection is available for the supported diagnostic sections, without unnecessarily routing local checks through remote-management protocols.
+- **Computer Health:** Evidence-based local and remote health checks with review, checked, and unavailable states, including storage, services, events, uptime, firewall, updates inventory, and pending-restart indicators.
+- **Improved dashboard:** Compact, independently scrollable health details, better navigation and sizing, clearer target status, and remembered window preferences.
+- **Reports and comparisons:** Improved saved-report handling, HTML/CSV/TXT export, structured inventory snapshots, and side-by-side changes between captures.
+- **Reports folder:** Open Folder requests an actual Windows Explorer directory for dragging reports into email or chat. A non-elevated Separate Administrative Account GUI requests one-time UAC approval for a separate folder-opening helper (not elevation of the toolkit). Other launch modes use the normal route; Copy Folder Path remains available. All three folder-opening modes were county-tested; Separate Admin requires UAC when not already elevated.
+- **Version traceability:** Development versions include an abbreviated source commit identifier; diagnostic exports and structured snapshots include version information.
+- **Tools and Favorites:** More flexible tool access, favorites, and an explicitly authorized Windows PowerShell (Administrator) launch option.
+- **Refined branding and usability:** Updated Launcher presentation, improved long-label display, and revised README screenshots.
+
+Core GUI and Classic diagnostic, authentication, reporting, snapshot, and Reports-folder workflows have been accepted in county Windows testing. v1.27 is approved for production following county-network validation and a technician-accepted clean-install smoke test; optional edge-case coverage remains planned in the [roadmap](ROADMAP.md).
 
 ## Features
 
-- **Two interfaces:** Windows GUI and numbered Classic PowerShell menus.
-- **Remote access checks:** DNS resolution, ICMP reachability, WMI, WinRM, and `ADMIN$` accessibility.
-- **Credential selection:** Run supported diagnostics with your current Windows identity or explicitly supplied alternate administrative credentials. Credentials are not intended to be stored in configuration files.
-- **Windows diagnostics:** Collect information across system, storage, services, hardware, local accounts and groups, shares, software, updates, tasks, firewall, events, and related categories. Some checks require particular remote services or privileges.
-- **Health-oriented reporting:** Review collected findings and access-check results; unavailable or unsuccessful checks are reported separately from successful results.
-- **Exportable reports:** Save diagnostic output in HTML, CSV, or TXT, and browse previously saved reports.
-- **Snapshots and comparisons:** Create structured JSON inventory snapshots from the GUI or Classic interface, then compare two captures to identify changes in services, installed software, updates, users, groups, administrators, and shares.
-- **Tool integration:** Locate and launch supported external troubleshooting utilities, including optional Microsoft Sysinternals tools and PortQry when installed.
-
-## Requirements
-
-- **Windows 10/11 or supported Windows Server**, with **Windows PowerShell 5.1** and .NET/WPF support for the graphical interface.
-- Network connectivity to the systems being checked.
-- Appropriate authorization on each remote target. Individual diagnostics may require WMI/DCOM, WinRM, SMB, firewall rules, or elevated permissions.
-- Optional: [Microsoft Sysinternals](https://learn.microsoft.com/en-us/sysinternals/) and [PortQry](https://www.microsoft.com/en-us/download/details.aspx?id=17148) for the related external-tool integrations. The toolkit can warn if an optional dependency is not found.
-
-No agent is installed on remote target computers by the toolkit's launcher.
-
+- Graphical (WPF) and Classic PowerShell interfaces for Windows technicians.
+- Windows workstation and server diagnostics, including a complete 20-section diagnostic workflow.
+- Remote DNS, ping, WMI, WinRM, and ADMIN$ accessibility checks.
+- Default and explicitly provided Alternate remote authentication where supported.
+- Read-only health analysis and exportable HTML, CSV, and TXT reports.
+- JSON inventory snapshots and comparisons covering supported system categories.
+- Integrated utility catalog, custom tools, and favorites; optional Sysinternals and PortQry support.
 
 ## Screenshots
 
-### Graphical Dashboard
+![IT Toolkit Launcher](Screenshots/login.png)
 
-The IT Toolkit provides a graphical dashboard for remote system diagnostics, administrative access checks, reporting, and favorite utilities.
+![IT Toolkit Dashboard](Screenshots/dashboard.png)
 
-![IT Toolkit Dashboard](Screenshots/Dashboard.png)
+## Requirements
+
+- Windows 10/11 or compatible Windows Server, Windows PowerShell 5.1, and .NET/WPF for the graphical interface.
+- Network connectivity and appropriate authorization for remote targets.
+- Relevant Windows remote-management services, firewall permissions, and administrative rights where required.
+- Optional: [Microsoft Sysinternals](https://learn.microsoft.com/en-us/sysinternals/) and [PortQry](https://www.microsoft.com/en-us/download/details.aspx?id=17148).
+
+macOS and Linux are not supported. The launcher does not install an agent on remote systems.
 
 ## Installation
 
-1. Download the v1.26 release ZIP and extract its contents into a local folder, such as `C:\ITToolkit`.
-2. Keep `Modules`, `Branding`, the `.ps1` files, and `Toolkit-config.json` together in their original relative paths.
-3. Review `Toolkit-config.json` and update paths, reporting options, and the default authentication domain for your environment.
-4. On Windows, run **`Launch.cmd`** to open the launcher and choose the GUI or Classic interface.
+1. For the stable **v1.27 release**, download the approved source from the [`main` branch](https://github.com/wisper1977/ITToolkit/tree/main). A GitHub release archive may be published separately.
+2. **Install to a local folder on `C:\`**, such as `C:\ITToolkit` (not directly in the root of `C:\`). Do **not** run the Toolkit from the Desktop: technicians have encountered environments where a Desktop-based installation fails to launch or run correctly. Preserve the `Modules`, `Branding`, scripts, and configuration file layout.
+3. Review `Toolkit-config.json` and adapt the organization branding, default authentication domain, report directory, and optional tool paths.
+4. Run `Launch.cmd`, choose an execution mode, then open the graphical or Classic interface.
 
-You can also start the Classic console directly:
+**Launcher execution modes**
+
+- **Current Windows User:** Start the Toolkit under the launcher's current Windows identity.
+- **Separate Administrative Account:** Supply an explicitly authorized administrative identity for the Toolkit process.
+- **Standard Session + On-Demand Administration:** Keep the regular session identity; use existing explicit Alternate authentication and scoped UAC operations when supported.
+
+The Launcher does not automatically sign in as an administrator or store passwords. Direct script launches and interface switching do not silently substitute credentials.
+
+To start either interface directly from Windows PowerShell:
 
 ```powershell
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ITToolkit\ITToolkit.ps1"
+# Classic interface
+powershell.exe -NoProfile -File "C:\ITToolkit\ITToolkit.ps1"
+
+# Graphical interface
+powershell.exe -NoProfile -STA -File "C:\ITToolkit\ITToolkit-GUI.ps1"
 ```
 
-Or start the GUI in an STA Windows PowerShell session:
-
-```powershell
-powershell.exe -NoProfile -STA -ExecutionPolicy Bypass -File "C:\ITToolkit\ITToolkit-GUI.ps1"
-```
-
-The example commands use a process-only execution-policy override; follow your organization's script-execution and code-signing requirements rather than bypassing enforced policies.
+Follow your organization's script-execution policy and code-signing requirements.
 
 ## Basic workflow
 
-1. Select or enter a Windows computer or server as the target.
-2. Choose **Default** credentials, or explicitly provide **Alternate** credentials when needed.
-3. Run access checks and the diagnostics relevant to the issue.
-4. Save a report for documentation, or create a snapshot as a baseline.
-5. After a change or later investigation, capture another snapshot and compare the two.
+1. Select the local computer or an authorized remote target.
+2. Choose Default authentication or explicit Alternate credentials, where supported.
+3. Run the desired diagnostics or Computer Health checks.
+4. Save an HTML, CSV, or TXT report, or capture an inventory snapshot.
+5. Capture a later snapshot and compare changes when investigating a system.
 
-Snapshot comparisons are inventory differences, **not** a substitute for security auditing or a guarantee that a computer is healthy. Some services normally stop when idle, and some collectors can return partial results due to permissions or transport restrictions.
+A successful query does not guarantee that the machine is healthy. Unavailable checks should not be interpreted as passing results.
+
+## Development and release versions
+
+- **Development:** `Major.Minor.Commit` (example: `1.27.b3bb971`), where the suffix identifies the verified Git source revision used for that development build.
+- **Stable:** `Major.Minor` (example: `1.27`), after required Windows validation and formal release approval.
+- GUI, Classic, Launcher, and generated report metadata should consistently identify their source build. A configured suffix must not be assumed to identify a newer commit until the build version is regenerated and verified.
 
 ## Project layout
 
 ```text
-ITToolKit/
+ITToolkit/
 ├── Launch.cmd
 ├── ITToolkit-Launcher.ps1
 ├── ITToolkit-GUI.ps1
@@ -80,43 +108,17 @@ ITToolKit/
 └── Reports/
 ```
 
-The release distribution may omit development test scripts. They are not required for routine use.
+## Security and limitations
 
-## Security and responsible use
+- Use IT Toolkit only for systems you are authorized to administer and follow least-privilege practices.
+- Reports and snapshots may contain sensitive infrastructure details; do not commit them, credentials, or private keys to GitHub.
+- Remote capabilities depend on the target OS, permissions, firewall, and management protocols.
+- Inventory comparisons show collected differences, not comprehensive forensic changes or security compliance.
+- Some separately authorized operations may require additional Windows permissions or UAC confirmation.
+- The Report Archive **Open Folder** action requires explicit Windows UAC approval under a non-elevated Separate Administrative Account session; **Copy Folder Path** remains an alternative. See [ROADMAP.md](ROADMAP.md) for optional future refinements.
 
-This toolkit is intended for **authorized administration only**. Remote checks can reveal sensitive host, account, share, software, and network information.
+## Project history and plans
 
-- Run it only against systems you are authorized to administer.
-- Treat generated reports and snapshots as potentially sensitive operational data.
-- Never commit passwords, credential files, private keys, or report archives to GitHub.
-- The `ADMIN$` check uses SMB; existing sessions and credential conflicts can affect its result. Avoid disrupting pre-existing SMB connections.
-- Review the repository contents and branding before publishing. The included configuration contains **Cochise County-specific defaults** and should be adapted for other environments.
-
-## Current limitations
-
-- Windows PowerShell 5.1 and WPF are Windows-specific; this is **not** a native MacBook application.
-- Remote feature availability depends on permissions, operating-system capabilities, protocol configuration, and firewall settings.
-- An access check succeeding does not guarantee that every diagnostic collector will succeed.
-- Snapshot collection and comparison are designed for the supported inventory categories; they do not represent a complete forensic record.
-
-## Version history
-
-### v1.26
-
-- Expanded Default and Alternate credential support across diagnostic workflows.
-- Integrated credential-aware access checking for WMI, WinRM, and `ADMIN$`.
-- Improved GUI and Classic reporting and result-status presentation.
-- Added GUI and Classic snapshot creation with structured JSON comparisons.
-
-See the [complete changelog](CHANGELOG.md) for the development history from v1.0 through v1.26.
----
-## License
-
-Cochise County IT Toolkit is licensed under the
-GNU General Public License, Version 2.0 (GPL-2.0-only).
-
-Copyright (C) 2026 Chris Collins
-
-See the [LICENSE](LICENSE) file for the full license text.
-
-*Developed for IT workflows. This README documents the v1.26 Windows release.*
+- [CHANGELOG.md](CHANGELOG.md) — development changes, fixes, and validation history.
+- [ROADMAP.md](ROADMAP.md) — future development priorities and deferred edge cases.
+- [GitHub Releases](https://github.com/wisper1977/ITToolkit/releases) — published stable releases.

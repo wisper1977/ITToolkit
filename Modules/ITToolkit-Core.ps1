@@ -1,5 +1,7 @@
 ﻿# IT Toolkit v1.24 - dot-sourced component; loaded in parent script scope.
-function Pause-Toolkit { [void](Read-Host 'Press Enter to return') }
+function Wait-ToolkitContinue { [void](Read-Host 'Press Enter to return') }
+# Compatibility alias for existing module callers; avoids changing their behavior.
+Set-Alias -Name Pause-Toolkit -Value Wait-ToolkitContinue -Scope Script
 function Get-Target {
     if (-not $script:TargetComputer) {
         Write-Host 'No target selected. Choose Change Target from the main menu.' -ForegroundColor Yellow
@@ -56,7 +58,7 @@ function Test-RemoteAdminAccess {
     Write-Host "Result: $($script:AdminStatus)" -ForegroundColor $(if ($script:AdminStatus -eq 'Admin share accessible') {'Green'} elseif ($script:AdminStatus -eq 'Access denied') {'Yellow'} else {'DarkYellow'})
 }
 
-function Change-Target {
+function Set-ToolkitTarget {
     $value = (Read-Host 'Enter target hostname or IPv4 (B/blank = cancel)').Trim()
     if (-not $value -or $value -ieq 'B') { return }
     if ($value -notmatch '^[a-zA-Z0-9_.-]+$') {
@@ -64,10 +66,14 @@ function Change-Target {
         Pause-Toolkit
         return
     }
+    $script:LocalTargetMode = $false
     $script:TargetComputer = $value
     $script:TargetIPv4 = Resolve-TargetIPv4 $value
     Test-RemoteAdminAccess
 }
+# Compatibility alias retained for existing Classic menu and module callers.
+Set-Alias -Name Change-Target -Value Set-ToolkitTarget -Scope Script
+
 function Show-Header([string]$Section) {
     Clear-Host
     Write-Host '============================================================' -ForegroundColor Cyan

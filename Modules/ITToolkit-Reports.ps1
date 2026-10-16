@@ -426,8 +426,11 @@ function Get-RemoteScheduledTasks([string]$Target) {
 }
 function Get-SectionStatus([string]$Section,[string]$Content) {
     if ([string]::IsNullOrWhiteSpace($Content)) { return 'NO RESULTS' }
-    if ($Content -match '(?i)^UNAVAILABLE / ACCESS DENIED / ERROR:') {
-        if ($Content -match '(?i)access is denied|access denied|0x80070005|unauthorized') { return 'ACCESS DENIED' }
+    # Both the new neutral error heading and older report content indicate
+    # collection failure; classify ONLY the actual error message, not the label.
+    if ($Content -match '(?i)^(?:Error details:|UNAVAILABLE / ACCESS DENIED / ERROR:)') {
+        $actualError = $Content -replace '(?i)^(?:Error details:|UNAVAILABLE / ACCESS DENIED / ERROR:)\s*', ''
+        if ($actualError -match '(?i)access is denied|access denied|0x80070005|unauthorized') { return 'ACCESS DENIED' }
         return 'UNAVAILABLE'
     }
     if ($Content -match '(?im)^STATUS:\s*(UNAVAILABLE|ACCESS DENIED|NO RESULTS)') { return $Matches[1].ToUpperInvariant() }
@@ -499,13 +502,38 @@ function Get-RemoteIpConfig([string]$Target) {
         return "IPCONFIG /ALL: UNAVAILABLE - Remote WinRM failed: $winrmError; WMI fallback failed: $($_.Exception.Message)"
     }
 }
+# Remote systeminfo.exe uses an external process: bound it so RPC permission
+# failures or transport stalls cannot hold the reporting worker indefinitely.
+# This helper uses the existing process identity; it does not pass credentials.
+function Invoke-ToolkitBoundedRemoteSystemInfo {
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)][string]$Target,[int]$TimeoutSeconds=30)
+    $exe=Join-Path $env:SystemRoot 'System32\systeminfo.exe'
+    $stdout=Join-Path ([IO.Path]::GetTempPath()) ('itt-systeminfo-'+[guid]::NewGuid().ToString('N')+'.out')
+    $stderr=$stdout+'.err'
+    $process=$null
+    try {
+        $process=Start-Process -FilePath $exe -ArgumentList @('/s',$Target) -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -ErrorAction Stop
+        if (-not $process.WaitForExit($TimeoutSeconds*1000)) {
+            try { $process.Kill() } catch { }
+            throw ('UNAVAILABLE: Remote systeminfo timed out after '+$TimeoutSeconds+' seconds. The target may be inaccessible or the remote query may be stalled; access denial is not established.')
+        }
+        $result=if(Test-Path -LiteralPath $stdout){[IO.File]::ReadAllText($stdout)}else{''}
+        $errorText=if(Test-Path -LiteralPath $stderr){[IO.File]::ReadAllText($stderr)}else{''}
+        if($process.ExitCode -ne 0) {
+            throw ('Remote systeminfo failed (exit '+$process.ExitCode+'): '+($result+' '+$errorText).Trim())
+        }
+        return $result
+    } finally {
+        if($null -ne $process) { $process.Dispose() }
+        foreach($file in @($stdout,$stderr)){Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue}
+    }
+}
 function Get-ReportSection([string]$Section,[string]$Target) {
     try {
         switch ($Section) {
             'System' {
-                $result = & systeminfo.exe /s $Target 2>&1 | Out-String
-                if ($LASTEXITCODE -ne 0) { throw "systeminfo exit code $LASTEXITCODE : $result" }
-                return $result
+                return (Invoke-ToolkitBoundedRemoteSystemInfo -Target $Target -TimeoutSeconds 30)
             }
             'Network' {
                 $out = New-Object System.Collections.Generic.List[string]
@@ -662,5 +690,5 @@ function Get-ReportSection([string]$Section,[string]$Target) {
                 return $result
             }
         }
-    } catch { return "UNAVAILABLE / ACCESS DENIED / ERROR: $($_.Exception.Message)" }
+    } catch { return "Error details: $($_.Exception.Message)" }
 }

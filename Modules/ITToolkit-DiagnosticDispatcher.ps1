@@ -2,6 +2,36 @@
 # Requires Phase 3A WMI, 3B WinRM, 3D Mixed and Phase 1 Authentication modules.
 # Do not serialize the authentication context: it contains a live PSCredential.
 
+# Classification supplements the original adapter status; it never replaces raw details.
+# NO RESULTS is not success, and PARTIAL / UNAVAILABLE is not a complete failure.
+function Get-ToolkitDiagnosticStatusCategory {
+    [CmdletBinding()]
+    param([AllowEmptyString()][string]$Status)
+    switch ($Status.Trim().ToUpperInvariant()) {
+        'SUCCESS'               { return 'Success' }
+        'NO RESULTS'            { return 'NoData' }
+        'REVIEW'                { return 'Review' }
+        'PARTIAL'               { return 'Partial' }
+        'PARTIAL / UNAVAILABLE' { return 'Partial' }
+        'ACCESS DENIED'         { return 'AccessDenied' }
+        'UNAVAILABLE'           { return 'Unavailable' }
+        'NOT TESTED'            { return 'NotTested' }
+        'NOT INTEGRATED'        { return 'NotTested' }
+        default                 { return 'Unknown' }
+    }
+}
+
+# Only explicit authorization failures are access denied. An unreachable target
+# or a failed transport remains UNAVAILABLE, even when the computer name is invalid.
+function Get-ToolkitDiagnosticExceptionStatus {
+    [CmdletBinding()]
+    param([AllowEmptyString()][string]$Message)
+    if ($Message -match '(?i)access is denied|access denied|0x80070005|unauthorized') {
+        return 'ACCESS DENIED'
+    }
+    return 'UNAVAILABLE'
+}
+
 function Get-ToolkitDiagnosticMap {
     [CmdletBinding()]
     param()
@@ -42,7 +72,7 @@ function Invoke-ToolkitDiagnostic {
     if ($entry.Count -ne 1) { throw "Unknown diagnostic section: $Section" }
     $m = $entry[0]
     if ($m.Adapter -eq 'Pending') {
-        return [pscustomobject]@{ Target=[string]$Context.ComputerName; Mode=[string]$Context.Mode; UserName=[string]$Context.UserName; Section=$Section; CollectedAt=Get-Date; Status='NOT INTEGRATED'; Data=@(); Error=$m.Note; Adapter=$m.Adapter; AdapterSection=$m.AdapterSection }
+        return [pscustomobject]@{ Target=[string]$Context.ComputerName; Mode=[string]$Context.Mode; UserName=[string]$Context.UserName; Section=$Section; CollectedAt=Get-Date; Status='NOT INTEGRATED'; StatusCategory='NotTested'; Data=@(); Error=$m.Note; Adapter=$m.Adapter; AdapterSection=$m.AdapterSection }
     }
     try {
         switch ($m.Adapter) {
@@ -61,12 +91,15 @@ function Invoke-ToolkitDiagnostic {
             Section=$Section
             CollectedAt=$r.CollectedAt
             Status=[string]$r.Status
+            StatusCategory=(Get-ToolkitDiagnosticStatusCategory -Status ([string]$r.Status))
             Data=@($r.Data)
             Error=[string]$r.Error
             Adapter=[string]$m.Adapter
             AdapterSection=[string]$m.AdapterSection
         }
     } catch {
-        [pscustomobject]@{ Target=[string]$Context.ComputerName; Mode=[string]$Context.Mode; UserName=[string]$Context.UserName; Section=$Section; CollectedAt=Get-Date; Status='UNAVAILABLE'; Data=@(); Error=[string]$_.Exception.Message; Adapter=[string]$m.Adapter; AdapterSection=[string]$m.AdapterSection }
+        $failureMessage = [string]$_.Exception.Message
+        $failureStatus = Get-ToolkitDiagnosticExceptionStatus -Message $failureMessage
+        [pscustomobject]@{ Target=[string]$Context.ComputerName; Mode=[string]$Context.Mode; UserName=[string]$Context.UserName; Section=$Section; CollectedAt=Get-Date; Status=$failureStatus; StatusCategory=(Get-ToolkitDiagnosticStatusCategory -Status $failureStatus); Data=@(); Error=$failureMessage; Adapter=[string]$m.Adapter; AdapterSection=[string]$m.AdapterSection }
     }
 }

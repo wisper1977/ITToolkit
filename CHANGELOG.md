@@ -1,8 +1,39 @@
 # Changelog
 
-Documented changes to **IT Toolkit** are recorded here. This file distinguishes confirmed release changes from development milestones. Dates are included only where established; historical versions have not been assigned speculative dates.
+Meaningful IT Toolkit additions, changes, fixes, and release status are grouped by version. Git commits record implementation details and interim testing; the changelog is **not a development journal**. Pending tasks are tracked in [ROADMAP.md](ROADMAP.md).
 
-The project is a Windows PowerShell 5.1 toolkit. The GUI uses Windows Presentation Foundation (WPF); the Classic interface uses a text menu.
+## [1.27] — 2026-10-16
+
+### Added
+
+- Three explicit Launcher modes: Current Windows User, Separate Administrative Account, and On-Demand Administration, with per-user mode preference and no saved passwords.
+- Shared GUI/Classic execution context, privilege requirements, and authorization preflight for local and remote diagnostics.
+- Direct local collection across the 20 diagnostic sections; scoped Windows UAC requests for supported local BitLocker and Group Policy actions.
+- Explicit, target-bound remote Alternate credentials and read-only remote execution identity evidence (VERIFIED, MISMATCH, or NOT VERIFIED).
+- One-time GUI **Retry with Admin Credentials** after a single remote Default diagnostic returns ACCESS DENIED; no automatic fallback or persistent credential-mode substitution.
+- Seven-check Computer Health with evidence-based checked, review, partial, and unavailable results.
+- Development build identification using a source-commit suffix in interfaces, reports, and snapshots.
+
+### Changed
+
+- Improved GUI/Classic feature alignment, Classic menu navigation, interface switching, target state, and retained authentication provenance.
+- Refined dashboard layout, scrolling health details, saved window preferences, and report presentation.
+- Improved HTML/CSV/TXT report export, structured inventory snapshots, report archive reopening, and comparison presentation.
+- Updated tools/favorites access and added a separately authorized Windows PowerShell (Administrator) launch option.
+
+### Fixed
+
+- Improved GUI diagnostic cancellation, target-switch recovery, and bounded remote diagnostic execution without misclassifying timeouts as access denied.
+- Corrected stale target output, local-mode labels, RPC/transport status interpretation, and UAC button visibility.
+- Restored comparison HTML navigation, collapsible categories, and added/changed/removed highlighting.
+- GUI **Open Folder** now opens an actual Explorer Reports directory in all three launcher modes; non-elevated Separate Administrative Account mode requires explicit UAC approval for a separate helper, leaving the GUI non-elevated. **Copy Folder Path** remains available.
+
+### Validation and release status
+
+- County technician accepted local and remote GUI/Classic diagnostic workflows, including 20-section Run All, verified remote Alternate identity, On-Demand retry success/cancellation, and expected partial/unavailable outcomes.
+- County Windows testing confirmed GUI Services HTML/CSV/TXT exports, remote seven-category snapshots, comparison output, archive persistence after restart, and Reports-folder opening in all three launcher modes. Elevated-folder Explorer drag-and-drop was also tested.
+- Windows PowerShell 5.1 static authorization and regression tests support the implementation but do not replace interactive or transport validation.
+- **Stable release approved:** county-network workflows and technician-reported clean-install smoke test accepted for the source build `1.27.b3bb971`; stable configuration version is `1.27`. Optional negative/edge cases remain tracked in [ROADMAP.md](ROADMAP.md).
 
 ## [1.26] — 2026-10-14
 
@@ -250,5 +281,3 @@ The entries below are preserved from the project's **Master Version Changelog**.
 - **Development phases** (for example v1.26 Phase 3A or Phase 6F) are implementation/test milestones within a release, not separate published versions.
 - Future release notes should be added under their exact Git tag, with date, Added/Changed/Fixed/Security categories when applicable.
 - Do not treat a diagnostic collection status of **Success** as proof that the target system itself is healthy.
-
-[1.26]: https://github.com/wisper1977/ITToolkit/releases/tag/v1.26

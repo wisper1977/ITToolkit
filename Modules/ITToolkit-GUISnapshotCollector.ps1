@@ -2,14 +2,19 @@
 # SchemaVersion 1 matches the existing snapshot-comparison engine.
 function Get-ToolkitGUISnapshot {
     param([Parameter(Mandatory=$true)][string]$Target,
-          [Parameter(Mandatory=$true)][ValidateSet('Default','Alternate')][string]$Mode,
+          [Parameter(Mandatory=$true)][ValidateSet('Default','Alternate','Local')][string]$Mode,
           [System.Management.Automation.PSCredential]$Credential,
           [string]$ToolkitVersion='1.26')
     if ($Mode -eq 'Alternate' -and $null -eq $Credential) { throw 'Alternate snapshot collection requires explicit credentials.' }
+    if ($Mode -eq 'Local') {
+        if ($null -ne $Credential) { throw 'Local snapshot cannot accept alternate credentials.' }
+        if ($Target -ine $env:COMPUTERNAME) { throw 'Local snapshot target must be the current computer.' }
+    }
     $categories = [ordered]@{}
     $errors = [ordered]@{}
     $sections = @('Services','Software','Updates','Users','Groups','Administrators','Shares')
-    $wmiArgs = @{ ComputerName=$Target; ErrorAction='Stop' }
+    $wmiArgs = @{ ErrorAction='Stop' }
+    if ($Mode -ne 'Local') { $wmiArgs.ComputerName = $Target }
     if ($Mode -eq 'Alternate') { $wmiArgs.Credential = $Credential }
     function Read-WmiSnapshotClass([string]$name,[string]$filter='') {
         $args = $wmiArgs.Clone(); $args.Class = $name
@@ -67,7 +72,27 @@ function Get-ToolkitGUISnapshot {
                     })
                 }
                 'Software' {
-                    # Use WMI StdRegProv through an explicitly authenticated DCOM scope.
+                    # Local inventory reads the actual local registry, not remote DCOM.
+                    if ($Mode -eq 'Local') {
+                        $software = New-Object System.Collections.Generic.List[object]
+                        foreach ($base in @('SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall','SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall')) {
+                            $registryPath = 'Registry::HKEY_LOCAL_MACHINE\' + $base
+                            if (-not (Test-Path -LiteralPath $registryPath)) { continue }
+                            foreach ($key in @(Get-ChildItem -LiteralPath $registryPath -ErrorAction Stop)) {
+                                $values = Get-ItemProperty -LiteralPath $key.PSPath -ErrorAction Stop
+                                if ([string]::IsNullOrWhiteSpace([string]$values.DisplayName)) { continue }
+                                $software.Add([pscustomobject]@{
+                                    Key=($base + '\' + $key.PSChildName)
+                                    Name=[string]$values.DisplayName
+                                    Version=[string]$values.DisplayVersion
+                                    Publisher=[string]$values.Publisher
+                                })
+                            }
+                        }
+                        $entries = @($software.ToArray())
+                        break
+                    }
+                    # Remote inventory uses WMI StdRegProv with authenticated DCOM.
                     $options = New-Object System.Management.ConnectionOptions
                     if ($Mode -eq 'Alternate') {
                         $user = $Credential.UserName

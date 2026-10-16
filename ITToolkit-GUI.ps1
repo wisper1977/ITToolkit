@@ -1,11 +1,28 @@
 ﻿# IT Toolkit graphical interface - current build version is read from Toolkit-config.json
 # Windows PowerShell 5.1 / WPF / STA. Works from the toolkit root folder.
 # Shared built-in Tools catalog is loaded from Modules\ITToolkit-BuiltInCatalog.ps1.
+param(
+    [ValidateSet('Current','SeparateAccount','OnDemand')]
+    [string]$ExecutionMode = 'Current'
+)
 $ErrorActionPreference = 'Stop'
 if ([Threading.Thread]::CurrentThread.GetApartmentState() -ne [Threading.ApartmentState]::STA) {
     throw 'GUI requires an STA thread. Start through the Toolkit launcher or powershell.exe -STA -File ITToolkit-GUI.ps1.'
 }
 $script:ToolkitRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+# Shared process identity/elevation evidence. Mode is metadata, not permission.
+$executionContextPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-ExecutionContext.ps1'
+if (-not (Test-Path -LiteralPath $executionContextPath -PathType Leaf)) { throw "Missing toolkit execution context: $executionContextPath" }
+. $executionContextPath
+$script:ToolkitExecutionContext = Get-ToolkitExecutionContext -Mode $ExecutionMode
+# Shared read-only diagnostic privilege definitions; no credential or elevation side effects.
+$requirementsPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-PrivilegeRequirements.ps1'
+if (-not (Test-Path -LiteralPath $requirementsPath -PathType Leaf)) { throw "Missing toolkit privilege requirements: $requirementsPath" }
+. $requirementsPath
+# Read-only authorization preflight: no execution routing or credentials changed.
+$authorizationPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-OperationAuthorization.ps1'
+if (-not (Test-Path -LiteralPath $authorizationPath -PathType Leaf)) { throw "Missing toolkit authorization module: $authorizationPath" }
+. $authorizationPath
 $configPath = Join-Path $script:ToolkitRoot 'Toolkit-config.json'
 if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { throw "Missing configuration: $configPath" }
 $cfg = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
@@ -26,6 +43,8 @@ $prefsRoot = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'C
 $prefsPath = Join-Path $prefsRoot 'GUISettings.json'
 $script:FavoriteIds = @('powershell','eventvwr','services')
 $script:RecentTargets = @()
+$script:LastGUIPage = 'Dashboard'
+$script:GUIWindowPlacement = $null
 if (Test-Path -LiteralPath $prefsPath -PathType Leaf) {
     try {
         $saved = Get-Content -LiteralPath $prefsPath -Raw | ConvertFrom-Json
@@ -34,6 +53,10 @@ if (Test-Path -LiteralPath $prefsPath -PathType Leaf) {
         if ($null -ne $saved.DashboardPins) {
             $script:FavoriteIds = @(@($saved.DashboardPins) + @($script:FavoriteIds) | Where-Object { $_ -is [string] } | Select-Object -Unique | Select-Object -First 10)
         } else { $script:FavoriteIds = @($script:FavoriteIds | Select-Object -First 10) }
+        if ([string]$saved.LastPage -in @('Dashboard','Diagnostics','Tools','Reports','Settings')) {
+            $script:LastGUIPage = [string]$saved.LastPage
+        }
+        if ($saved.WindowPlacement) { $script:GUIWindowPlacement = $saved.WindowPlacement }
         if ($null -ne $saved.RecentTargets) {
             $script:RecentTargets = @($saved.RecentTargets | Where-Object { $_ -and $_.Name -and $_.Name -match '^[a-zA-Z0-9_.-]+$' } | Select-Object -First 8)
         }
@@ -42,7 +65,12 @@ if (Test-Path -LiteralPath $prefsPath -PathType Leaf) {
 function Save-GUIPreferences {
     try {
         if (-not (Test-Path -LiteralPath $prefsRoot -PathType Container)) { New-Item -ItemType Directory -Path $prefsRoot -Force | Out-Null }
-        $preferences = [ordered]@{ Favorites = @($script:FavoriteIds); RecentTargets = @($script:RecentTargets) }
+        $preferences = [ordered]@{
+            Favorites = @($script:FavoriteIds)
+            RecentTargets = @($script:RecentTargets)
+            LastPage = $script:LastGUIPage
+            WindowPlacement = $script:GUIWindowPlacement
+        }
         $json = ConvertTo-Json -InputObject $preferences -Depth 4
         [IO.File]::WriteAllText($prefsPath, $json + [Environment]::NewLine, (New-Object Text.UTF8Encoding($false)))
     } catch { [System.Windows.MessageBox]::Show("Could not save GUI preferences: $($_.Exception.Message)", 'IT Toolkit') | Out-Null }
@@ -180,14 +208,19 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
     <StackPanel VerticalAlignment="Center"><TextBlock Name="Heading" Foreground="White" FontSize="24" FontWeight="SemiBold"/><TextBlock Name="Subtitle" Foreground="#CBDBEE" Margin="0,5,0,0" FontSize="12"/></StackPanel>
    </DockPanel>
   </Border>
-  <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="190"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+  <Grid Grid.Row="1"><Grid.ColumnDefinitions><ColumnDefinition Width="255"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
    <Border Background="#E6EDF5" BorderBrush="#CED9E6" BorderThickness="0,0,1,0" Padding="12,18">
-    <StackPanel>
+    <Grid>
+     <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*" MinHeight="0"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+     <StackPanel Grid.Row="0">
      <Button Name="NavDashboard" Content="Dashboard" Height="41"/>
      <Button Name="NavDiagnostics" Content="Diagnostics" Height="41"/>
      <Button Name="NavTools" Content="Tools" Height="41"/>
      <Button Name="NavReports" Content="Reports" Height="41"/>
      <Button Name="NavSettings" Content="Settings" Height="41"/>
+
+     </StackPanel>
+     <StackPanel Grid.Row="1">
      <Border Height="1" Background="#CAD5E1" Margin="0,12"/>
      <TextBlock Text="TARGET COMPUTER" FontWeight="SemiBold" FontSize="11" Foreground="#61748B" Margin="4,0,0,9"/>
      <Border Name="SideStatusCard" Background="#F1F5FA" BorderBrush="#CBD7E5" BorderThickness="1,1,1,1" CornerRadius="5" Padding="10,10,8,10">
@@ -199,16 +232,40 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
        </Border>
       </StackPanel>
      </Border>
-    </StackPanel>
+     </StackPanel>
+     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="0,10,0,8">
+     <Border Background="#F4F8FD" BorderBrush="#C7D7E8" BorderThickness="1" CornerRadius="5" Padding="9" Margin="0">
+      <StackPanel>
+       <TextBlock Text="COMPUTER HEALTH" FontWeight="SemiBold" FontSize="11" Foreground="#17365D" Margin="0,0,0,5"/>
+       <TextBlock Name="DashboardHealthSummary" Text="Run Health Check for the selected computer." FontSize="11" TextWrapping="Wrap" Foreground="#53677E" Margin="0,0,0,9"/>
+       <UniformGrid Columns="3" Margin="0,0,0,10">
+        <Border Background="#FFF2DD" CornerRadius="4" Padding="5" Margin="0,0,4,0"><StackPanel><TextBlock Text="REVIEW" FontSize="9" FontWeight="SemiBold" Foreground="#785018" TextAlignment="Center"/><TextBlock Name="HealthReviewCount" Text="—" FontSize="19" FontWeight="SemiBold" Foreground="#785018" TextAlignment="Center"/></StackPanel></Border>
+        <Border Background="#E6F0FD" CornerRadius="4" Padding="5" Margin="0,0,4,0"><StackPanel><TextBlock Text="CHECKED" FontSize="9" FontWeight="SemiBold" Foreground="#274C79" TextAlignment="Center"/><TextBlock Name="HealthAvailableCount" Text="—" FontSize="19" FontWeight="SemiBold" Foreground="#274C79" TextAlignment="Center"/></StackPanel></Border>
+        <Border Background="#E7EAF0" CornerRadius="4" Padding="5"><StackPanel><TextBlock Text="UNKNOWN" FontSize="9" FontWeight="SemiBold" Foreground="#4B5563" TextAlignment="Center"/><TextBlock Name="HealthUnavailableCount" Text="—" FontSize="19" FontWeight="SemiBold" Foreground="#4B5563" TextAlignment="Center"/></StackPanel></Border>
+       </UniformGrid>
+       <TextBlock Text="EVIDENCE BY CATEGORY" FontWeight="SemiBold" FontSize="10" Foreground="#17365D" Margin="0,0,0,7"/>
+       <TextBlock Name="HealthStorageDetail" Text="Storage: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+       <TextBlock Name="HealthServicesDetail" Text="Services: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+       <TextBlock Name="HealthEventsDetail" Text="Events: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+       <TextBlock Name="HealthSystemDetail" Text="System: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+       <TextBlock Name="HealthSecurityDetail" Text="Security: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+       <TextBlock Name="HealthUpdatesDetail" Text="Updates: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+       <TextBlock Name="HealthRestartDetail" Text="Restart: Not assessed" TextWrapping="Wrap" FontSize="11" Margin="0,0,0,8"/>
+       <TextBlock Text="Review is not a confirmed fault. Installed QFEs do not establish patch compliance. Full findings: Diagnostics." TextWrapping="Wrap" FontSize="10" Foreground="#60738A"/>
+      </StackPanel>
+     </Border>
+     </ScrollViewer>
+     <Button Grid.Row="3" Name="SwitchClassic" Content="Switch to Classic" Height="41" Margin="0" ToolTip="Start Classic with this Windows identity; targets and alternate credentials do not transfer."/>
+    </Grid>
    </Border>
    <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <StackPanel Margin="26,22,26,22">
      <StackPanel Name="PageDashboard">
       <TextBlock Text="Dashboard" FontSize="24" FontWeight="SemiBold"/>
-      <TextBlock Text="Select a target computer, then open a diagnostic tool or your favorite shortcuts." Margin="0,6,0,17" Foreground="#60738A"/>
+      <TextBlock Text="Select a target computer, then open a diagnostic tool or your favorite shortcuts." TextWrapping="Wrap" Margin="0,6,0,17" Foreground="#60738A"/>
       <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="19" CornerRadius="5" Margin="0,0,0,15">
        <StackPanel><TextBlock Text="TARGET COMPUTER" FontWeight="SemiBold" Foreground="#17365D" Margin="0,0,0,9"/>
-        <WrapPanel><TextBox Name="TargetInput" Width="270" Height="34" Padding="9,5" Margin="0,0,9,8" ToolTip="Computer hostname or IPv4 address"/><Button Name="SetTarget" Content="Set target / Check access" Height="34"/><Button Name="ClearTarget" Content="Clear" Height="34"/></WrapPanel>
+        <WrapPanel><TextBox Name="TargetInput" Width="270" Height="34" Padding="9,5" Margin="0,0,9,8" ToolTip="Computer hostname or IPv4 address"/><Button Name="SetTarget" Content="Set target / Check access" Height="34"/><Button Name="UseLocalTarget" Content="Use Local Computer" Height="34"/><Button Name="ClearTarget" Content="Clear" Height="34"/></WrapPanel>
         <WrapPanel Margin="0,0,0,7" VerticalAlignment="Center">
           <CheckBox Name="UseAlternate" Content="Use alternate credentials" Margin="0,5,14,4" VerticalAlignment="Center"/>
           <TextBlock Name="AlternateUserLabel" Text="" Foreground="#42678E" VerticalAlignment="Center" Margin="0,4,12,4"/>
@@ -220,18 +277,18 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
           <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="20"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
           <StackPanel Grid.Column="0">
           <TextBlock Text="SELECTED TARGET" Foreground="#60738A" FontSize="10" FontWeight="SemiBold"/>
-          <TextBlock Name="TargetNameText" Text="Not selected" FontSize="17" FontWeight="Bold" Foreground="#17365D" Margin="0,3,0,11"/>
+          <TextBlock Name="TargetNameText" Text="Not selected" TextWrapping="Wrap" FontSize="17" FontWeight="Bold" Foreground="#17365D" Margin="0,3,0,11"/>
           <WrapPanel Margin="0,0,0,10">
            <StackPanel Margin="0,0,18,6">
             <TextBlock Text="IPv4 ADDRESS" Foreground="#60738A" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,4"/>
             <Border Background="#DDEDFE" BorderBrush="#ADCFEF" BorderThickness="1" CornerRadius="5" Padding="10,5">
-             <TextBlock Name="TargetIpText" Text="(not selected)" FontWeight="SemiBold" Foreground="#194F85"/>
+             <TextBlock Name="TargetIpText" Text="(not selected)" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="#194F85"/>
             </Border>
            </StackPanel>
            <StackPanel Margin="0,0,0,6">
             <TextBlock Text="ADMIN$ STATUS" Foreground="#60738A" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,4"/>
             <Border Name="AdminBadge" Background="#E5EAF0" BorderBrush="#BBC8D5" BorderThickness="1" CornerRadius="5" Padding="10,5">
-             <TextBlock Name="AdminStatusText" Text="Not checked" FontWeight="SemiBold" Foreground="#51667B"/>
+             <TextBlock Name="AdminStatusText" Text="Not checked" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="#51667B"/>
             </Border>
            </StackPanel>
           </WrapPanel>
@@ -287,7 +344,10 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
         <ComboBox Name="DiagnosticSection" Height="34" Margin="0,0,0,10" ToolTip="Choose one of the twenty existing reporting checks."/>
         <WrapPanel>
          <Button Name="RunDiagnostic" Content="Run selected check"/>
+          <Button Name="RunElevatedLocalDiagnostic" Content="Run Elevated (UAC)" Visibility="Collapsed" ToolTip="Explicit administrator approval for this selected local diagnostic"/>
+          <Button Name="RetryRemoteWithAdmin" Content="Retry with Admin Credentials" Visibility="Collapsed" ToolTip="Explicit one-time retry of the denied remote check using credentials authorized for this target"/>
          <Button Name="RunAllDiagnostics" Content="Run all 20 checks"/>
+          <Button Name="CancelDiagnostic" Content="Cancel Diagnostics" IsEnabled="False" ToolTip="Request cancellation of active diagnostic collection"/>
          <Button Name="CreateSnapshotGUI" Content="Create Snapshot" ToolTip="Capture structured inventory for later comparison"/>
         </WrapPanel>
         <TextBlock Name="DiagnosticProgress" Text="Ready to run diagnostics." Foreground="#526B83" Margin="0,6,0,0" TextWrapping="Wrap"/>
@@ -298,6 +358,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
       <Border Background="White" BorderBrush="#D7E0EB" BorderThickness="1" Padding="12" Margin="0,10,0,0" CornerRadius="5">
        <StackPanel>
         <DockPanel LastChildFill="False">
+         <Button Name="CopyDiagnosticReport" DockPanel.Dock="Left" Content="Copy Report" Width="138" Height="34" IsEnabled="False" Background="#E7EEF7" Foreground="#17365D" FontWeight="SemiBold" Margin="0,0,14,0" ToolTip="Copy displayed diagnostic report to clipboard"/>
          <Button Name="SaveDiagnosticReport" DockPanel.Dock="Right" Content="Save Report" Width="138" Height="34" IsEnabled="False" Background="#17365D" Foreground="White" FontWeight="SemiBold" Margin="14,0,0,0"/>
          <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
           <TextBlock Text="Format" Margin="0,0,8,0" VerticalAlignment="Center" Foreground="#42566D"/>
@@ -413,14 +474,16 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
      <ColumnDefinition Width="2*"/><ColumnDefinition Width="2*"/><ColumnDefinition Width="1.7*"/><ColumnDefinition Width="1.6*"/>
     </Grid.ColumnDefinitions>
     <TextBlock Grid.Column="0" Name="Status" Text="Ready" Foreground="#35516B" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,0,12,0"/>
-    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+    <Grid Grid.Column="1" VerticalAlignment="Center" Margin="0,0,12,0">
+     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
      <TextBlock Text="TECHNICIAN  " FontSize="10" FontWeight="SemiBold" Foreground="#61748B" VerticalAlignment="Center"/>
-     <TextBlock Name="LocalUser" Foreground="#17365D" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-    </StackPanel>
-    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,12,0">
+     <TextBlock Grid.Column="1" Name="LocalUser" Foreground="#17365D" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+    </Grid>
+    <Grid Grid.Column="2" VerticalAlignment="Center" Margin="0,0,12,0">
+     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
      <TextBlock Text="COMPUTER  " FontSize="10" FontWeight="SemiBold" Foreground="#61748B" VerticalAlignment="Center"/>
-     <TextBlock Name="LocalComputer" Foreground="#17365D" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-    </StackPanel>
+     <TextBlock Grid.Column="1" Name="LocalComputer" Foreground="#17365D" FontSize="11" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+    </Grid>
     <DockPanel Grid.Column="3" LastChildFill="True" VerticalAlignment="Center">
      <TextBlock Name="FooterRight" DockPanel.Dock="Right" Visibility="Collapsed"/>
      <TextBlock Text="POWERSHELL  " FontSize="10" FontWeight="SemiBold" Foreground="#61748B" DockPanel.Dock="Left"/>
@@ -434,13 +497,15 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 $reader = New-Object System.Xml.XmlNodeReader $xaml
 $window = [Windows.Markup.XamlReader]::Load($reader)
 $ui = @{}
-foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunAllDiagnostics','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
+foreach ($name in @('Heading','Subtitle','HeaderLogo','NavDashboard','NavDiagnostics','NavTools','NavReports','NavSettings','SwitchClassic','PageDashboard','PageDiagnostics','PageTools','PageReports','PageSettings','SideTarget','SideIPv4','SideAccess','SideStatusCard','SideAccessBadge','TargetInput','SetTarget','UseLocalTarget','ClearTarget','UseAlternate','AlternateUserLabel','ChangeAlternate','AlternateProbeSummary','TargetDnsSummary','TargetPingSummary','TargetCheckTime','TargetLastDiagnostic','DashboardHealthSummary','HealthReviewCount','HealthAvailableCount','HealthUnavailableCount','HealthStorageDetail','HealthServicesDetail','HealthEventsDetail','HealthSystemDetail','HealthSecurityDetail','HealthUpdatesDetail','HealthRestartDetail','QuickPing','QuickDns','QuickHealth','TargetStatusCard','TargetNameText','TargetIpText','AdminBadge','AdminStatusText','AdminDetailBox','AdminDetailText','DashboardPins','PinHint','EditPins','RecentTargetRows','RecentReportRows','ClearRecents','MoreReports','LocalUser','LocalComputer','LocalPSVersion','PingTarget','DnsTarget','CheckAdmin','DiagnosticSection','RunDiagnostic','RunElevatedLocalDiagnostic','RetryRemoteWithAdmin','RunAllDiagnostics','CancelDiagnostic','CreateSnapshotGUI','DiagnosticProgress','DiagnosticOutput','CopyDiagnosticReport','SaveDiagnosticReport','DiagnosticReportFormat','DiagnosticSaveStatus','ToolRows','ToolSearch','ToolFilter','ToolRefresh','ToolSummary','AddCustomTool','ArchiveTabs','ArchiveSearch','ArchiveFormat','ArchiveList','ArchiveRefresh','ArchiveOpen','ArchiveFolder','ArchiveCopyPath','ArchiveStatus','SnapshotOlder','SnapshotNewer','SnapshotsRefresh','CompareSnapshotsGUI','SaveComparisonGUI','ComparisonFormat','SnapshotStatus','ComparisonOutput','SettingsInfo','SetOrgName','SetAuthDomain','SetSysinternals','SetPortQry','SetReportsFolder','SetReportsFormat','SetLogoPath','SetLoginPath','SetIconPath','SetSaveConfig','SetReloadConfig','SetConfigStatus','SetClearTargets','SetClearFavorites','FooterRight','Status')) { $ui[$name] = $window.FindName($name) }
 $window.Title = "$displayName - Graphical Interface"
 $ui.Heading.Text = $displayName
 $ui.Subtitle.Text = "Graphical Interface  |  Toolkit v$version"
 $ui.FooterRight.Text = [Security.Principal.WindowsIdentity]::GetCurrent().Name
 $ui.LocalUser.Text = [Security.Principal.WindowsIdentity]::GetCurrent().Name
 $ui.LocalComputer.Text = $env:COMPUTERNAME
+$ui.LocalUser.ToolTip = $ui.LocalUser.Text
+$ui.LocalComputer.ToolTip = $ui.LocalComputer.Text
 $ui.LocalPSVersion.Text = [string]$PSVersionTable.PSVersion
 $ui.SettingsInfo.Text = "Personal preferences: $prefsPath`nMaximum dashboard favorites: 10`nRecent targets retained: 8"
 
@@ -466,6 +531,7 @@ $script:GUIAlternateUser = ''
 $script:GUIAlternateMode = $false
 $script:GUIAlternateTarget = ''
 $script:TargetComputer = $null
+$script:LocalTargetMode = $false
 $script:TargetIPv4 = '(not selected)'
 $script:AdminStatus = 'Not checked'
 $script:AdminDetail = 'Select a target first.'
@@ -485,17 +551,41 @@ function Update-TargetInfo {
     $ui.TargetCheckTime.Text = if ($script:TargetLastChecked) { $script:TargetLastChecked.ToString('g') } else { 'Not checked' }
     $ui.TargetLastDiagnostic.Text = [string]$script:LastDiagnosticSummary
 }
+function Clear-DashboardHealthDetails {
+    $ui.DashboardHealthSummary.Text = 'Run Health Check for the selected local or remote computer to populate evidence.'
+    foreach ($name in @('HealthReviewCount','HealthAvailableCount','HealthUnavailableCount')) { $ui[$name].Text = '—' }
+    $ui.HealthStorageDetail.Text = 'Storage: Not assessed'
+    $ui.HealthServicesDetail.Text = 'Services: Not assessed'
+    $ui.HealthEventsDetail.Text = 'Events: Not assessed'
+    $ui.HealthSystemDetail.Text = 'System: Not assessed'
+    $ui.HealthSecurityDetail.Text = 'Security: Not assessed'
+    $ui.HealthUpdatesDetail.Text = 'Updates: Not assessed'
+    $ui.HealthRestartDetail.Text = 'Restart: Not assessed'
+}
 function Update-TargetView {
+    Update-GUIElevatedDiagnosticButton
+    # Do not display another target's prior health observations as current.
+    $currentHealthMode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $currentHealthIdentity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+    if ($script:DashboardHealthTarget -and
+        ($script:DashboardHealthTarget -ine $script:TargetComputer -or
+         $script:DashboardHealthMode -ne $currentHealthMode -or
+         $script:DashboardHealthIdentity -ine $currentHealthIdentity)) {
+        $script:DashboardHealthTarget = $null
+        Clear-DashboardHealthDetails
+    }
     $label = if ($script:TargetComputer) { $script:TargetComputer } else { 'Not selected' }
     $ipText = if ($script:TargetIPv4) { [string]$script:TargetIPv4 } else { '(not selected)' }
     $statusText = [string]$script:AdminStatus
     $detailText = [string]$script:AdminDetail
 
     $ui.SideTarget.Text = $label
+    $ui.SideTarget.ToolTip = $label
     $ui.SideIPv4.Text = $ipText
     $ui.SideIPv4.Visibility = if ($script:TargetComputer) { 'Visible' } else { 'Collapsed' }
     $ui.SideAccess.Text = $statusText
     $ui.TargetNameText.Text = $label
+    $ui.TargetNameText.ToolTip = $label
     $ui.TargetIpText.Text = $ipText
     $ui.AdminStatusText.Text = $statusText
     $ui.AdminDetailText.Text = $detailText
@@ -524,6 +614,7 @@ function Update-TargetView {
     Update-TargetInfo
 }
 function Test-GUIAdminShare {
+    if ($script:LocalTargetMode) { return }
     if (-not $script:TargetComputer) { return }
     $script:AdminStatus = 'Checking ADMIN$'
     $script:AdminDetail = 'Checking share access with the selected authentication mode.'
@@ -587,9 +678,10 @@ function Clear-GUIAlternateContext {
     $script:GUIAlternateTarget = ''
 }
 function Set-GUIAuthView {
+    $ui.UseAlternate.IsEnabled = -not $script:LocalTargetMode
     $ui.AlternateUserLabel.Text = if ($script:GUIAlternateMode -and $script:GUIAlternateUser) { [string]$script:GUIAlternateUser } else { '' }
     $ui.ChangeAlternate.IsEnabled = [bool]$script:GUIAlternateMode
-    $ui.CheckAdmin.IsEnabled = -not $script:GUIAlternateMode
+    $ui.CheckAdmin.IsEnabled = -not $script:GUIAlternateMode -and -not $script:LocalTargetMode
     # Health uses the same credential-aware diagnostic dispatcher as other checks.
     $ui.QuickHealth.IsEnabled = $true
     # Diagnostic execution is enabled for either mode; alternate runs require a live auth context.
@@ -656,11 +748,17 @@ function Confirm-GUIAlternateCredential {
 }
 
 function Resolve-GUITarget {
+    if ($null -ne $script:DiagnosticPS -or $null -ne $script:SnapshotPS) {
+        [Windows.MessageBox]::Show('Wait for the active collection to finish before changing targets.','Collection in progress') | Out-Null
+        return
+    }
     Clear-GUIReportState
     $value = $ui.TargetInput.Text.Trim()
     if (-not $value -or $value -notmatch '^[a-zA-Z0-9_.-]+$') { [Windows.MessageBox]::Show('Enter a valid hostname or IPv4 address.', 'Target computer') | Out-Null; return }
     if ($script:GUIAlternateTarget -and $script:GUIAlternateTarget -ine $value) { Clear-GUIAlternateContext }
     if ($script:GUIAlternateMode -and -not (Confirm-GUIAlternateCredential)) { return }
+    $script:LocalTargetMode = $false
+    Set-GUIAuthView
     $script:TargetComputer = $value
     $script:TargetPingState = 'Checking ICMP...'
     $script:TargetLastChecked = $null
@@ -688,7 +786,67 @@ function Resolve-GUITarget {
     Update-GUIRecentTargetStatus
     $ui.Status.Text = "Target selected: $value"
 }
+# Window placement is read/written only when opening or closing the main GUI.
+# Normal restore bounds are preserved when maximized, so unmaximizing works.
+function Save-GUIWindowPlacement {
+    $bounds = if ($window.WindowState -eq [Windows.WindowState]::Maximized) {
+        $window.RestoreBounds
+    } else {
+        [Windows.Rect]::new($window.Left, $window.Top, $window.Width, $window.Height)
+    }
+    $script:GUIWindowPlacement = [ordered]@{
+        Left = [double]$bounds.Left
+        Top = [double]$bounds.Top
+        Width = [double]$bounds.Width
+        Height = [double]$bounds.Height
+        Maximized = ($window.WindowState -eq [Windows.WindowState]::Maximized)
+    }
+}
+function Restore-GUIWindowPlacement {
+    $saved = $script:GUIWindowPlacement
+    if ($null -eq $saved) { return }
+    try {
+        $left = [double]$saved.Left; $top = [double]$saved.Top
+        $width = [double]$saved.Width; $height = [double]$saved.Height
+        foreach ($number in @($left,$top,$width,$height)) {
+            if ([double]::IsNaN($number) -or [double]::IsInfinity($number)) { return }
+        }
+        if ($width -lt $window.MinWidth -or $height -lt $window.MinHeight -or
+            $width -gt 10000 -or $height -gt 10000) { return }
+
+        # Ensure at least a meaningful portion remains on a connected monitor.
+        # Screen bounds use device pixels; WPF coordinates use device-independent units.
+        Add-Type -AssemblyName System.Windows.Forms -ErrorAction Stop
+        $source = [Windows.PresentationSource]::FromVisual($window)
+        $scaleX = 1.0; $scaleY = 1.0
+        if ($null -ne $source -and $null -ne $source.CompositionTarget) {
+            $scaleX = $source.CompositionTarget.TransformToDevice.M11
+            $scaleY = $source.CompositionTarget.TransformToDevice.M22
+        }
+        $visible = $false
+        foreach ($screen in [System.Windows.Forms.Screen]::AllScreens) {
+            $work = $screen.WorkingArea
+            $screenLeft = $work.Left / $scaleX; $screenTop = $work.Top / $scaleY
+            $screenRight = $work.Right / $scaleX; $screenBottom = $work.Bottom / $scaleY
+            if ([math]::Min($left + $width,$screenRight) - [math]::Max($left,$screenLeft) -ge 100 -and
+                [math]::Min($top + $height,$screenBottom) - [math]::Max($top,$screenTop) -ge 80) {
+                $visible = $true; break
+            }
+        }
+        if (-not $visible) { return }
+        $window.WindowStartupLocation = [Windows.WindowStartupLocation]::Manual
+        $window.Width = $width; $window.Height = $height
+        $window.Left = $left; $window.Top = $top
+        if ($saved.Maximized -eq $true) {
+            $window.WindowState = [Windows.WindowState]::Maximized
+        }
+    } catch {
+        # Malformed preferences or unavailable display APIs use XAML defaults.
+    }
+}
 function Show-GUIPage([string]$name) {
+    if ($name -notin @('Dashboard','Diagnostics','Tools','Reports','Settings')) { return }
+    $script:LastGUIPage = $name
     foreach ($page in @('Dashboard','Diagnostics','Tools','Reports','Settings')) { $ui["Page$page"].Visibility = if ($page -eq $name) { 'Visible' } else { 'Collapsed' } }
     $ui.Status.Text = "$name - Ready"
 }
@@ -698,7 +856,18 @@ function Start-GUITool([string]$id) {
     $exe = $script:ResolvedApps[$id]
     if (-not $exe) { [Windows.MessageBox]::Show("$($app.Name) was not found on this computer.", 'Tool unavailable') | Out-Null; return }
     try {
-        if ($id -in @('portqry','psexec')) {
+        if ($id -eq 'powershell-admin') {
+            # Windows requests the administrator identity through UAC. Do not
+            # forward alternate target credentials or elevate the toolkit.
+            $confirm = [Windows.MessageBox]::Show(
+                'Open a separate Windows PowerShell session as administrator? Windows UAC will request approval or credentials. IT Toolkit stays under your current account.',
+                'Open elevated PowerShell',
+                [Windows.MessageBoxButton]::YesNo,
+                [Windows.MessageBoxImage]::Question)
+            if ($confirm -ne [Windows.MessageBoxResult]::Yes) { return }
+            Start-Process -FilePath $exe -ArgumentList '-NoLogo' -Verb RunAs -ErrorAction Stop | Out-Null
+        }
+        elseif ($id -in @('portqry','psexec')) {
             # Command-line utilities: keep help, EULA prompts, and error output visible.
             Start-Process -FilePath $env:ComSpec -ArgumentList ('/k ""' + $exe + '" -?"') -ErrorAction Stop | Out-Null
         }
@@ -706,6 +875,20 @@ function Start-GUITool([string]$id) {
         else { Start-Process -FilePath $exe -ErrorAction Stop | Out-Null }
         $ui.Status.Text = "Launched: $($app.Name)"
     } catch { [Windows.MessageBox]::Show($_.Exception.Message, 'Unable to launch tool') | Out-Null }
+}
+# Shared multiline labels for dynamically generated Tools and Dashboard buttons.
+# A bounded TextBlock width is needed because UniformGrid/WrapPanel content can
+# otherwise measure wider than its button, defeating TextWrapping.
+function New-GUIToolButtonLabel([string]$text, [double]$maxWidth) {
+    $label = New-Object Windows.Controls.TextBlock
+    $label.Text = $text
+    $label.TextWrapping = [Windows.TextWrapping]::Wrap
+    $label.TextAlignment = [Windows.TextAlignment]::Center
+    $label.VerticalAlignment = [Windows.VerticalAlignment]::Center
+    $label.HorizontalAlignment = [Windows.HorizontalAlignment]::Center
+    $label.MaxWidth = $maxWidth
+    $label.FontSize = 12
+    return $label
 }
 function Update-FavoriteColumns {
     $width = $ui.DashboardPins.ActualWidth
@@ -720,7 +903,7 @@ function Refresh-DashboardPins {
         $item = $script:Apps | Where-Object { $_.Id -eq $id } | Select-Object -First 1
         if (-not $item) { continue }
         $button = New-Object Windows.Controls.Button
-        $button.Content = $item.Name; $button.MinWidth = 0; $button.Height = 55; $button.HorizontalAlignment = [Windows.HorizontalAlignment]::Stretch
+        $button.Content = New-GUIToolButtonLabel ([string]$item.Name) 110; $button.MinWidth = 0; $button.MinHeight = 70; $button.HorizontalAlignment = [Windows.HorizontalAlignment]::Stretch
         $button.ToolTip = $item.Description
         $button.Margin = [Windows.Thickness]::new(0,0,7,7)
         $button.IsEnabled = [bool]$script:ResolvedApps[$id]
@@ -746,9 +929,9 @@ function Refresh-RecentTargets {
         $row = New-Object Windows.Controls.DockPanel
         $row.Margin = '0,0,0,5'
         $button = New-Object Windows.Controls.Button
-        $button.Content = [string]$entry.Name
+        $button.Content = New-GUIToolButtonLabel ([string]$entry.Name) 145
         $button.Tag = [string]$entry.Name
-        $button.Margin = '0,0,8,0'; $button.MinWidth = 140
+        $button.Margin = '0,0,8,0'; $button.MinWidth = 140; $button.MaxWidth = 175; $button.MinHeight = 36
         $rememberedMode = if ($entry.PSObject.Properties['CredentialMode']) { [string]$entry.CredentialMode } else { 'Default' }
         $rememberedUser = if ($entry.PSObject.Properties['CredentialUser']) { [string]$entry.CredentialUser } else { '' }
         $button.Tag = [pscustomobject]@{ Name = [string]$entry.Name; Mode = $rememberedMode; User = $rememberedUser }
@@ -785,10 +968,29 @@ function Refresh-RecentTargets {
         [void]$row.Children.Add($button)
         $ip = New-Object Windows.Controls.TextBlock
         $ip.Text = [string]$entry.IPv4
-        $ip.Foreground = '#60738A'; $ip.VerticalAlignment = 'Center'
+        $ip.Foreground = '#60738A'; $ip.VerticalAlignment = 'Center'; $ip.TextTrimming = [Windows.TextTrimming]::CharacterEllipsis; $ip.ToolTip = $ip.Text
         [void]$row.Children.Add($ip)
         [void]$ui.RecentTargetRows.Children.Add($row)
     }
+}
+function Open-GUISavedReport {
+    param([Parameter(Mandatory=$true)][string]$Path)
+    $fullPath = [IO.Path]::GetFullPath($Path)
+    if (-not (Test-Path -LiteralPath $fullPath -PathType Leaf)) { throw "Report file not found: $fullPath" }
+    if ([IO.Path]::GetExtension($fullPath).Equals('.html', [StringComparison]::OrdinalIgnoreCase)) {
+        # Explicit Edge launch avoids silent shell association failures in alternate-credential sessions.
+        $edgePaths = @(
+            (Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'),
+            (Join-Path $env:ProgramFiles 'Microsoft\Edge\Application\msedge.exe')
+        )
+        $edge = $edgePaths | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -First 1
+        if ($edge) {
+            $uri = ([System.Uri]::new($fullPath)).AbsoluteUri
+            Start-Process -FilePath $edge -ArgumentList ('--new-window "' + $uri + '"') -ErrorAction Stop | Out-Null
+            return
+        }
+    }
+    Start-Process -FilePath $fullPath -Verb Open -ErrorAction Stop | Out-Null
 }
 function Refresh-RecentReports {
     $ui.RecentReportRows.Children.Clear()
@@ -807,11 +1009,11 @@ function Refresh-RecentReports {
         $row = New-Object Windows.Controls.DockPanel
         $row.Margin = '0,0,0,5'
         $button = New-Object Windows.Controls.Button
-        $button.Content = [string]$file.Name; $button.Tag = [string]$file.FullName
+        $button.Content = New-GUIToolButtonLabel ([string]$file.Name) 165; $button.Tag = [string]$file.FullName
         $button.ToolTip = 'Open saved report: ' + $file.FullName
-        $button.MaxWidth = 290; $button.Margin = '0,0,8,0'
+        $button.MaxWidth = 185; $button.MinHeight = 36; $button.Margin = '0,0,8,0'
         $button.Add_Click({
-            try { Start-Process -FilePath ([string]$this.Tag) -ErrorAction Stop | Out-Null }
+            try { Open-GUISavedReport -Path ([string]$this.Tag) }
             catch { [Windows.MessageBox]::Show("Unable to open report: $($_.Exception.Message)", 'Report Archive') | Out-Null }
         })
         [Windows.Controls.DockPanel]::SetDock($button, 'Left')
@@ -928,9 +1130,9 @@ function Refresh-Tools {
         if ($filter -eq 'Favorites' -and -not $favorite) { continue }
         $visible++
         $row = New-Object Windows.Controls.WrapPanel
-        $row.Margin = '0,0,0,8'; $row.Orientation = [Windows.Controls.Orientation]::Horizontal
+        $row.Margin = '0,0,0,8'; $row.Orientation = [Windows.Controls.Orientation]::Horizontal; $row.VerticalAlignment = [Windows.VerticalAlignment]::Center
         $launch = New-Object Windows.Controls.Button
-        $launch.Width = 205; $launch.Height = 36; $launch.Content = $app.Name; $launch.ToolTip = $app.Description
+        $launch.Width = 205; $launch.MinHeight = 54; $launch.Content = New-GUIToolButtonLabel ([string]$app.Name) 177; $launch.ToolTip = $app.Description
         $launch.IsEnabled = $available; $launch.Tag = $app.Id
         $launch.Add_Click({ Start-GUITool ([string]$this.Tag) })
         [void]$row.Children.Add($launch)
@@ -1025,6 +1227,29 @@ foreach ($section in $script:DiagnosticSections) {
     [void]$ui.DiagnosticSection.Items.Add($entry)
 }
 $ui.DiagnosticSection.SelectedIndex = 0
+# Only offer the existing scoped UAC pathway for supported local diagnostics
+# when the current process does not already have an elevated administrator token.
+# The launcher choice is not itself evidence of privilege.
+function Test-GUIProcessElevated {
+    # This is evidence from the process token, not from the launcher selection.
+    return [bool]$script:ToolkitExecutionContext.IsElevated
+}
+function Update-GUIElevatedDiagnosticButton {
+    $selected = if ($null -ne $ui.DiagnosticSection.SelectedItem) { [string]$ui.DiagnosticSection.SelectedItem.Tag } else { '' }
+    $needed = $false
+    if (-not [string]::IsNullOrWhiteSpace($selected)) {
+        $targetMode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+        $choice = Get-ToolkitDiagnosticExecutionChoice -Section $selected -TargetMode $targetMode -IsElevated (Test-GUIProcessElevated)
+        $needed = $choice.RunAction -eq 'RunElevatedUac'
+    }
+    # Exactly one selected-check action is visible. UAC replaces the normal
+    # action only for scoped local checks needing an elevated token.
+    $ui.RunDiagnostic.Visibility = if ($needed) { [Windows.Visibility]::Collapsed } else { [Windows.Visibility]::Visible }
+    $ui.RunElevatedLocalDiagnostic.Visibility = if ($needed) { [Windows.Visibility]::Visible } else { [Windows.Visibility]::Collapsed }
+    $ui.RunElevatedLocalDiagnostic.IsEnabled = $needed -and $null -eq $script:DiagnosticPS
+}
+$ui.DiagnosticSection.Add_SelectionChanged({ Update-GUIElevatedDiagnosticButton })
+Update-GUIElevatedDiagnosticButton
 # Report is populated only after a completed diagnostic collection.
 $script:LastGUIReport = $null
 $script:PendingGUIReport = $null
@@ -1033,33 +1258,111 @@ for ($i = 0; $i -lt $ui.DiagnosticReportFormat.Items.Count; $i++) {
     if ([string]$ui.DiagnosticReportFormat.Items[$i].Content -eq $defaultFormat) { $ui.DiagnosticReportFormat.SelectedIndex = $i; break }
 }
 function Clear-GUIReportState {
+    # Invalidate both the saved report and its visible evidence. Keeping old
+    # diagnostic text after a target/credential change is misleading even when
+    # Save/Copy are disabled and separately reject a mismatched context.
     $script:LastGUIReport = $null
     $ui.SaveDiagnosticReport.IsEnabled = $false
+    $ui.CopyDiagnosticReport.IsEnabled = $false
+    $ui.RetryRemoteWithAdmin.Visibility = [Windows.Visibility]::Collapsed
+    $ui.DiagnosticOutput.Clear()
     $ui.DiagnosticSaveStatus.Text = 'Run a diagnostic to enable Save Report.'
 }
 $script:DiagnosticPS = $null
 $script:DiagnosticAsync = $null
+$script:DiagnosticCancelRequested = $false
+$script:DiagnosticCancelReason = ''
+$script:DiagnosticCancelHandle = $null
+# Remote time budget is a cancellation request, not a guaranteed network timeout.
+$script:DiagnosticRemoteSingleTimeoutSeconds = 60
+$script:DiagnosticRemoteBatchTimeoutSeconds = 600
+function Request-GUIDiagnosticCancellation([string]$Reason) {
+    if ($null -eq $script:DiagnosticPS -or $null -eq $script:DiagnosticAsync -or $script:DiagnosticCancelRequested) { return }
+    $script:DiagnosticCancelRequested = $true
+    $script:DiagnosticCancelReason = $Reason
+    Clear-GUIReportState
+    $ui.CancelDiagnostic.IsEnabled = $false
+    $ui.DiagnosticProgress.Text = "$Reason Waiting for the diagnostic worker to stop..."
+    $ui.Status.Text = 'Cancelling diagnostics...'
+    try {
+        # BeginStop returns immediately; synchronous Stop can freeze the WPF thread.
+        $script:DiagnosticCancelHandle = $script:DiagnosticPS.BeginStop($null,$null)
+    } catch {
+        $ui.DiagnosticProgress.Text = "Could not request cancellation: $($_.Exception.Message)"
+        $ui.Status.Text = 'Cancellation request failed.'
+    }
+}
 $script:DiagnosticTimer = New-Object Windows.Threading.DispatcherTimer
 $script:DiagnosticTimer.Interval = [TimeSpan]::FromMilliseconds(250)
 $script:DiagnosticTimer.Add_Tick({
     if ($null -eq $script:DiagnosticPS -or $null -eq $script:DiagnosticAsync) { return }
-    if (-not $script:DiagnosticAsync.IsCompleted) { return }
+    if (-not $script:DiagnosticAsync.IsCompleted) {
+        if (-not $script:DiagnosticCancelRequested -and $null -ne $script:PendingGUIReport -and
+            $script:PendingGUIReport.Mode -ne 'Local') {
+            $budget = if (@($script:PendingGUIReport.Sections).Count -gt 1) { $script:DiagnosticRemoteBatchTimeoutSeconds } else { $script:DiagnosticRemoteSingleTimeoutSeconds }
+            if (((Get-Date) - $script:PendingGUIReport.Started).TotalSeconds -ge $budget) {
+                Request-GUIDiagnosticCancellation "Remote diagnostic exceeded the $budget-second time budget."
+            }
+        }
+        return
+    }
     $script:DiagnosticTimer.Stop()
     try {
+        if ($script:DiagnosticCancelRequested) {
+            # Do not publish or save partial results from a cancelled operation.
+            try { $null = $script:DiagnosticPS.EndInvoke($script:DiagnosticAsync) } catch { }
+            Clear-GUIReportState
+            $ui.DiagnosticOutput.Text = 'Diagnostic collection cancelled. No report was created.'
+            $ui.DiagnosticProgress.Text = [string]$script:DiagnosticCancelReason
+            $ui.Status.Text = 'Diagnostics cancelled.'
+            return
+        }
         $output = @($script:DiagnosticPS.EndInvoke($script:DiagnosticAsync))
         $ui.DiagnosticOutput.Text = ($output | ForEach-Object { [string]$_ }) -join "`r`n"
         if (-not $ui.DiagnosticOutput.Text) { $ui.DiagnosticOutput.Text = '(The collector returned no output.)' }
         # Never save results under a target or identity different from the collection request.
         $completed = $script:PendingGUIReport
-        $activeMode = if ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
-        $activeIdentity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+        $activeMode = if ($completed.IsOnDemand -and -not $script:LocalTargetMode -and -not $script:GUIAlternateMode) { 'Alternate' } elseif ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+        $activeIdentity = if ($completed.IsOnDemand -and -not $script:LocalTargetMode -and -not $script:GUIAlternateMode) { [string]$completed.Identity } elseif ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
         if ($null -eq $completed -or $completed.Target -ine $script:TargetComputer -or
             $completed.Mode -ne $activeMode -or $completed.Identity -ine $activeIdentity) {
             throw 'Target or credentials changed during collection. Results discarded; run diagnostics again.'
         }
+        if ('Health' -in @($completed.Sections)) {
+            $script:DashboardHealthTarget = [string]$completed.Target
+            $script:DashboardHealthMode = [string]$completed.Mode
+            $script:DashboardHealthIdentity = [string]$completed.Identity
+            $summary = [regex]::Match($ui.DiagnosticOutput.Text, 'Review: (\d+) \| Available: (\d+) \| Unavailable: (\d+)')
+            if ($summary.Success) {
+                $ui.HealthReviewCount.Text = $summary.Groups[1].Value
+                $ui.HealthAvailableCount.Text = $summary.Groups[2].Value
+                $ui.HealthUnavailableCount.Text = $summary.Groups[3].Value
+                foreach ($entry in @(
+                    @{Name='HealthStorageDetail'; Check='SystemDrive'; Title='Storage'},
+                    @{Name='HealthServicesDetail'; Check='AutomaticServices'; Title='Services'},
+                    @{Name='HealthEventsDetail'; Check='RecentSystemEvents'; Title='Events'},
+                    @{Name='HealthSystemDetail'; Check='SystemUptime'; Title='System'},
+                    @{Name='HealthSecurityDetail'; Check='FirewallProfiles'; Title='Security'},
+                    @{Name='HealthUpdatesDetail'; Check='InstalledHotfixes'; Title='Updates'},
+                    @{Name='HealthRestartDetail'; Check='PendingRestart'; Title='Restart'}
+                )) {
+                    $pattern = '(?m)^\[(Review|Observed|Unavailable)\] ' + [regex]::Escape($entry.Check) + ': ([^\r\n]*)'
+                    $finding = [regex]::Match($ui.DiagnosticOutput.Text, $pattern)
+                    $ui[$entry.Name].Text = if ($finding.Success) {
+                        $entry.Title + ': ' + $finding.Groups[1].Value + ' — ' + $finding.Groups[2].Value
+                    } else { $entry.Title + ': Not assessed / unavailable' }
+                }
+                $ui.DashboardHealthSummary.Text = ("{0} ({1}): {2} review findings, {3} available checks, {4} unavailable checks. Requested identity: {5}; see Diagnostics for evidence and next steps." -f
+                    $completed.Target,$completed.Mode,$summary.Groups[1].Value,$summary.Groups[2].Value,$summary.Groups[3].Value,$completed.Identity)
+            } else {
+                Clear-DashboardHealthDetails
+                $ui.DashboardHealthSummary.Text = 'Health analysis unavailable. See the Diagnostics report for details.'
+            }
+        }
         # Keep exactly the completed, displayed output; no collection occurs when saving.
         $script:LastGUIReport = [pscustomobject]@{
             Mode = $script:PendingGUIReport.Mode
+            IsOnDemand = [bool]$script:PendingGUIReport.IsOnDemand
             Identity = $script:PendingGUIReport.Identity
             Target = $script:PendingGUIReport.Target
             Sections = @($script:PendingGUIReport.Sections)
@@ -1067,6 +1370,11 @@ $script:DiagnosticTimer.Add_Tick({
             Results = [string]$ui.DiagnosticOutput.Text
         }
         $ui.SaveDiagnosticReport.IsEnabled = $true
+        $ui.CopyDiagnosticReport.IsEnabled = $true
+        # Offer a one-time explicit retry only for a denied single remote Default check.
+        $canRetry = ($completed.Mode -eq 'Default' -and @($completed.Sections).Count -eq 1 -and
+            $ui.DiagnosticOutput.Text -match '(?im)^STATUS:\s*ACCESS DENIED\b')
+        $ui.RetryRemoteWithAdmin.Visibility = if ($canRetry) { [Windows.Visibility]::Visible } else { [Windows.Visibility]::Collapsed }
         $ui.DiagnosticSaveStatus.Text = 'Results ready. Choose a format and click Save Report.'
         $script:LastDiagnosticSummary = if ($script:LastGUIReport.Sections.Count -eq 1) { [string]$script:LastGUIReport.Sections[0] } else { "All $($script:LastGUIReport.Sections.Count) checks" }
         $script:LastDiagnosticSummary += ' - ' + (Get-Date).ToString('g')
@@ -1083,15 +1391,29 @@ $script:DiagnosticTimer.Add_Tick({
         $script:DiagnosticPS = $null
         $script:DiagnosticAsync = $null
         $script:PendingGUIReport = $null
+        $script:DiagnosticCancelRequested = $false
+        $script:DiagnosticCancelReason = ''
+        $script:DiagnosticCancelHandle = $null
+        $ui.CancelDiagnostic.IsEnabled = $false
         $ui.RunDiagnostic.IsEnabled = $true
+        Update-GUIElevatedDiagnosticButton
         $ui.RunAllDiagnostics.IsEnabled = $true
     }
 })
-function Start-GUIDiagnostics([string[]]$sections) {
-    $mode = if ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
-    $identity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
-    $alternateCredential = $null
-    if ($script:GUIAlternateMode) {
+function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,[bool]$allowRemoteSigned = $false,[System.Management.Automation.PSCredential]$onDemandCredential = $null) {
+    $onDemand = $null -ne $onDemandCredential
+    if ($onDemand -and ($script:LocalTargetMode -or $script:GUIAlternateMode -or $sections.Count -ne 1 -or $elevatedLocal -or $allowRemoteSigned)) {
+        throw 'On-demand credentials require exactly one remote Default diagnostic without local UAC.'
+    }
+    if ($allowRemoteSigned -and -not $elevatedLocal) { throw 'Execution-policy consent requires a selected elevated local diagnostic.' }
+    if ($elevatedLocal -and (-not $script:LocalTargetMode -or $sections.Count -ne 1 -or $sections[0] -notin @('BitLocker','Policy'))) {
+        [Windows.MessageBox]::Show('UAC handoff is available only for one local BitLocker or Policy check.','Invalid elevation request') | Out-Null
+        return
+    }
+    $mode = if ($onDemand) { 'Alternate' } elseif ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $identity = if ($onDemand) { [string]$onDemandCredential.UserName } elseif ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+    $alternateCredential = if ($onDemand) { $onDemandCredential } else { $null }
+    if ($mode -eq 'Alternate' -and -not $onDemand) {
         if (-not $script:TargetComputer -or -not $script:GUIAuthContext -or
             $script:GUIAlternateTarget -ine $script:TargetComputer -or
             $script:GUIAuthContext.ComputerName -ine $script:TargetComputer -or
@@ -1107,6 +1429,32 @@ function Start-GUIDiagnostics([string[]]$sections) {
         return
     }
     if ($null -ne $script:DiagnosticPS) { return }
+    # Validate every local section (including Run All) before starting any collector.
+    # Scoped UAC is still an explicit technician action; no automatic elevation.
+    if ($mode -eq 'Local') {
+        try {
+            $null = Assert-ToolkitLocalDiagnosticAuthorization -Sections $sections -TargetComputer ([string]$script:TargetComputer) -ElevatedLocal:$elevatedLocal
+        } catch {
+            Clear-GUIReportState
+            $ui.DiagnosticOutput.Text = "Local diagnostics were not started: $($_.Exception.Message)"
+            $ui.DiagnosticProgress.Text = 'Authorization preflight blocked local collection.'
+            $ui.Status.Text = 'Diagnostics not started.'
+            return
+        }
+    }
+    else {
+        try {
+            # The existing GUIAuthContext retains the typed PSCredential only in memory.
+            $remoteContext = if ($onDemand) { New-ToolkitAuthContext -ComputerName ([string]$script:TargetComputer) -Mode Alternate -Credential $onDemandCredential } elseif ($mode -eq 'Alternate') { $script:GUIAuthContext } else { $null }
+            $null = Assert-ToolkitRemoteDiagnosticAuthorization -Sections $sections -TargetComputer ([string]$script:TargetComputer) -Mode $mode -AuthenticationContext $remoteContext
+        } catch {
+            Clear-GUIReportState
+            $ui.DiagnosticOutput.Text = "Remote diagnostics were not started: $($_.Exception.Message)"
+            $ui.DiagnosticProgress.Text = 'Authorization preflight blocked remote collection.'
+            $ui.Status.Text = 'Diagnostics not started.'
+            return
+        }
+    }
     Clear-GUIReportState
     $script:PendingGUIReport = $null
     $reportModule = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-Reports.ps1'
@@ -1118,7 +1466,13 @@ function Start-GUIDiagnostics([string[]]$sections) {
             return
         }
     }
+    $script:DiagnosticCancelRequested = $false
+    $script:DiagnosticCancelReason = ''
+    $script:DiagnosticCancelHandle = $null
     $script:PendingGUIReport = [pscustomobject]@{
+        Elevated = $elevatedLocal
+        PolicyConsent = $allowRemoteSigned
+        IsOnDemand = $onDemand
         Mode = $mode
         Identity = $identity
         Target = [string]$script:TargetComputer
@@ -1129,7 +1483,9 @@ function Start-GUIDiagnostics([string[]]$sections) {
     $ui.DiagnosticProgress.Text = "Running $($sections.Count) check(s) against $($script:TargetComputer) ..."
     $ui.Status.Text = 'Collecting diagnostic information ...'
     $ui.RunDiagnostic.IsEnabled = $false
+    $ui.RunElevatedLocalDiagnostic.IsEnabled = $false
     $ui.RunAllDiagnostics.IsEnabled = $false
+    $ui.CancelDiagnostic.IsEnabled = $true
     $worker = @'
 param([string]$root,[string]$target,[string[]]$requested)
 $ErrorActionPreference = 'Stop'
@@ -1137,10 +1493,18 @@ $script:ToolkitRoot = $root
 . (Join-Path $root 'Modules\ITToolkit-Config.ps1')
 . (Join-Path $root 'Modules\ITToolkit-Core.ps1')
 . (Join-Path $root 'Modules\ITToolkit-Reports.ps1')
+. (Join-Path $root 'Modules\ITToolkit-DiagnosticDispatcher.ps1')
 $lines = New-Object System.Collections.Generic.List[string]
 $lines.Add("Target: $target")
 $lines.Add("Collected: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
 $lines.Add('Read-only diagnostics; a successful query does not establish system health.')
+if ('Health' -in $requested) {
+    . (Join-Path $root 'Modules\ITToolkit-Authentication.ps1')
+    . (Join-Path $root 'Modules\ITToolkit-WmiDiagnostics.ps1')
+    . (Join-Path $root 'Modules\ITToolkit-CompositeDiagnostics.ps1')
+    . (Join-Path $root 'Modules\ITToolkit-HealthAnalysis.ps1')
+    $healthContext = New-ToolkitAuthContext -ComputerName $target -Mode Default
+}
 foreach ($section in $requested) {
     $lines.Add('')
     $lines.Add(('=' * 65))
@@ -1150,14 +1514,73 @@ foreach ($section in $requested) {
         $content = [string](Get-ReportSection $section $target)
         $status = Get-SectionStatus $section $content
         $lines.Add("STATUS: $status")
+        $lines.Add("Status category: $(Get-ToolkitDiagnosticStatusCategory -Status $status)")
         $lines.Add($content)
+        if ($section -eq 'Health') {
+            $remoteHealth = Get-ToolkitCompositeDiagnostic -Context $healthContext -Section Health
+            $lines.Add('')
+            $lines.Add('Remote Health evidence collected separately through the selected Default identity over WinRM; unavailable transport is not a passed check.')
+            $lines.Add((Format-ToolkitHealthAnalysis -Analysis (Get-ToolkitRemoteHealthAnalysis -Result $remoteHealth)))
+        }
     } catch {
-        $lines.Add('STATUS: UNAVAILABLE')
-        $lines.Add("UNAVAILABLE / ACCESS DENIED / ERROR: $($_.Exception.Message)")
+        $failureMessage = [string]$_.Exception.Message
+        $failureStatus = Get-ToolkitDiagnosticExceptionStatus -Message $failureMessage
+        $lines.Add("STATUS: $failureStatus")
+        $lines.Add("Status category: $(Get-ToolkitDiagnosticStatusCategory -Status $failureStatus)")
+        $lines.Add("Error details: $failureMessage")
     }
 }
 return ($lines -join "`r`n")
 '@
+    if ($mode -eq 'Local') {
+        # Direct-local collection only; no remote fallback and no credential elevation.
+        $worker = @'
+param([string]$root,[string]$target,[string[]]$requested,[bool]$elevated,[bool]$policyConsent)
+$ErrorActionPreference = 'Stop'
+. (Join-Path $root 'Modules\ITToolkit-LocalDiagnostics.ps1')
+. (Join-Path $root 'Modules\ITToolkit-HealthAnalysis.ps1')
+$lines = New-Object System.Collections.Generic.List[string]
+$lines.Add("Target: $target")
+$lines.Add('Collection mode: Local (current Windows identity)')
+$lines.Add("Collected: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
+$lines.Add('Diagnostic queries are read-only; separately approved PowerShell policy changes are identified below. Query success does not establish system health.')
+foreach ($section in $requested) {
+    $lines.Add('')
+    $lines.Add(('=' * 65))
+    $lines.Add("$section REPORT")
+    $lines.Add(('=' * 65))
+    if ($section -notin @('System','Firewall','Services','Storage','Network','Hardware','Users','Groups','Administrators','Shares','Software','Updates','Tasks','Events','Startup','BitLocker','Sessions','Policy','SharePermissions','Health')) {
+        $lines.Add('STATUS: NOT TESTED')
+        $lines.Add('Status category: NotTested')
+        $lines.Add('Error details: Direct-local collection is not implemented for this section yet.')
+        continue
+    }
+    $result = if ($elevated -and $section -in @('BitLocker','Policy')) {
+        Invoke-ToolkitElevatedLocalDiagnostic -Section $section -AllowCurrentUserRemoteSigned:$policyConsent
+    } else {
+        Get-ToolkitLocalDiagnostic -Section $section
+    }
+    if ($elevated) {
+        $lines.Add('Collection authorization: Windows UAC (explicit administrator approval).')
+        $lines.Add("Initiating technician: $($result.InitiatingIdentity)")
+        $lines.Add("Actual collection identity: $($result.CollectionIdentity)")
+        $lines.Add("PowerShell execution policy: $($result.ExecutionPolicyBefore) -> $($result.ExecutionPolicyAfter)")
+        $lines.Add("CurrentUser policy changed for elevated account: $([bool]$result.ExecutionPolicyChanged)")
+    }
+    $lines.Add("STATUS: $($result.Status)")
+    $lines.Add("Status category: $($result.StatusCategory)")
+    if ($result.Error) { $lines.Add("Error details: $($result.Error)") }
+    foreach ($record in @($result.Data)) {
+        $lines.Add(($record | Format-List * | Out-String -Width 200).TrimEnd())
+    }
+    if ($section -eq 'Health') {
+        $lines.Add('')
+        $lines.Add((Format-ToolkitHealthAnalysis -Analysis (Get-ToolkitLocalHealthAnalysis -Result $result)))
+    }
+}
+return ($lines -join "`r`n")
+'@
+    }
     if ($mode -eq 'Alternate') {
         # Credentials cross into the in-process runspace as PSCredential, never via a command line or file.
         $worker = @'
@@ -1167,13 +1590,15 @@ $script:ToolkitRoot = $root
 foreach ($name in @('ITToolkit-Authentication.ps1','ITToolkit-WmiDiagnostics.ps1',
     'ITToolkit-WinRMDiagnostics.ps1','ITToolkit-MixedDiagnostics.ps1',
     'ITToolkit-CompositeDiagnostics.ps1','ITToolkit-DetailDiagnostics.ps1',
-    'ITToolkit-DiagnosticDispatcher.ps1','ITToolkit-ClassicDispatcher.ps1')) {
+    'ITToolkit-DiagnosticDispatcher.ps1','ITToolkit-ClassicDispatcher.ps1','ITToolkit-HealthAnalysis.ps1')) {
     $path = Join-Path $root ('Modules\' + $name)
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing Phase 5B dependency: $path" }
     . $path
 }
 $context = New-ToolkitAuthContext -ComputerName $target -Mode Alternate -Credential $credential
+$identityEvidence = Test-ToolkitRemoteExecutionIdentity -Context $context
 $lines = New-Object System.Collections.Generic.List[string]
+$lines.Add((Format-ToolkitRemoteExecutionIdentity -Result $identityEvidence))
 # Collection metadata is added once by the GUI Save Report handler.
 # Worker output contains only the diagnostic section content.
 foreach ($section in $requested) {
@@ -1185,9 +1610,16 @@ foreach ($section in $requested) {
         $result = Invoke-ToolkitDiagnostic -Context $context -Section $section
         $lines.Add("STATUS: $($result.Status)")
         $lines.Add((Convert-ClassicDispatcherResult -Result $result))
+        if ($section -eq 'Health') {
+            $lines.Add('')
+            $lines.Add((Format-ToolkitHealthAnalysis -Analysis (Get-ToolkitRemoteHealthAnalysis -Result $result)))
+        }
     } catch {
-        $lines.Add('STATUS: UNAVAILABLE')
-        $lines.Add("UNAVAILABLE / ACCESS DENIED / ERROR: $($_.Exception.Message)")
+        $failureMessage = [string]$_.Exception.Message
+        $failureStatus = Get-ToolkitDiagnosticExceptionStatus -Message $failureMessage
+        $lines.Add("STATUS: $failureStatus")
+        $lines.Add("Status category: $(Get-ToolkitDiagnosticStatusCategory -Status $failureStatus)")
+        $lines.Add("Error details: $failureMessage")
     }
 }
 $context = $null
@@ -1199,12 +1631,17 @@ return ($lines -join "`r`n")
         $script:DiagnosticPS = [PowerShell]::Create()
         $pipeline = $script:DiagnosticPS.AddScript($worker).AddArgument($script:ToolkitRoot).AddArgument([string]$script:TargetComputer).AddArgument([string[]]$sections)
         if ($mode -eq 'Alternate') { [void]$pipeline.AddArgument($alternateCredential) }
+        elseif ($mode -eq 'Local') {
+            [void]$pipeline.AddArgument([bool]$elevatedLocal)
+            [void]$pipeline.AddArgument([bool]$allowRemoteSigned)
+        }
         $script:DiagnosticAsync = $script:DiagnosticPS.BeginInvoke()
         $script:DiagnosticTimer.Start()
     } catch {
         if ($script:DiagnosticPS) { $script:DiagnosticPS.Dispose() }
         $script:DiagnosticPS = $null
         $script:DiagnosticAsync = $null
+        $ui.CancelDiagnostic.IsEnabled = $false
         $ui.RunDiagnostic.IsEnabled = $true
         $ui.RunAllDiagnostics.IsEnabled = $true
         $script:PendingGUIReport = $null
@@ -1226,7 +1663,7 @@ $script:SnapshotTimer.Add_Tick({
         $snapshot = $items | Where-Object { $_ -and $_.PSObject.Properties['SchemaVersion'] } | Select-Object -Last 1
         if ($null -eq $snapshot) { throw 'Snapshot collector returned no structured snapshot.' }
         $request = $script:SnapshotRequested
-        $mode = if ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+        $mode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
         $identity = if ($mode -eq 'Alternate') { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
         if (-not $request -or $request.Target -ine $script:TargetComputer -or $request.Mode -ne $mode -or $request.Identity -ine $identity) {
             throw 'Target or credentials changed during capture. Snapshot discarded.'
@@ -1265,7 +1702,7 @@ $ui.CreateSnapshotGUI.Add_Click({
     if ($null -ne $script:SnapshotPS) { return }
     $target = [string]$script:TargetComputer
     if ([string]::IsNullOrWhiteSpace($target)) { [Windows.MessageBox]::Show('Select a target on Dashboard first.','Snapshot') | Out-Null; return }
-    $mode = if ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $mode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
     $identity = if ($mode -eq 'Alternate') { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
     $credential = $null
     if ($mode -eq 'Alternate') {
@@ -1280,6 +1717,9 @@ $ui.CreateSnapshotGUI.Add_Click({
     }
     $module = Join-Path (Join-Path $script:ToolkitRoot 'Modules') 'ITToolkit-GUISnapshotCollector.ps1'
     if (-not (Test-Path -LiteralPath $module -PathType Leaf)) { [Windows.MessageBox]::Show("Missing snapshot collector: $module",'Snapshot') | Out-Null; return }
+    if ($mode -eq 'Local' -and $target -ine $env:COMPUTERNAME) {
+        [Windows.MessageBox]::Show('Local snapshot target does not match the current computer.','Snapshot') | Out-Null; return
+    }
     $script:SnapshotRequested = [pscustomobject]@{ Target=$target; Mode=$mode; Identity=$identity }
     $ui.CreateSnapshotGUI.IsEnabled = $false
     $ui.DiagnosticProgress.Text = "Capturing snapshot for $target ($mode). Please wait ..."
@@ -1303,11 +1743,32 @@ Get-ToolkitGUISnapshot -Target $target -Mode $mode -Credential $credential -Tool
 })
 
 # Save only the completed diagnostic text already displayed in the GUI.
+$ui.CopyDiagnosticReport.Add_Click({
+    if ($null -eq $script:LastGUIReport -or $null -ne $script:DiagnosticPS) { return }
+    $captured = $script:LastGUIReport
+    $validRetry = [bool]$captured.IsOnDemand -and -not $script:LocalTargetMode -and -not $script:GUIAlternateMode
+    $currentMode = if ($validRetry) { 'Alternate' } elseif ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $currentIdentity = if ($validRetry) { [string]$captured.Identity } elseif ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+    if ($captured.Target -ine $script:TargetComputer -or $captured.Mode -ne $currentMode -or
+        $captured.Identity -ine $currentIdentity -or $ui.DiagnosticOutput.Text -cne $captured.Results) {
+        Clear-GUIReportState
+        $ui.DiagnosticSaveStatus.Text = 'Report context changed. Run the diagnostic again before copying.'
+        return
+    }
+    try {
+        [Windows.Clipboard]::SetText([string]$captured.Results)
+        $ui.DiagnosticSaveStatus.Text = 'Displayed report copied to clipboard.'
+        $ui.Status.Text = 'Diagnostic report copied.'
+    } catch {
+        $ui.DiagnosticSaveStatus.Text = "Could not copy report: $($_.Exception.Message)"
+    }
+})
 $ui.SaveDiagnosticReport.Add_Click({
     if ($null -eq $script:LastGUIReport -or $null -ne $script:DiagnosticPS) { return }
     $captured = $script:LastGUIReport
-    $currentMode = if ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
-    $currentIdentity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+    $validRetry = [bool]$captured.IsOnDemand -and -not $script:LocalTargetMode -and -not $script:GUIAlternateMode
+    $currentMode = if ($validRetry) { 'Alternate' } elseif ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
+    $currentIdentity = if ($validRetry) { [string]$captured.Identity } elseif ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
     if ($captured.Target -ine $script:TargetComputer -or $captured.Mode -ne $currentMode -or
         $captured.Identity -ine $currentIdentity) {
         Clear-GUIReportState
@@ -1340,7 +1801,8 @@ $ui.SaveDiagnosticReport.Add_Click({
         } else {
             'Read-only diagnostics; a successful query does not establish system health.'
         }
-        $reportText = "${org} ${appTitle} - REMOTE DIAGNOSTIC REPORT`r`nReport: $label`r`nCollected: $($captured.CollectedAt.ToString('yyyy-MM-dd HH:mm:ss zzz'))`r`nSaved: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')`r`nTechnician account: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)`r`nDiagnostic authentication: $($captured.Mode)`r`nDiagnostic identity: $($captured.Identity)`r`n$disclaimer`r`n$($captured.Results)"
+        $reportScope = if ($captured.Mode -eq 'Local') { 'LOCAL' } else { 'REMOTE' }
+        $reportText = "${org} ${appTitle} - $reportScope DIAGNOSTIC REPORT`r`nToolkit version: $version`r`nReport: $label`r`nCollected: $($captured.CollectedAt.ToString('yyyy-MM-dd HH:mm:ss zzz'))`r`nSaved: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')`r`nTechnician account: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)`r`nDiagnostic authentication: $($captured.Mode)`r`nDiagnostic identity: $($captured.Identity)`r`n$disclaimer`r`n$($captured.Results)"
         $lines = [string[]]@($reportText -split '\r?\n')
         switch ($format) {
             'HTML' { $contents = Convert-ReportHtml $reportText $title }
@@ -1365,10 +1827,93 @@ $ui.RunDiagnostic.Add_Click({
     if ($null -eq $ui.DiagnosticSection.SelectedItem) { return }
     Start-GUIDiagnostics @([string]$ui.DiagnosticSection.SelectedItem.Tag)
 })
+$ui.RunElevatedLocalDiagnostic.Add_Click({
+    if ($null -eq $ui.DiagnosticSection.SelectedItem) { return }
+    $section = [string]$ui.DiagnosticSection.SelectedItem.Tag
+    $choice = Get-ToolkitDiagnosticExecutionChoice -Section $section -TargetMode $(if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }) -IsElevated (Test-GUIProcessElevated)
+    if ($choice.RunAction -ne 'RunElevatedUac') {
+        [Windows.MessageBox]::Show('Run Elevated is applicable only to supported local BitLocker or Policy checks when the current process is not elevated.','Elevation scope') | Out-Null
+        return
+    }
+    $approval = [Windows.MessageBox]::Show(
+        "Windows UAC will request approval or administrator credentials for this local $section check. The GUI will remain under its existing identity. Continue?",
+        'Authorize diagnostic elevation',
+        [Windows.MessageBoxButton]::YesNo,
+        [Windows.MessageBoxImage]::Question)
+    if ($approval -ne [Windows.MessageBoxResult]::Yes) { return }
+    $policyChoice = [Windows.MessageBox]::Show(
+        'If the UAC administrator account has Restricted PowerShell execution policy, allow IT Toolkit to permanently change only that account''s CurrentUser policy to RemoteSigned? This is a separate persistent configuration change.' + [Environment]::NewLine +
+        'YES = approve that account-level change if needed.' + [Environment]::NewLine +
+        'NO = run UAC diagnostic without changing execution policy.' + [Environment]::NewLine +
+        'CANCEL = do not run.',
+        'Authorize optional PowerShell policy change',
+        [Windows.MessageBoxButton]::YesNoCancel,
+        [Windows.MessageBoxImage]::Warning)
+    if ($policyChoice -eq [Windows.MessageBoxResult]::Cancel) { return }
+    Start-GUIDiagnostics @($section) $true ($policyChoice -eq [Windows.MessageBoxResult]::Yes)
+})
+# A remote denial can be retried only after an explicit, scoped credential prompt.
+# The GUI remains in Default mode; the PSCredential is handed only to this one
+# Alternate worker invocation and is not saved as the target's normal identity.
+$ui.RetryRemoteWithAdmin.Add_Click({
+    $captured = $script:LastGUIReport
+    if ($null -ne $script:DiagnosticPS -or $script:LocalTargetMode -or $script:GUIAlternateMode -or
+        $null -eq $captured -or $captured.Mode -ne 'Default' -or @($captured.Sections).Count -ne 1 -or
+        $captured.Target -ine $script:TargetComputer -or
+        $captured.Identity -ine [Security.Principal.WindowsIdentity]::GetCurrent().Name -or
+        $captured.Results -cne $ui.DiagnosticOutput.Text -or
+        $captured.Results -notmatch '(?im)^STATUS:\s*ACCESS DENIED\b') {
+        Clear-GUIReportState
+        $ui.DiagnosticSaveStatus.Text = 'Report context changed. Run the denied check again.'
+        return
+    }
+    $dlg = New-Object Windows.Window
+    $dlg.Title = 'One-time remote admin retry - ' + $captured.Target
+    $dlg.Width = 440; $dlg.Height = 270; $dlg.MinWidth = 400
+    $dlg.WindowStartupLocation = 'CenterOwner'; $dlg.Owner = $window
+    $dlg.ResizeMode = 'NoResize'; $dlg.Background = '#F4F7FB'
+    $stack = New-Object Windows.Controls.StackPanel; $stack.Margin = '22'
+    $txt = New-Object Windows.Controls.TextBlock
+    $txt.Text = 'Authorized remote account (DOMAIN\\user or UPN)'
+    $txt.Margin = '0,0,0,6'; [void]$stack.Children.Add($txt)
+    $nameInput = New-Object Windows.Controls.TextBox
+    $nameInput.Height = 30; $nameInput.Padding = '6,4'
+    if ($cfg.AuthenticationDomain) { $nameInput.Text = [string]$cfg.AuthenticationDomain + [char]92 }
+    [void]$stack.Children.Add($nameInput)
+    $pt = New-Object Windows.Controls.TextBlock; $pt.Text = 'Password (not saved)'
+    $pt.Margin = '0,14,0,6'; [void]$stack.Children.Add($pt)
+    $passwordInput = New-Object Windows.Controls.PasswordBox
+    $passwordInput.Height = 30; $passwordInput.Padding = '6,4'; [void]$stack.Children.Add($passwordInput)
+    $buttons = New-Object Windows.Controls.StackPanel
+    $buttons.Orientation = 'Horizontal'; $buttons.HorizontalAlignment = 'Right'; $buttons.Margin = '0,19,0,0'
+    $ok = New-Object Windows.Controls.Button; $ok.Content = 'Retry selected check'; $ok.Width = 160; $ok.Height = 32; $ok.IsDefault = $true
+    $cancel = New-Object Windows.Controls.Button; $cancel.Content = 'Cancel'; $cancel.Width = 90; $cancel.Height = 32; $cancel.IsCancel = $true
+    [void]$buttons.Children.Add($ok); [void]$buttons.Children.Add($cancel); [void]$stack.Children.Add($buttons)
+    $dlg.Content = $stack
+    $ok.Add_Click({
+        try {
+            $user = Resolve-ToolkitAuthUserName -UserName $nameInput.Text -DefaultDomain ([string]$cfg.AuthenticationDomain)
+            if ($passwordInput.SecurePassword.Length -eq 0) { throw 'Enter a password.' }
+            $dlg.Tag = [System.Management.Automation.PSCredential]::new($user,$passwordInput.SecurePassword.Copy())
+            $dlg.DialogResult = $true
+        } catch { [Windows.MessageBox]::Show($_.Exception.Message,'Invalid credentials') | Out-Null }
+    })
+    if ($dlg.ShowDialog() -ne $true) { return }
+    $credential = [System.Management.Automation.PSCredential]$dlg.Tag
+    if ($script:TargetComputer -ine $captured.Target) {
+        Clear-GUIReportState
+        return
+    }
+    # No automatic fallback or account substitution, even if the retry fails.
+    Start-GUIDiagnostics @([string]$captured.Sections[0]) $false $false $credential
+    $credential = $null
+})
 $ui.RunAllDiagnostics.Add_Click({
     Start-GUIDiagnostics @($script:DiagnosticSections | ForEach-Object { [string]$_.Id })
 })
+$ui.CancelDiagnostic.Add_Click({ Request-GUIDiagnosticCancellation 'Technician requested cancellation.' })
 $window.Add_Closing({
+    try { Save-GUIWindowPlacement; Save-GUIPreferences } catch { }
     Clear-GUIAlternateContext
     $script:DiagnosticTimer.Stop()
     if ($null -ne $script:DiagnosticPS) {
@@ -1382,6 +1927,28 @@ $ui.NavDiagnostics.Add_Click({ Show-GUIPage 'Diagnostics' })
 $ui.NavTools.Add_Click({ Refresh-Tools; Show-GUIPage 'Tools' })
 $ui.NavReports.Add_Click({ Refresh-Archive; Refresh-SnapshotArchive; Show-GUIPage 'Reports' })
 $ui.NavSettings.Add_Click({ Show-GUIPage 'Settings' })
+$ui.SwitchClassic.Add_Click({
+    if ($null -ne $script:DiagnosticPS -or $null -ne $script:SnapshotPS) {
+        [Windows.MessageBox]::Show('Finish the active collection before switching interfaces.', 'Collection in progress') | Out-Null
+        return
+    }
+    $classicScript = Join-Path $PSScriptRoot 'ITToolkit.ps1'
+    if (-not (Test-Path -LiteralPath $classicScript -PathType Leaf)) {
+        [Windows.MessageBox]::Show('Classic script was not found; remaining in GUI.', 'Switch unavailable') | Out-Null
+        return
+    }
+    try {
+        # Launch under the current Windows token, without credential or target handoff.
+        $psExe = Join-Path $PSHOME 'powershell.exe'
+        $arguments = '-NoLogo -NoProfile -STA -File "' + $classicScript + '" -ExecutionMode ' + $script:ToolkitExecutionContext.Mode
+        $process = Start-Process -FilePath $psExe -ArgumentList $arguments -WorkingDirectory $PSScriptRoot -PassThru -ErrorAction Stop
+        if ($null -eq $process) { throw 'Windows did not return a process.' }
+        $window.Close()
+    } catch {
+        [Windows.MessageBox]::Show("Could not open Classic; remaining in GUI: $($_.Exception.Message)", 'Switch failed') | Out-Null
+    }
+})
+
 $ui.EditPins.Add_Click({ Refresh-Tools; Show-GUIPage 'Tools' })
 $ui.ClearRecents.Add_Click({
     $script:RecentTargets = @()
@@ -1390,6 +1957,7 @@ $ui.ClearRecents.Add_Click({
 })
 $ui.MoreReports.Add_Click({ Refresh-Archive; Refresh-SnapshotArchive; Show-GUIPage 'Reports' })
 $ui.UseAlternate.Add_Checked({
+    if ($script:LocalTargetMode) { $ui.UseAlternate.IsChecked = $false; return }
     $script:GUIAlternateMode = $true
     Clear-GUIAlternateContext
     Clear-GUIReportState
@@ -1412,8 +1980,30 @@ $ui.UseAlternate.Add_Unchecked({
 })
 $ui.ChangeAlternate.Add_Click({ [void](Confirm-GUIAlternateCredential) })
 $ui.SetTarget.Add_Click({ Resolve-GUITarget })
-$ui.ClearTarget.Add_Click({ Clear-GUIAlternateContext; $script:GUIAlternateMode=$false; $ui.UseAlternate.IsChecked=$false; Set-GUIAuthView; Clear-GUIReportState; $script:TargetPingState = 'Not checked'; $script:TargetLastChecked = $null; $script:LastDiagnosticSummary = 'None this session'; $script:TargetComputer = $null; $script:TargetIPv4 = '(not selected)'; $script:AdminStatus = 'Not checked'; $script:AdminDetail = 'Select a target first.'; $ui.TargetInput.Text = ''; Update-TargetView })
-$ui.CheckAdmin.Add_Click({ Clear-GUIReportState; if (-not $script:TargetComputer) { [Windows.MessageBox]::Show('Select a target on the Dashboard first.', 'No target') | Out-Null; return }; Test-GUIAdminShare; Update-GUIRecentTargetStatus; $ui.DiagnosticOutput.Text = "ADMIN`$: $($script:AdminStatus)`n$($script:AdminDetail)" })
+$ui.UseLocalTarget.Add_Click({
+    if ($null -ne $script:DiagnosticPS -or $null -ne $script:SnapshotPS) {
+        [Windows.MessageBox]::Show('Wait for the active collection to finish before changing targets.','Collection in progress') | Out-Null
+        return
+    }
+    Clear-GUIAlternateContext
+    $script:LocalTargetMode = $true
+    $script:GUIAlternateMode = $false
+    $ui.UseAlternate.IsChecked = $false
+    Clear-GUIReportState
+    $script:TargetComputer = [string]$env:COMPUTERNAME
+    $ui.TargetInput.Text = $script:TargetComputer
+    $script:TargetIPv4 = '(local collection)'
+    $script:TargetPingState = 'Not needed (local)'
+    $script:TargetLastChecked = Get-Date
+    $script:LastDiagnosticSummary = 'None this session'
+    $script:AdminStatus = 'Local mode'
+    $script:AdminDetail = 'All 20 local diagnostics and local snapshots use direct-local collection. BitLocker and Policy can request separate Windows UAC approval when needed.'
+    Set-GUIAuthView
+    Update-TargetView
+    $ui.Status.Text = 'Local computer selected — System and Firewall available.'
+})
+$ui.ClearTarget.Add_Click({ if ($null -ne $script:DiagnosticPS -or $null -ne $script:SnapshotPS) { [Windows.MessageBox]::Show('Wait for the active collection to finish before clearing the target.','Collection in progress') | Out-Null; return }; $script:LocalTargetMode=$false; Clear-GUIAlternateContext; $script:GUIAlternateMode=$false; $ui.UseAlternate.IsChecked=$false; Set-GUIAuthView; Clear-GUIReportState; $script:TargetPingState = 'Not checked'; $script:TargetLastChecked = $null; $script:LastDiagnosticSummary = 'None this session'; $script:TargetComputer = $null; $script:TargetIPv4 = '(not selected)'; $script:AdminStatus = 'Not checked'; $script:AdminDetail = 'Select a target first.'; $ui.TargetInput.Text = ''; Update-TargetView })
+$ui.CheckAdmin.Add_Click({ if ($script:LocalTargetMode) { [Windows.MessageBox]::Show('ADMIN$ is a remote access check and is not applicable to direct-local collection.','Local mode') | Out-Null; return }; Clear-GUIReportState; if (-not $script:TargetComputer) { [Windows.MessageBox]::Show('Select a target on the Dashboard first.', 'No target') | Out-Null; return }; Test-GUIAdminShare; Update-GUIRecentTargetStatus; $ui.DiagnosticOutput.Text = "ADMIN`$: $($script:AdminStatus)`n$($script:AdminDetail)" })
 $ui.DnsTarget.Add_Click({ Clear-GUIReportState;
     if (-not $script:TargetComputer) { [Windows.MessageBox]::Show('Select a target on the Dashboard first.', 'No target') | Out-Null; return }
     try { $all = [Net.Dns]::GetHostAddresses($script:TargetComputer); $ui.DiagnosticOutput.Text = "DNS: $($script:TargetComputer)`n" + (($all | ForEach-Object { $_.ToString() }) -join "`n") } catch { $ui.DiagnosticOutput.Text = $_.Exception.Message }
@@ -1547,7 +2137,7 @@ $ui.ArchiveOpen.Add_Click({
         $path = [IO.Path]::GetFullPath([string]$item.Path)
         if (-not $path.StartsWith($root,[StringComparison]::OrdinalIgnoreCase)) { throw 'Report path is outside the configured archive.' }
         if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'The selected report no longer exists. Refresh the archive.' }
-        Start-Process -FilePath $path -ErrorAction Stop | Out-Null
+        Open-GUISavedReport -Path $path
     } catch { [Windows.MessageBox]::Show($_.Exception.Message,'Unable to open report') | Out-Null }
 })
 $ui.ArchiveFolder.Add_Click({
@@ -1558,17 +2148,57 @@ $ui.ArchiveFolder.Add_Click({
         return
     }
     try {
-        # Open the directory through the Windows shell, without /n or an alternate root.
-        # The launcher may run under a different administrator account from the desktop user.
-        $start = New-Object System.Diagnostics.ProcessStartInfo
-        $start.FileName = [IO.Path]::GetFullPath($folder)
-        $start.UseShellExecute = $true
-        $start.Verb = 'open'
-        $opened = [System.Diagnostics.Process]::Start($start)
-        $ui.ArchiveStatus.Text = "Folder open requested: $folder (if Explorer doesn't appear, use Copy Folder Path)."
+        # Shell.Application.Explore opens a real Explorer folder window. County
+        # technician verified this in a separate-admin PowerShell session where
+        # Start-Process explorer.exe did not show a window. Keep the Explorer
+        # window for drag-and-drop attachment into email or chat.
+        $fullFolder = [IO.Path]::GetFullPath($folder)
+        if ($ExecutionMode -eq 'SeparateAccount' -and -not (Test-GUIProcessElevated)) {
+            # Scoped UAC: the GUI stays non-elevated; only the folder-open helper
+            # starts with an administrator token after explicit Windows consent.
+            # Never pass credentials or change execution-policy persistence.
+            $answer = [Windows.MessageBox]::Show(
+                'Opening the Reports folder in Separate Administrative Account mode requires a one-time Windows UAC approval on this workstation. IT Toolkit itself will remain non-elevated. Continue?',
+                'Open Reports folder with UAC',
+                [Windows.MessageBoxButton]::YesNo,
+                [Windows.MessageBoxImage]::Question)
+            if ($answer -ne [Windows.MessageBoxResult]::Yes) {
+                $ui.ArchiveStatus.Text = 'Open Reports folder cancelled. No elevation requested.'
+                return
+            }
+            $powerShell = Join-Path $PSHOME 'powershell.exe'
+            if (-not (Test-Path -LiteralPath $powerShell -PathType Leaf)) {
+                throw "Windows PowerShell executable not found: $powerShell"
+            }
+            # Encode a literal, single-quoted folder argument. This avoids
+            # interpreting user-configured folder names as PowerShell source.
+            $literalFolder = "'" + $fullFolder.Replace("'","''") + "'"
+            $openScript = '$ErrorActionPreference = ''Stop''; $shell = New-Object -ComObject Shell.Application; $shell.Explore(' + $literalFolder + ')'
+            $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($openScript))
+            try {
+                $helper = Start-Process -FilePath $powerShell -Verb RunAs -ArgumentList @(
+                    '-NoLogo','-NoProfile','-STA','-ExecutionPolicy','Bypass',
+                    '-WindowStyle','Hidden','-EncodedCommand',$encoded
+                ) -PassThru -ErrorAction Stop
+                $ui.ArchiveStatus.Text = "Requested UAC-approved Explorer folder window: $fullFolder. If nothing appears, use Copy Folder Path."
+            } catch {
+                if ($_.Exception -is [System.ComponentModel.Win32Exception] -and $_.Exception.NativeErrorCode -eq 1223) {
+                    $ui.ArchiveStatus.Text = 'Windows UAC was cancelled. No folder was opened.'
+                    return
+                }
+                throw
+            }
+            return
+        }
+        $shell = New-Object -ComObject Shell.Application -ErrorAction Stop
+        if ($null -eq $shell) { throw 'Windows Shell automation is unavailable.' }
+        $shell.Explore($fullFolder)
+        # COM Explore is asynchronous: invocation success does not prove a
+        # window appeared. Preserve the Copy Folder Path fallback.
+        $ui.ArchiveStatus.Text = "Requested Explorer folder window: $fullFolder. If nothing appears, use Copy Folder Path."
     } catch {
         $ui.ArchiveStatus.Text = "Explorer could not open this directory. Use Copy Folder Path: $folder"
-        [Windows.MessageBox]::Show("Unable to open the reports folder in Explorer.`n$folder`n`n$($_.Exception.Message)`n`nYou can use Copy Folder Path and paste it in Explorer.", 'Report Archive') | Out-Null
+        [Windows.MessageBox]::Show("Unable to open the reports folder in Explorer.`n$folder`n`n$($_.Exception.Message)`n`nUse Copy Folder Path and paste the path into Explorer.", 'Report Archive') | Out-Null
     }
 })
 $ui.ArchiveCopyPath.Add_Click({
@@ -1608,14 +2238,12 @@ function Convert-GUIComparisonCsv([string]$comparison) {
     return ($rows | ConvertTo-Csv -NoTypeInformation) -join "`r`n"
 }
 function Convert-GUIComparisonHtml([string]$comparison) {
-    $title = [System.Net.WebUtility]::HtmlEncode("$displayName - Snapshot Comparison")
-    $body = [System.Net.WebUtility]::HtmlEncode($comparison)
-    return @"
-<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><title>$title</title>
-<style>body{font-family:Segoe UI,Arial,sans-serif;margin:36px;background:#f4f7fb;color:#17365d}main{background:white;border:1px solid #d7e0eb;border-radius:8px;padding:24px}h1{font-size:23px}pre{color:#24364a;font:13px/1.65 Consolas,monospace;white-space:pre-wrap;overflow-wrap:anywhere}</style>
-</head><body><main><h1>$title</h1><pre>$body</pre></main></body></html>
-"@
+    # Reuse the shared report renderer; keep snapshot comparison, TXT, and CSV untouched.
+    # HTML-only section headings follow the existing 'CATEGORY CHANGES' report format.
+    $formatted = [regex]::Replace($comparison, '(?m)^--- (Services|Software|Updates|Users|Groups|Administrators|Shares) ---\r?$', '$1 CHANGES')
+    $script:Config = $cfg
+    . (Join-Path $script:ToolkitRoot 'Modules\ITToolkit-Reports.ps1')
+    return Convert-ReportHtml $formatted "$displayName - Snapshot Comparison"
 }
 $ui.SaveComparisonGUI.Add_Click({
     if ([string]::IsNullOrWhiteSpace($script:GUIComparisonText)) { return }
@@ -1731,6 +2359,15 @@ Refresh-DashboardPins
 Refresh-Tools
 Refresh-RecentTargets
 Refresh-RecentReports
+# Restore the last page without connecting to any remembered target.
+switch ($script:LastGUIPage) {
+    'Tools' { Refresh-Tools; Show-GUIPage 'Tools' }
+    'Reports' { Refresh-Archive; Refresh-SnapshotArchive; Show-GUIPage 'Reports' }
+    'Settings' { Show-GUIPage 'Settings' }
+    'Diagnostics' { Show-GUIPage 'Diagnostics' }
+    default { Show-GUIPage 'Dashboard' }
+}
+Restore-GUIWindowPlacement
 # Hide only the console owned by this PowerShell process, after WPF is visible.
 # Keep this separate from the launcher so Classic mode remains unchanged.
 $window.Add_ContentRendered({

@@ -70,6 +70,56 @@ function Get-ToolkitCompositeDiagnostic {
                     })
                     $rows+=@($remote)
                 } catch {$errors.Add('Remote Health: '+$_.Exception.Message);$rows += [pscustomobject]@{Check='Remote health metrics';Value=$_.Exception.Message;Status='UNAVAILABLE'}}
+                # Keep new observations on the same selected WinRM identity.
+                # Independent errors cannot invalidate other successful checks.
+                try {
+                    $extra=@(Invoke-ToolkitCompositeRemote $Context {
+                        try {
+                            $os=Get-WmiObject Win32_OperatingSystem -ErrorAction Stop
+                            if (-not $os -or -not $os.ConvertToDateTime($os.LastBootUpTime)) { throw 'Boot time unavailable.' }
+                            $boot=$os.ConvertToDateTime($os.LastBootUpTime)
+                            [pscustomobject]@{Check='System uptime (days)';Value=[string]([math]::Round(((Get-Date)-$boot).TotalDays,1));Status='SUCCESS'}
+                        } catch {[pscustomobject]@{Check='System uptime (days)';Value=$_.Exception.Message;Status='UNAVAILABLE'}}
+                        try {
+                            $profiles=@(Get-NetFirewallProfile -ErrorAction Stop)
+                            if (-not $profiles.Count) { throw 'No Windows Firewall profiles returned.' }
+                            $disabled=@($profiles | Where-Object { -not [bool]$_.Enabled } | ForEach-Object { [string]$_.Name })
+                            [pscustomobject]@{Check='Disabled firewall profiles';Value=($disabled -join ', ');Status='SUCCESS';DisabledCount=$disabled.Count;ProfilesQueried=$profiles.Count}
+                        } catch {[pscustomobject]@{Check='Disabled firewall profiles';Value=$_.Exception.Message;Status='UNAVAILABLE'}}
+                        try {
+                            $patches=@(Get-WmiObject Win32_QuickFixEngineering -ErrorAction Stop)
+                            [pscustomobject]@{Check='Installed QFE count';Value=[string]$patches.Count;Status='SUCCESS'}
+                        } catch {[pscustomobject]@{Check='Installed QFE count';Value=$_.Exception.Message;Status='UNAVAILABLE'}}
+                        try {
+                            $reasons=New-Object System.Collections.Generic.List[string]
+                            $reg=[Microsoft.Win32.RegistryKey]::OpenBaseKey(
+                                [Microsoft.Win32.RegistryHive]::LocalMachine,
+                                [Microsoft.Win32.RegistryView]::Default)
+                            try {
+                                foreach ($entry in @(
+                                    @('Component servicing','SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending'),
+                                    @('Windows Update','SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired')
+                                )) {
+                                    $key=$reg.OpenSubKey([string]$entry[1],$false)
+                                    if ($null -ne $key) { $reasons.Add([string]$entry[0]);$key.Dispose() }
+                                }
+                                $session=$reg.OpenSubKey('SYSTEM\CurrentControlSet\Control\Session Manager',$false)
+                                if ($null -eq $session) { throw 'Session Manager registry key unavailable.' }
+                                try {
+                                    $pending=$session.GetValue('PendingFileRenameOperations',$null)
+                                    if ($null -ne $pending -and @($pending).Count -gt 0) { $reasons.Add('Pending file rename operations') }
+                                } finally { $session.Dispose() }
+                            } finally { $reg.Dispose() }
+                            [pscustomobject]@{Check='Pending restart indicators';Value=($reasons -join ', ');IndicatorCount=$reasons.Count;Status='SUCCESS'}
+                        } catch {[pscustomobject]@{Check='Pending restart indicators';Value=$_.Exception.Message;Status='UNAVAILABLE'}}
+                    })
+                    $rows+=@($extra)
+                } catch {
+                    $errors.Add('Extended remote Health: '+$_.Exception.Message)
+                    foreach ($name in @('System uptime (days)','Disabled firewall profiles','Installed QFE count','Pending restart indicators')) {
+                        $rows += [pscustomobject]@{Check=$name;Value=$_.Exception.Message;Status='UNAVAILABLE'}
+                    }
+                }
             }
             'SharePermissions' {
                 $rows=@(Invoke-ToolkitCompositeRemote $Context {

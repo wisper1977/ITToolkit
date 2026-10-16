@@ -125,3 +125,71 @@ function Get-ToolkitAuthProbeSummary {
     param([Parameter(Mandatory=$true)]$Context)
     return @(Test-ToolkitAuthContext -Context $Context -Method All)
 }
+
+# Verify identity inside the target's own PowerShell remoting session.
+# This is separate from authentication preflight and never assumes an
+# authenticated principal based on a technician-entered username.
+function Test-ToolkitRemoteExecutionIdentity {
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)]$Context)
+    if ($null -eq $Context -or $Context.PSTypeNames -notcontains 'ITToolkit.AuthenticationContext' -or
+        $Context.Mode -notin @('Default','Alternate') -or
+        [string]::IsNullOrWhiteSpace([string]$Context.ComputerName)) {
+        throw 'A valid target-bound authentication context is required for identity verification.'
+    }
+    if ($Context.Mode -eq 'Alternate' -and
+        ($Context.Credential -isnot [System.Management.Automation.PSCredential] -or
+         [string]$Context.UserName -ine [string]$Context.Credential.UserName)) {
+        throw 'Alternate identity verification requires matching explicit credentials.'
+    }
+    $actual = ''
+    $detail = ''
+    $status = 'NOT VERIFIED'
+    try {
+        $options = New-PSSessionOption -OpenTimeout 10000 -OperationTimeout 15000
+        $args = @{
+            ComputerName = [string]$Context.ComputerName
+            ScriptBlock = { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
+            SessionOption = $options
+            ErrorAction = 'Stop'
+        }
+        if ($Context.Mode -eq 'Alternate') {
+            $args.Credential = $Context.Credential
+            $args.Authentication = 'Negotiate'
+        }
+        $names = @(Invoke-Command @args)
+        if ($names.Count -eq 1 -and -not [string]::IsNullOrWhiteSpace([string]$names[0])) {
+            $actual = [string]$names[0]
+            if ($actual -ieq [string]$Context.UserName) {
+                $status = 'VERIFIED'
+            } else {
+                $status = 'MISMATCH'
+                $detail = 'Remote execution identity differs from the requested identity.'
+            }
+        } else {
+            $detail = 'Remote execution identity did not return one non-empty name.'
+        }
+    } catch {
+        $detail = [string]$_.Exception.Message
+    }
+    [pscustomobject]@{
+        Target = [string]$Context.ComputerName
+        Mode = [string]$Context.Mode
+        RequestedIdentity = [string]$Context.UserName
+        ActualIdentity = $(if ($actual) { $actual } else { 'Not verified' })
+        Verification = $status
+        Detail = $detail
+    }
+}
+function Format-ToolkitRemoteExecutionIdentity {
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)]$Result)
+    $lines = @(
+        "Authentication mode: $($Result.Mode)"
+        "Requested remote identity: $($Result.RequestedIdentity)"
+        "Actual remote execution identity: $($Result.ActualIdentity)"
+        "Remote identity verification: $($Result.Verification)"
+    )
+    if ($Result.Detail) { $lines += 'Identity verification detail: ' + [string]$Result.Detail }
+    return ($lines -join "`r`n")
+}

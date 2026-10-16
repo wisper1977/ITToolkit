@@ -4,6 +4,7 @@
 function Get-ToolkitBuiltInTools {
 return @(
     [pscustomobject]@{Id='powershell'; Name='Windows PowerShell'; Group='Windows'; Description='Open a Windows PowerShell console.'; Exe='powershell.exe'; Args='-NoLogo'},
+    [pscustomobject]@{Id='powershell-admin'; Name='Windows PowerShell (Administrator)'; Group='Windows'; Description='Open an elevated Windows PowerShell 5.1 console through Windows UAC; the toolkit remains under its original identity.'; Exe='powershell.exe'; Args='-NoLogo'},
     [pscustomobject]@{Id='eventvwr'; Name='Event Viewer'; Group='Windows'; Description='Review local Windows event logs.'; Exe='eventvwr.msc'; Args=''},
     [pscustomobject]@{Id='services'; Name='Services'; Group='Windows'; Description='Open the Services management console.'; Exe='services.msc'; Args=''},
     [pscustomobject]@{Id='compmgmt'; Name='Computer Management'; Group='Windows'; Description='Open Computer Management.'; Exe='compmgmt.msc'; Args=''},
