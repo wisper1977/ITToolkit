@@ -16,6 +16,8 @@ For v1.27 local BitLocker or Policy diagnostics in a non-elevated GUI, **Run Ele
 
 **v1.27 centralized authorization foundation (standalone local, remote Default, and explicit Alternate preflight scenarios Windows-verified; integration testing pending):** The new `Modules/ITToolkit-OperationAuthorization.ps1` is imported by GUI and Classic and provides the read-only `Get-ToolkitOperationAuthorization` preflight. It evaluates the current Windows identity and elevation, target/mode consistency, and explicit remote Alternate context when supplied. A `ReadyForAttempt` result means only that preflight inputs are coherent; Windows and remote endpoints still enforce access. The module never grants privileges, prompts for credentials, initiates UAC, or changes an operation's execution route. Existing diagnostic behavior is unchanged.
 
+**v1.27 first enforced preflight (Windows retest pending):** Only a **single local System Information diagnostic** in either interface now checks the shared authorization preflight before executing. A blocked assessment prevents collection; a `ReadyForAttempt` assessment allows the existing local collector to try under its unchanged Windows identity. All-in-one, remote, and elevated diagnostic execution paths are unchanged in this incremental rollout.
+
 ## Features
 **Home GUI Report Archive validation:** Technician confirmed **Open Reports Folder** opens successfully in the home interactive-user setup. The previously failing separate-administrator workplace desktop handoff remains a known limitation and requires its own Windows test.
 
