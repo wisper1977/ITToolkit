@@ -1373,10 +1373,7 @@ function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,
     # This checks intent/target consistency; Windows still enforces actual access.
     if ($mode -eq 'Local' -and $sections.Count -eq 1 -and $sections[0] -eq 'System' -and -not $elevatedLocal) {
         try {
-            $authorization = Get-ToolkitOperationAuthorization -Section System -TargetMode Local -TargetComputer ([string]$script:TargetComputer) -RequestedRoute CurrentToken
-            if ($authorization.Assessment -ne 'ReadyForAttempt' -or $authorization.ProposedRoute -ne 'CurrentToken') {
-                throw ("Local System diagnostic blocked by preflight: {0}" -f $authorization.Reason)
-            }
+            $null = Assert-ToolkitLocalSystemAuthorization -TargetComputer ([string]$script:TargetComputer)
         } catch {
             Clear-GUIReportState
             $ui.DiagnosticOutput.Text = "Local System diagnostic was not started: $($_.Exception.Message)"
