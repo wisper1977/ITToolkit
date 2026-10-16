@@ -6,6 +6,7 @@ Meaningful IT Toolkit additions, changes, fixes, and release status are grouped 
 
 ### Added
 
+- Read-only actual remote execution identity verification for GUI and Classic Alternate diagnostic reports, using the same target-bound credentials and displaying VERIFIED, MISMATCH, or NOT VERIFIED rather than assuming the requested account was used. County Windows validation pending.
 - Three explicit Launcher modes: **Current Windows User**, **Separate Administrative Account**, and **Standard Session + On-Demand Administration**, with per-user mode preference and no saved passwords.
 - Shared execution-context, privilege-requirements, and authorization-preflight modules for GUI and Classic. Target-bound remote Alternate authentication is checked before collection; invalid or mismatched requests are blocked without silent identity fallback.
 - Direct-local diagnostic collection for all 20 sections and local structured inventory snapshots alongside existing remote collection.
