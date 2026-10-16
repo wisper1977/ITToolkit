@@ -27,6 +27,8 @@ Meaningful IT Toolkit additions, changes, fixes, and release status are grouped 
 
 ### Fixed
 
+- GUI Report Archive uses an owned native Windows report browser in Separate Administrative Account sessions, avoiding the unreliable cross-account Explorer handoff; ordinary launcher modes retain their existing folder-opening path. Windows acceptance pending.
+
 - **Remote failure recovery:** County testing confirmed Cancel Diagnostics restores target switching after a stalled, unauthorized remote request. Default-mode System Information now runs with a 30-second child-process deadline and cleanup; GUI single remote diagnostics request cancellation after 60 seconds. Windows regression of the new deadlines remains pending; timeouts are not assumed to mean access denied.
 - **GUI comparison HTML:** Restored collapsible category sections, jump links and added/changed/removed highlighting by routing HTML-only comparison headings through the existing shared report renderer. Underlying snapshot comparisons and TXT/CSV exports are unchanged. Windows GUI startup and HTML export validation remain pending.
 
