@@ -44,7 +44,7 @@ The IT Toolkit provides a graphical dashboard for remote system diagnostics, adm
 1. For the stable release, download the **v1.26 release ZIP** from [GitHub Releases](https://github.com/wisper1977/ITToolkit/releases/tag/v1.26). For the in-progress v1.27 build, switch to [`develop/v1.27`](https://github.com/wisper1977/ITToolkit/tree/develop/v1.27) and clone or download that branch. Extract into a local folder, such as `C:\ITToolkit`.
 2. Keep `Modules`, `Branding`, the `.ps1` files, and `Toolkit-config.json` together in their original relative paths.
 3. Review `Toolkit-config.json` and update paths, reporting options, and the default authentication domain for your environment.
-4. On Windows, run **`Launch.cmd`** to open the launcher and choose the GUI or Classic interface.
+4. On Windows, run **`Launch.cmd`** to open the launcher and choose the GUI or Classic interface. Check **Run as my current Windows user** to inherit the signed-in launcher's Windows identity without entering a second credential. Leave it unchecked to use the established separate administrative username/password launch. Current-session mode does **not** elevate the process; launch permissions and target access remain subject to the Windows token and existing diagnostic credential selection. The mode is saved per launcher user, while passwords are never saved. This v1.27 change requires Windows GUI/Classic testing.
 
 You can also start the Classic console directly:
 
