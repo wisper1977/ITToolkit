@@ -48,7 +48,7 @@ if (Test-Path -LiteralPath $settingsPath -PathType Leaf) {
 
 Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
 [xml]$xaml = @'
-<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" Title="IT Toolkit Launcher" Width="510" Height="555" MinWidth="480" MinHeight="555" WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize" Background="#F4F7FB" FontFamily="Segoe UI">
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" Title="IT Toolkit Launcher" Width="510" Height="635" MinWidth="480" MinHeight="570" WindowStartupLocation="CenterScreen" ResizeMode="CanMinimize" Background="#F4F7FB" FontFamily="Segoe UI">
   <Grid>
     <Grid.RowDefinitions>
       <RowDefinition Height="92"/>
@@ -67,37 +67,38 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
       </Grid>
     </Border>
     <Border Grid.Row="1" Background="#E4EDF7" ClipToBounds="True">
-      <Image Name="LoginBackground" Height="105" Stretch="UniformToFill" Visibility="Collapsed"/>
+      <Image Name="LoginBackground" Height="85" Stretch="UniformToFill" Visibility="Collapsed"/>
     </Border>
+    <!-- Scroll only on unusually small displays or enlarged DPI/text, not at normal size. -->
     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-      <StackPanel Margin="25,20,25,4">
+      <StackPanel Margin="25,12,25,0">
         <TextBlock Text="Execution mode" FontWeight="SemiBold" Foreground="#24364A"/>
         <ComboBox Name="ExecutionMode" Height="33" Margin="0,6,0,6" SelectedIndex="1">
           <ComboBoxItem Content="Current Windows User" Tag="Current"/>
           <ComboBoxItem Content="Separate Administrative Account" Tag="SeparateAccount"/>
           <ComboBoxItem Content="Standard Session + On-Demand Administration" Tag="OnDemand"/>
         </ComboBox>
-        <TextBlock Name="ExecutionNote" TextWrapping="Wrap" FontSize="11" Foreground="#526477" Margin="0,0,0,12"/>
+        <TextBlock Name="ExecutionNote" TextWrapping="Wrap" FontSize="11" Foreground="#526477" Margin="0,0,0,8"/>
         <TextBlock Text="Administrative username (separate-account mode)" FontWeight="SemiBold" Foreground="#24364A"/>
-        <TextBox Name="Username" Height="32" Margin="0,6,0,12" Padding="8,5" ToolTip="Enter username, DOMAIN\username, or username@domain"/>
+        <TextBox Name="Username" Height="32" Margin="0,4,0,8" Padding="8,5" ToolTip="Enter username, DOMAIN\username, or username@domain"/>
         <TextBlock Text="Password" FontWeight="SemiBold" Foreground="#24364A"/>
-        <PasswordBox Name="Password" Height="32" Margin="0,6,0,13" Padding="8,5"/>
+        <PasswordBox Name="Password" Height="32" Margin="0,4,0,8" Padding="8,5"/>
         <TextBlock Text="Choose interface" FontWeight="SemiBold" Foreground="#24364A"/>
-        <ComboBox Name="Interface" Height="33" Margin="0,6,0,12" SelectedIndex="0">
+        <ComboBox Name="Interface" Height="33" Margin="0,4,0,8" SelectedIndex="0">
           <ComboBoxItem Content="Classic PowerShell menu" Tag="Classic"/>
           <ComboBoxItem Content="Graphical user interface" Tag="GUI"/>
         </ComboBox>
-        <CheckBox Name="RememberUser" Content="Remember my username" Margin="0,1,0,8"/>
-        <CheckBox Name="RememberInterface" Content="Remember my interface preference" Margin="0,0,0,10"/>
-        <TextBlock Name="Message" TextWrapping="Wrap" Foreground="#8A3C11" FontSize="12" MinHeight="38"/>
+        <CheckBox Name="RememberUser" Content="Remember my username" Margin="0,1,0,5"/>
+        <CheckBox Name="RememberInterface" Content="Remember my interface preference" Margin="0,0,0,5"/>
+        <TextBlock Name="Message" TextWrapping="Wrap" Foreground="#8A3C11" FontSize="12" MinHeight="20"/>
       </StackPanel>
     </ScrollViewer>
-    <StackPanel Grid.Row="3" Margin="25,8,25,20">
+    <StackPanel Grid.Row="3" Margin="25,6,25,12">
       <DockPanel LastChildFill="False">
         <Button Name="Cancel" Content="Cancel" Width="95" Height="35" DockPanel.Dock="Right" Margin="10,0,0,0"/>
         <Button Name="Launch" Content="Launch Toolkit" Width="155" Height="35" DockPanel.Dock="Right" Background="#17365D" Foreground="White" FontWeight="SemiBold"/>
       </DockPanel>
-      <TextBlock Name="Footer" Margin="0,12,0,0" FontSize="11" Foreground="#66788B" TextWrapping="Wrap"/>
+      <TextBlock Name="Footer" Margin="0,7,0,0" FontSize="11" Foreground="#66788B" TextWrapping="Wrap"/>
     </StackPanel>
   </Grid>
 </Window>
@@ -181,9 +182,9 @@ $bannerImage = Get-BrandingImage -ConfiguredPath $bannerSetting -FallbackPath 'B
 if ($null -ne $bannerImage) {
     $ui.LoginBackground.Source = $bannerImage
     $ui.LoginBackground.Visibility = [Windows.Visibility]::Visible
-    $ui.BannerRow.Height = [Windows.GridLength]::new(105)
-    $window.Height = 660
-    $window.MinHeight = 660
+    $ui.BannerRow.Height = [Windows.GridLength]::new(85)
+    $window.Height = 720
+    $window.MinHeight = 570
 }
 
 # Optional organization logo in the title-bar icon (configured path must remain local).
@@ -269,4 +270,10 @@ $ui.Launch.Add_Click({
     }
 })
 if ([string]$ui.ExecutionMode.SelectedItem.Tag -eq 'SeparateAccount') { $ui.Username.Focus() | Out-Null } else { $ui.Launch.Focus() | Out-Null }
+# Keep the launcher within the usable monitor area. The ScrollViewer remains an
+# accessibility fallback for unusually small desktops or high DPI/text scaling.
+$usableHeight = [System.Windows.SystemParameters]::WorkArea.Height
+if ($usableHeight -gt 0 -and $window.Height -gt $usableHeight) {
+    $window.Height = [Math]::Max(420, $usableHeight)
+}
 [void]$window.ShowDialog()
