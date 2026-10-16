@@ -2,13 +2,13 @@
 
 **v1.28 — Active development** · Windows PowerShell 5.1 · Windows administration and diagnostics
 
-> **Release status:** v1.28 is in active development on [`develop/v1.28`](https://github.com/wisper1977/ITToolkit/tree/develop/v1.28). **v1.27** on `main` is the published stable Enterprise release. No v1.28 diagnostic enhancements have been implemented or validated yet. See [CHANGELOG.md](CHANGELOG.md) for completed changes and [ROADMAP.md](ROADMAP.md) for planned work.
+> **Release status:** v1.28 is in active development on [`develop/v1.28`](https://github.com/wisper1977/ITToolkit/tree/develop/v1.28). **v1.27** on `main` is the published stable Enterprise release. See [CHANGELOG.md](CHANGELOG.md) for completed changes and [ROADMAP.md](ROADMAP.md) for planned work.
 
 IT Toolkit is a portable, PowerShell-based Windows administration utility for technicians. It combines system diagnostics, access checks, reporting, inventory comparisons, and frequently used tools in graphical and Classic console interfaces.
 
 ## v1.28 development focus
 
-The v1.28 milestone is a **diagnostic completeness review** of all 20 sections, beginning with Network. The first local Network inventory expansion is implemented but **awaiting Enterprise Windows validation**; remote Network and routing enhancements are not yet implemented. Local, remote Default, and remote Alternate evidence will be compared while maintaining GUI/Classic parity, authentication boundaries, and report compatibility.
+The v1.28 milestone is a **diagnostic completeness review** of all 20 sections, beginning with Network. Local Network adapter inventory and display corrections have been accepted in Enterprise Windows testing. A read-only active-route inventory has been implemented and **awaits Enterprise Windows validation**; remote Network enhancements remain pending. Local, remote Default, and remote Alternate evidence will be compared while maintaining GUI/Classic parity, authentication boundaries, and report compatibility.
 
 The v1.27 stable baseline already includes three launcher modes, shared authorization, verified remote identity evidence, seven-check Computer Health, HTML/CSV/TXT reports, structured inventory snapshots and comparisons, and the scoped UAC Reports-folder helper. See the [v1.27 release notes](CHANGELOG.md) for established features and testing.
 
@@ -76,7 +76,7 @@ A successful query does not guarantee that the machine is healthy. Unavailable c
 
 ## Development and release versions
 
-- **Development:** `Major.Minor.Commit` (current application-code version: `1.28.2ec9c30`), where the suffix identifies the verified Network collector source revision `2ec9c30`. Documentation-only commits do not change it.
+- **Development:** `Major.Minor.Commit` (current application-code version: `1.28.0a896d6`), where the suffix identifies the verified Network collector source revision `0a896d6`. Documentation-only commits do not change it.
 - **Stable:** `Major.Minor` (current production: `1.27`); v1.28 will use `1.28` only after Windows validation and explicit release approval.
 - GUI, Classic, Launcher, and generated report metadata should consistently identify their source build. A configured suffix must not be assumed to identify a newer commit until the build version is regenerated and verified.
 
