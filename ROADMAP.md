@@ -28,7 +28,7 @@
 
 - **UAC result-handoff follow-up:** Home BitLocker and Policy UAC runs subsequently succeeded under the same initiating/collecting Windows user (October 15, 2026), with no execution-policy change. Earlier missing-result failure is not explained by this success; capture stage diagnostics if it recurs. Still test UAC cancellation, explicitly authorized separate-administrator UAC, and failure reporting without broadening ACLs.
 - **Selected-check button exclusivity (home GUI selection behavior confirmed):** Technician verified the new mutually exclusive button behavior on Windows. Remaining regression coverage: remote targets, already-elevated processes, and busy/completion states.
-- **Classic conditional UAC follow-up:** Home Windows technician observed a UAC prompt for local Group Policy but no UAC prompt for Disk Space. Confirm Group Policy result completion and authorization provenance, and test cancellation and other account/token conditions.
+- **Classic conditional UAC follow-up:** Home Windows technician confirmed local Group Policy raised UAC and returned an accurate report, while Disk Space ran without UAC. Remaining: verify recorded collection identity/provenance, UAC cancellation, and other account/token conditions.
 - **Context-sensitive elevation button validation:** On Windows, check GUI local BitLocker/Policy under non-elevated and elevated tokens, remote-mode and other-category hiding, switching targets and sections, UAC cancellation and reporting. Confirm an elevated standard diagnostic succeeds or accurately reports any access failure; validate Classic's explicit UAC workflow separately. Do not infer needed elevation solely from launcher mode.
 
 
