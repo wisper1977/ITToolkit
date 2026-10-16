@@ -62,6 +62,8 @@ The example commands use a process-only execution-policy override; follow your o
 
 **Launcher sizing (v1.27 development):** The execution-mode launcher uses a compact layout intended to fit without an internal scrollbar on normal desktop work areas. Optional organization artwork is preserved at a shorter height. On small displays or with high DPI/text scaling, the form can still scroll rather than clip essential fields. Windows layout validation is pending.
 
+**Scoped local UAC button (v1.27 development; Windows retest pending):** In GUI diagnostics, **Run Elevated (UAC)** appears only when the local computer is selected, the selected check is BitLocker or Policy, and the IT Toolkit process is not already elevated. Windows requests the appropriate consent or administrator credentials. Other diagnostics retain their standard execution pathways; this is not a general-purpose privileged command runner. Classic retains its existing explicit local UAC workflow.
+
 ## Basic workflow
 
 1. Select or enter a Windows computer or server as the target.
