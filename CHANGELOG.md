@@ -27,6 +27,11 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 - **Home GUI UAC BitLocker verified:** Technician confirmed `DESKTOP-8EHGAPD\wispe` launched a local BitLocker check through explicit Windows UAC and received a `SUCCESS` report under the same account. C: and E: reported FullyDecrypted, Protection Off, 0% encryption, and no encryption method. The report showed RemoteSigned → RemoteSigned, with no CurrentUser execution-policy change. Local Policy also succeeded through UAC. These validate the tested same-account paths, **not** separate-admin UAC, cancellation handling, or other Windows configurations. The earlier no-result error was not reproduced after the instrumentation change; its underlying cause remains unconfirmed.
 
+### Batch-wide local authorization enforcement (new implementation; Windows validation pending)
+
+- Introduced `Assert-ToolkitLocalDiagnosticAuthorization` in the shared authorization module. Before collection, GUI and Classic now preflight **every selected local section** (including all 20 in Run All) rather than only a single System report; any blocked section or invalid request stops the entire local selection before collection. Normal local sections use the current Windows token. Explicit GUI BitLocker/Policy UAC uses the scoped single-section `ElevatedLocal` check; Classic's existing initial current-token probe and separate UAC consent flow are preserved. Remote Default/Alternate execution is unchanged.
+- Expanded `Tests/Test-LocalSystemAuthorization.ps1` into an all-20 Windows PowerShell validation matrix covering registry uniqueness, each section, 20-section batches, mismatched targets, invalid sections and UAC requests, and simulated no-collection-on-denial. These expanded tests have **not yet been run on Windows**. Interactive GUI/Classic, remote authentication, and UAC regression remain pending.
+
 ### Controlled authorization denial test (technician-confirmed on Windows)
 
 - Consolidated the already-enforced single local System diagnostic entry check into `Assert-ToolkitLocalSystemAuthorization` in the shared operation authorization module. GUI and Classic both call the same guard before starting their respective collectors. The guard throws for blocked or invalid preflight results; no additional diagnostics, remote modes, or UAC routes were changed.
