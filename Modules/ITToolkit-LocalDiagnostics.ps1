@@ -757,10 +757,12 @@ function Invoke-ToolkitElevatedLocalDiagnostic {
         (Get-Item -LiteralPath $directory).SetAccessControl($acl)
         $outputFile = Join-Path $directory 'report.clixml'
         $errorFile = Join-Path $directory 'error.clixml'
+        $statusFile = Join-Path $directory 'child-stage.txt'
         $nonce = [guid]::NewGuid().ToString('N')
         $safeModule = "'" + $modulePath.Replace("'","''") + "'"
         $safeOutput = "'" + $outputFile.Replace("'","''") + "'"
         $safeError = "'" + $errorFile.Replace("'","''") + "'"
+        $safeStatus = "'" + $statusFile.Replace("'","''") + "'"
         $safeSection = "'" + $Section + "'"
         $safeNonce = "'" + $nonce + "'"
         $allowPolicy = if ($AllowCurrentUserRemoteSigned.IsPresent) { '$true' } else { '$false' }
@@ -769,6 +771,8 @@ function Invoke-ToolkitElevatedLocalDiagnostic {
         $child = @'
 $ErrorActionPreference = 'Stop'
 try {
+    # Non-secret diagnostic checkpoint; restricted by the handoff folder ACL.
+    [IO.File]::WriteAllText(__STATUS__, 'child-started')
     $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
     $principal = New-Object System.Security.Principal.WindowsPrincipal -ArgumentList $identity
     if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
@@ -807,6 +811,7 @@ try {
         EffectiveExecutionPolicy = [string](Get-ExecutionPolicy)
         Result = $diagnosticResult
     } | Export-Clixml -LiteralPath __OUTPUT__ -ErrorAction Stop
+    [IO.File]::WriteAllText(__STATUS__, 'result-written')
 } catch {
     try {
         [pscustomobject]@{
@@ -825,6 +830,7 @@ try {
         $child = $child.Replace('__SECTION__',$safeSection)
         $child = $child.Replace('__OUTPUT__',$safeOutput)
         $child = $child.Replace('__ERROR__',$safeError)
+        $child = $child.Replace('__STATUS__',$safeStatus)
         $child = $child.Replace('__NONCE__',$safeNonce)
         $child = $child.Replace('__ALLOW_POLICY__',$allowPolicy)
         $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($child))
@@ -861,10 +867,17 @@ try {
             }
         }
         if (-not (Test-Path -LiteralPath $outputFile -PathType Leaf)) {
-            $message = ("Elevated diagnostic returned no accessible result (exit code {0}). " +
-                "Check UAC account rights, whether the administrator account can access the " +
-                "toolkit files and the protected temporary folder, and endpoint security events.")
-            throw ($message -f $process.ExitCode)
+            $stage = 'no child checkpoint found'
+            if (Test-Path -LiteralPath $statusFile -PathType Leaf) {
+                try { $stage = [IO.File]::ReadAllText($statusFile).Trim() }
+                catch { $stage = 'child checkpoint exists but cannot be read' }
+            }
+            $message = ("Elevated diagnostic returned no accessible result (exit code {0}; stage: {1}). " +
+                "No report was collected. 'no child checkpoint found' suggests the child command did not reach " +
+                "its first file write or lacked access to the protected folder. 'child-started' means " +
+                "the child began execution but did not complete the report handoff. " +
+                "Check UAC identity, toolkit file access, temporary-folder permissions, and endpoint security.")
+            throw ($message -f $process.ExitCode,$stage)
         }
         if ($process.ExitCode -ne 0) {
             throw ("Elevated process exited with code {0}; its output was discarded." -f $process.ExitCode)
