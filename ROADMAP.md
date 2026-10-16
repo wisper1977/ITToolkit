@@ -22,6 +22,8 @@
 
 ### Report, snapshot, and usability regression
 
+- **Launcher execution-mode Windows validation:** Verify checkbox checked starts both GUI and Classic under the current Windows identity without a second password; unchecked retains separate-user launch. Test switching modes, remembered preference, non-admin current tokens, and no credential spillover into remote Default/Alternate diagnostics. The launcher checkbox does not resolve the separate-account Explorer window handoff.
+
 - **Health reports:** Verify latest seven-check findings and collection provenance in GUI and Classic saved HTML/CSV/TXT, Copy Report, Recent Reports, and archive opening. Confirm partial/denied statuses survive formatting.
 - **Report Archive folder button — unresolved:** Windows GUI child PowerShell exited with code 0, but Explorer did not display the folder. Manual and nested launches worked outside the GUI. Compare GUI/Explorer process owners and session IDs, investigate the desktop handoff, and verify a visible window before closing this item. Preserve Copy Folder Path.
 - **Snapshots:** Local two-snapshot same-target comparison and its saved HTML report were confirmed from the technician's uploaded artifacts (nine service-property differences, no changes elsewhere). **Still check:** remote comparison, archive reload, partial/inaccessible categories, optional Classic report-sidecar creation, and target/identity mismatch protections. Local and remote capture was already technician-verified.
