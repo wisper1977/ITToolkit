@@ -119,6 +119,17 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
             return
         }
     }
+    if (-not $script:LocalTargetMode) {
+        $authMode = if ($script:ToolkitAuthMode -eq 'Alternate') { 'Alternate' } else { 'Default' }
+        $authContext = if ($authMode -eq 'Alternate') { $script:ToolkitAuthContext } else { $null }
+        try {
+            $null = Assert-ToolkitRemoteDiagnosticAuthorization -Sections $Sections -TargetComputer $target -Mode $authMode -AuthenticationContext $authContext
+        } catch {
+            Write-Host ('Remote preflight rejected the request: ' + $_.Exception.Message)
+            Pause-Toolkit
+            return
+        }
+    }
     $script:ClassicLastReport = $null
     $results = New-Object System.Collections.Generic.List[object]
     foreach ($section in $Sections) {
