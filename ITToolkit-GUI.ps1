@@ -14,7 +14,7 @@ $script:ToolkitRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $executionContextPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-ExecutionContext.ps1'
 if (-not (Test-Path -LiteralPath $executionContextPath -PathType Leaf)) { throw "Missing toolkit execution context: $executionContextPath" }
 . $executionContextPath
-$script:ExecutionContext = Get-ToolkitExecutionContext -Mode $ExecutionMode
+$script:ToolkitExecutionContext = Get-ToolkitExecutionContext -Mode $ExecutionMode
 $configPath = Join-Path $script:ToolkitRoot 'Toolkit-config.json'
 if (-not (Test-Path -LiteralPath $configPath -PathType Leaf)) { throw "Missing configuration: $configPath" }
 $cfg = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
@@ -1222,7 +1222,7 @@ $ui.DiagnosticSection.SelectedIndex = 0
 # The launcher choice is not itself evidence of privilege.
 function Test-GUIProcessElevated {
     # This is evidence from the process token, not from the launcher selection.
-    return [bool]$script:ExecutionContext.IsElevated
+    return [bool]$script:ToolkitExecutionContext.IsElevated
 }
 function Update-GUIElevatedDiagnosticButton {
     $selected = if ($null -ne $ui.DiagnosticSection.SelectedItem) { [string]$ui.DiagnosticSection.SelectedItem.Tag } else { '' }
@@ -1771,7 +1771,7 @@ $ui.SwitchClassic.Add_Click({
     try {
         # Launch under the current Windows token, without credential or target handoff.
         $psExe = Join-Path $PSHOME 'powershell.exe'
-        $arguments = '-NoLogo -NoProfile -STA -File "' + $classicScript + '" -ExecutionMode ' + $script:ExecutionContext.Mode
+        $arguments = '-NoLogo -NoProfile -STA -File "' + $classicScript + '" -ExecutionMode ' + $script:ToolkitExecutionContext.Mode
         $process = Start-Process -FilePath $psExe -ArgumentList $arguments -WorkingDirectory $PSScriptRoot -PassThru -ErrorAction Stop
         if ($null -eq $process) { throw 'Windows did not return a process.' }
         $window.Close()
