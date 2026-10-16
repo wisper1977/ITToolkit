@@ -1369,16 +1369,16 @@ function Start-GUIDiagnostics([string[]]$sections,[bool]$elevatedLocal = $false,
         return
     }
     if ($null -ne $script:DiagnosticPS) { return }
-    # First enforced boundary: only the single direct-local System diagnostic.
-    # This checks intent/target consistency; Windows still enforces actual access.
-    if ($mode -eq 'Local' -and $sections.Count -eq 1 -and $sections[0] -eq 'System' -and -not $elevatedLocal) {
+    # Validate every local section (including Run All) before starting any collector.
+    # Scoped UAC is still an explicit technician action; no automatic elevation.
+    if ($mode -eq 'Local') {
         try {
-            $null = Assert-ToolkitLocalSystemAuthorization -TargetComputer ([string]$script:TargetComputer)
+            $null = Assert-ToolkitLocalDiagnosticAuthorization -Sections $sections -TargetComputer ([string]$script:TargetComputer) -ElevatedLocal:$elevatedLocal
         } catch {
             Clear-GUIReportState
-            $ui.DiagnosticOutput.Text = "Local System diagnostic was not started: $($_.Exception.Message)"
-            $ui.DiagnosticProgress.Text = 'Authorization preflight blocked local System collection.'
-            $ui.Status.Text = 'Diagnostic not started.'
+            $ui.DiagnosticOutput.Text = "Local diagnostics were not started: $($_.Exception.Message)"
+            $ui.DiagnosticProgress.Text = 'Authorization preflight blocked local collection.'
+            $ui.Status.Text = 'Diagnostics not started.'
             return
         }
     }
