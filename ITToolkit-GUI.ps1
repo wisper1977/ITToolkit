@@ -1580,7 +1580,9 @@ foreach ($name in @('ITToolkit-Authentication.ps1','ITToolkit-WmiDiagnostics.ps1
     . $path
 }
 $context = New-ToolkitAuthContext -ComputerName $target -Mode Alternate -Credential $credential
+$identityEvidence = Test-ToolkitRemoteExecutionIdentity -Context $context
 $lines = New-Object System.Collections.Generic.List[string]
+$lines.Add((Format-ToolkitRemoteExecutionIdentity -Result $identityEvidence))
 # Collection metadata is added once by the GUI Save Report handler.
 # Worker output contains only the diagnostic section content.
 foreach ($section in $requested) {
