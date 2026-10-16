@@ -19,7 +19,7 @@ IT Toolkit is a portable, PowerShell-based Windows administration utility for te
 - **Computer Health:** Evidence-based local and remote health checks with review, checked, and unavailable states, including storage, services, events, uptime, firewall, updates inventory, and pending-restart indicators.
 - **Improved dashboard:** Compact, independently scrollable health details, better navigation and sizing, clearer target status, and remembered window preferences.
 - **Reports and comparisons:** Improved saved-report handling, HTML/CSV/TXT export, structured inventory snapshots, and side-by-side changes between captures.
-- **Reports folder:** Open Folder requests an actual Windows Explorer directory so report files can be dragged into email or chat; Copy Folder Path remains available. Shell automation for the Separate Admin case requires final GUI Windows acceptance.
+- **Reports folder:** Open Folder requests an actual Windows Explorer directory for dragging reports into email or chat. A non-elevated Separate Administrative Account GUI requests one-time UAC approval for a separate folder-opening helper (not elevation of the toolkit). Other launch modes use the normal route; Copy Folder Path remains available. Windows acceptance pending.
 - **Version traceability:** Development versions include an abbreviated source commit identifier; diagnostic exports and structured snapshots include version information.
 - **Tools and Favorites:** More flexible tool access, favorites, and an explicitly authorized Windows PowerShell (Administrator) launch option.
 - **Refined branding and usability:** Updated Launcher presentation, improved long-label display, and revised README screenshots.
