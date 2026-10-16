@@ -185,10 +185,10 @@ function Format-ToolkitRemoteExecutionIdentity {
     [CmdletBinding()]
     param([Parameter(Mandatory=$true)]$Result)
     $lines = @(
-        'Authentication mode: ' + [string]$Result.Mode
-        'Requested remote identity: ' + [string]$Result.RequestedIdentity
-        'Actual remote execution identity: ' + [string]$Result.ActualIdentity
-        'Remote identity verification: ' + [string]$Result.Verification
+        "Authentication mode: $($Result.Mode)"
+        "Requested remote identity: $($Result.RequestedIdentity)"
+        "Actual remote execution identity: $($Result.ActualIdentity)"
+        "Remote identity verification: $($Result.Verification)"
     )
     if ($Result.Detail) { $lines += 'Identity verification detail: ' + [string]$Result.Detail }
     return ($lines -join "`r`n")
