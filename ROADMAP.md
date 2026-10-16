@@ -22,7 +22,7 @@
 
 ### Report, snapshot, and usability regression
 
-- **Startup regression retest:** Verify GUI and Classic launch after replacing the conflicting automatic `$ExecutionContext` variable with `$script:ToolkitExecutionContext`; confirm Current, On-Demand, and Separate Administrative Account modes still launch correctly, then check interface switching.
+- **Startup regression retest:** GUI startup and GUI → Classic operation were confirmed on the home Windows computer after replacing the conflicting `$ExecutionContext` variable with `$script:ToolkitExecutionContext`. Still verify reverse Classic → GUI switching, direct Classic startup, and the Current, On-Demand, and Separate Administrative Account launcher modes across relevant Windows identities.
 - **Shared execution-context Windows validation:** Verify all three launcher modes produce correct Windows identity, elevated-token status and session ID in GUI and Classic; verify mode metadata survives GUI ↔ Classic switching and direct script starts default to Current. Check failures and remote Default/Alternate authentication remain independent of launcher mode. No automatic UAC should occur from merely choosing a mode.
 
 
