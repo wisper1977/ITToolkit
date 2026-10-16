@@ -15,7 +15,7 @@ $script:ToolkitRoot = $PSScriptRoot
 $executionContextPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-ExecutionContext.ps1'
 if (-not (Test-Path -LiteralPath $executionContextPath -PathType Leaf)) { throw "Missing toolkit execution context: $executionContextPath" }
 . $executionContextPath
-$script:ExecutionContext = Get-ToolkitExecutionContext -Mode $ExecutionMode
+$script:ToolkitExecutionContext = Get-ToolkitExecutionContext -Mode $ExecutionMode
 $componentFolder = Join-Path $script:ToolkitRoot 'Modules'
 $componentPath = Join-Path $componentFolder 'ITToolkit-Config.ps1'
 if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missing toolkit component: $componentPath" }
@@ -145,7 +145,7 @@ while ($true) {
             # Do not pass selected targets, credentials, or transient session state.
             try {
                 $psExe = Join-Path $PSHOME 'powershell.exe'
-                $arguments = '-NoLogo -NoProfile -STA -File "' + $guiScript + '" -ExecutionMode ' + $script:ExecutionContext.Mode
+                $arguments = '-NoLogo -NoProfile -STA -File "' + $guiScript + '" -ExecutionMode ' + $script:ToolkitExecutionContext.Mode
                 $newProcess = Start-Process -FilePath $psExe -ArgumentList $arguments -WorkingDirectory $script:ToolkitRoot -PassThru -ErrorAction Stop
                 if ($null -eq $newProcess) { throw 'Windows did not return a process.' }
                 Reset-ClassicAlternateCredential
