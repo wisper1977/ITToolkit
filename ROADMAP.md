@@ -22,6 +22,9 @@
 
 ### Report, snapshot, and usability regression
 
+- **Shared execution-context Windows validation:** Verify all three launcher modes produce correct Windows identity, elevated-token status and session ID in GUI and Classic; verify mode metadata survives GUI ↔ Classic switching and direct script starts default to Current. Check failures and remote Default/Alternate authentication remain independent of launcher mode. No automatic UAC should occur from merely choosing a mode.
+
+
 - **Context-sensitive elevation button validation:** On Windows, check GUI local BitLocker/Policy under non-elevated and elevated tokens, remote-mode and other-category hiding, switching targets and sections, UAC cancellation and reporting. Confirm an elevated standard diagnostic succeeds or accurately reports any access failure; validate Classic's explicit UAC workflow separately. Do not infer needed elevation solely from launcher mode.
 
 
