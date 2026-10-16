@@ -12,7 +12,7 @@ For v1.27 local BitLocker or Policy diagnostics in a non-elevated GUI, **Run Ele
 
 **Classic Windows test (October 15, 2026):** Local Group Policy prompted for UAC and returned an accurate report after approval; Disk Space ran without UAC. Other authorization identities and UAC cancellation are still pending.
 
-**v1.27 privilege requirements (standalone home Windows test passed; GUI/Classic retest pending):** `Modules/ITToolkit-PrivilegeRequirements.ps1` provides shared read-only metadata and selection helpers for the twenty diagnostic sections. GUI uses this registry to decide whether to show the existing local BitLocker/Policy UAC button; Classic imports the same definitions but retains its current execution behavior. The module never elevates or selects credentials, and remote access still requires explicit authorization.
+**v1.27 privilege requirements (standalone home Windows decisions passed; GUI/Classic retest pending):** `Modules/ITToolkit-PrivilegeRequirements.ps1` provides shared read-only metadata and selection helpers for the twenty diagnostic sections. GUI uses this registry to decide whether to show the existing local BitLocker/Policy UAC button; Classic imports the same definitions but retains its current execution behavior. The module never elevates or selects credentials, and remote access still requires explicit authorization.
 
 ## Features
 **Home GUI Report Archive validation:** Technician confirmed **Open Reports Folder** opens successfully in the home interactive-user setup. The previously failing separate-administrator workplace desktop handoff remains a known limitation and requires its own Windows test.
