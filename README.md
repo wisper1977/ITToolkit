@@ -8,7 +8,7 @@ IT Toolkit is a portable, PowerShell-based Windows administration utility for te
 
 ## v1.28 development focus
 
-The v1.28 milestone is a **diagnostic completeness review** of all 20 sections, beginning with Network. Local Network adapter inventory and display corrections have been accepted in Enterprise Windows testing. A read-only active-route inventory has been implemented and **awaits Enterprise Windows validation**; remote Network enhancements remain pending. Local, remote Default, and remote Alternate evidence will be compared while maintaining GUI/Classic parity, authentication boundaries, and report compatibility.
+The v1.28 milestone is a **diagnostic completeness review** of all 20 sections, beginning with Network. Local Network adapter inventory and display corrections have been accepted in Enterprise Windows testing. The active-route inventory has been observed in Enterprise Windows testing; corrected adapter-to-route interface indexes and a default-route summary now **await Enterprise Windows validation**. Remote Network enhancements remain pending. Local, remote Default, and remote Alternate evidence will be compared while maintaining GUI/Classic parity, authentication boundaries, and report compatibility.
 
 The v1.27 stable baseline already includes three launcher modes, shared authorization, verified remote identity evidence, seven-check Computer Health, HTML/CSV/TXT reports, structured inventory snapshots and comparisons, and the scoped UAC Reports-folder helper. See the [v1.27 release notes](CHANGELOG.md) for established features and testing.
 
@@ -76,7 +76,7 @@ A successful query does not guarantee that the machine is healthy. Unavailable c
 
 ## Development and release versions
 
-- **Development:** `Major.Minor.Commit` (current application-code version: `1.28.0a896d6`), where the suffix identifies the verified Network collector source revision `0a896d6`. Documentation-only commits do not change it.
+- **Development:** `Major.Minor.Commit` (current application-code version: `1.28.c352ad3`), where the suffix identifies the verified Network collector source revision `c352ad3`. Documentation-only commits do not change it.
 - **Stable:** `Major.Minor` (current production: `1.27`); v1.28 will use `1.28` only after Windows validation and explicit release approval.
 - GUI, Classic, Launcher, and generated report metadata should consistently identify their source build. A configured suffix must not be assumed to identify a newer commit until the build version is regenerated and verified.
 
