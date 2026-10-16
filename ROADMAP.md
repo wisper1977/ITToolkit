@@ -22,6 +22,9 @@
 
 ### Report, snapshot, and usability regression
 
+- **Context-sensitive elevation button validation:** On Windows, check GUI local BitLocker/Policy under non-elevated and elevated tokens, remote-mode and other-category hiding, switching targets and sections, UAC cancellation and reporting. Confirm an elevated standard diagnostic succeeds or accurately reports any access failure; validate Classic's explicit UAC workflow separately. Do not infer needed elevation solely from launcher mode.
+
+
 - **Launcher layout Windows validation:** Confirm the execution-mode dropdown, username/password, interface selection and buttons are all visible without a vertical scrollbar at normal Windows screen size, both with and without configured banner art. Verify small work areas/high DPI still allow access to all controls and changing modes does not clip explanatory text.
 
 - **Launcher execution-mode Windows validation:** Verify remembered dropdown modes in GUI and Classic: Current and On-Demand inherit the launcher identity without a second password; Separate Account still launches using the authorized account. Check dynamic field enablement, legacy checkbox preference migration, reload, non-admin tokens, explicit UAC/Alternate diagnostics in On-Demand, and no credential spillover. The separate-account Explorer desktop handoff remains unresolved.
