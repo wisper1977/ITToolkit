@@ -7,6 +7,9 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 ## [1.27] — In development (not released)
 
 ### Windows validation update — October 15, 2026
+
+- **Shared registry On-Demand GUI integration (technician-confirmed on home Windows):** Technician confirmed the GUI displayed only **Run Elevated (UAC)** for local BitLocker and Group Policy, only **Run selected check** for ordinary checks such as System and Storage, and completed an ordinary diagnostic successfully. This validates the tested GUI mode/selection transitions; Classic integration, remote-auth scenarios, UAC cancellation, and alternate user identities remain pending.
+
 - **Home Report Archive folder launch verified:** Technician confirmed **Open Reports Folder** visibly opens the folder from the home GUI while testing v1.27 On-Demand workflow. This validates only the home interactive-user scenario; the previously failing separate-administrator desktop/Explorer handoff at work remains unresolved pending retest.
 
 - **On-Demand GUI home Windows test (technician-confirmed):** Technician reports the **Standard Session + On-Demand Administration** launcher mode behaved as expected: GUI started normally, Computer Health and other ordinary diagnostics worked, and conditional local UAC controls appeared for supported checks. Technician subsequently confirmed On-Demand **Classic** ran without issues as well. These observations validate home GUI and Classic usage, not all user-token combinations, separate-account execution, or remote Alternate credentials.
