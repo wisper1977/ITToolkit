@@ -327,7 +327,7 @@ Add-Type -AssemblyName PresentationFramework,PresentationCore,WindowsBase
         <ComboBox Name="DiagnosticSection" Height="34" Margin="0,0,0,10" ToolTip="Choose one of the twenty existing reporting checks."/>
         <WrapPanel>
          <Button Name="RunDiagnostic" Content="Run selected check"/>
-          <Button Name="RunElevatedLocalDiagnostic" Content="Run selected with UAC" ToolTip="Explicit administrator consent for local BitLocker or Policy only"/>
+          <Button Name="RunElevatedLocalDiagnostic" Content="Run Elevated (UAC)" Visibility="Collapsed" ToolTip="Explicit administrator approval for this selected local diagnostic"/>
          <Button Name="RunAllDiagnostics" Content="Run all 20 checks"/>
          <Button Name="CreateSnapshotGUI" Content="Create Snapshot" ToolTip="Capture structured inventory for later comparison"/>
         </WrapPanel>
@@ -544,6 +544,7 @@ function Clear-DashboardHealthDetails {
     $ui.HealthRestartDetail.Text = 'Restart: Not assessed'
 }
 function Update-TargetView {
+    Update-GUIElevatedDiagnosticButton
     # Do not display another target's prior health observations as current.
     $currentHealthMode = if ($script:LocalTargetMode) { 'Local' } elseif ($script:GUIAlternateMode) { 'Alternate' } else { 'Default' }
     $currentHealthIdentity = if ($script:GUIAlternateMode) { [string]$script:GUIAlternateUser } else { [Security.Principal.WindowsIdentity]::GetCurrent().Name }
@@ -1207,6 +1208,23 @@ foreach ($section in $script:DiagnosticSections) {
     [void]$ui.DiagnosticSection.Items.Add($entry)
 }
 $ui.DiagnosticSection.SelectedIndex = 0
+# Only offer the existing scoped UAC pathway for supported local diagnostics
+# when the current process does not already have an elevated administrator token.
+# The launcher choice is not itself evidence of privilege.
+function Test-GUIProcessElevated {
+    $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+    $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+    return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+}
+function Update-GUIElevatedDiagnosticButton {
+    $selected = if ($null -ne $ui.DiagnosticSection.SelectedItem) { [string]$ui.DiagnosticSection.SelectedItem.Tag } else { '' }
+    $supported = [bool]$script:LocalTargetMode -and $selected -in @('BitLocker','Policy')
+    $needed = $supported -and -not (Test-GUIProcessElevated)
+    $ui.RunElevatedLocalDiagnostic.Visibility = if ($needed) { [Windows.Visibility]::Visible } else { [Windows.Visibility]::Collapsed }
+    $ui.RunElevatedLocalDiagnostic.IsEnabled = $needed -and $null -eq $script:DiagnosticPS
+}
+$ui.DiagnosticSection.Add_SelectionChanged({ Update-GUIElevatedDiagnosticButton })
+Update-GUIElevatedDiagnosticButton
 # Report is populated only after a completed diagnostic collection.
 $script:LastGUIReport = $null
 $script:PendingGUIReport = $null
@@ -1299,7 +1317,7 @@ $script:DiagnosticTimer.Add_Tick({
         $script:DiagnosticAsync = $null
         $script:PendingGUIReport = $null
         $ui.RunDiagnostic.IsEnabled = $true
-        $ui.RunElevatedLocalDiagnostic.IsEnabled = $true
+        Update-GUIElevatedDiagnosticButton
         $ui.RunAllDiagnostics.IsEnabled = $true
     }
 })
@@ -1693,12 +1711,12 @@ $ui.RunDiagnostic.Add_Click({
 $ui.RunElevatedLocalDiagnostic.Add_Click({
     if ($null -eq $ui.DiagnosticSection.SelectedItem) { return }
     $section = [string]$ui.DiagnosticSection.SelectedItem.Tag
-    if (-not $script:LocalTargetMode -or $section -notin @('BitLocker','Policy')) {
-        [Windows.MessageBox]::Show('Select the local computer and BitLocker or Policy first.','Elevation scope') | Out-Null
+    if (-not $script:LocalTargetMode -or $section -notin @('BitLocker','Policy') -or (Test-GUIProcessElevated)) {
+        [Windows.MessageBox]::Show('Run Elevated is applicable only to supported local BitLocker or Policy checks when the current process is not elevated.','Elevation scope') | Out-Null
         return
     }
     $approval = [Windows.MessageBox]::Show(
-        "Windows will request administrator credentials for this local $section check. The GUI will remain non-elevated. Continue?",
+        "Windows UAC will request approval or administrator credentials for this local $section check. The GUI will remain under its existing identity. Continue?",
         'Authorize diagnostic elevation',
         [Windows.MessageBoxButton]::YesNo,
         [Windows.MessageBoxImage]::Question)
