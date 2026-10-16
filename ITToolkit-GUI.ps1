@@ -1268,7 +1268,7 @@ $script:DiagnosticCancelRequested = $false
 $script:DiagnosticCancelReason = ''
 $script:DiagnosticCancelHandle = $null
 # Remote time budget is a cancellation request, not a guaranteed network timeout.
-$script:DiagnosticRemoteSingleTimeoutSeconds = 120
+$script:DiagnosticRemoteSingleTimeoutSeconds = 60
 $script:DiagnosticRemoteBatchTimeoutSeconds = 600
 function Request-GUIDiagnosticCancellation([string]$Reason) {
     if ($null -eq $script:DiagnosticPS -or $null -eq $script:DiagnosticAsync -or $script:DiagnosticCancelRequested) { return }
