@@ -6,6 +6,10 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ## [1.27] — In development (not released)
 
+### Windows validation update — October 15, 2026
+
+- **Home GUI UAC BitLocker verified:** Technician confirmed `DESKTOP-8EHGAPD\wispe` launched a local BitLocker check through explicit Windows UAC and received a `SUCCESS` report under the same account. C: and E: reported FullyDecrypted, Protection Off, 0% encryption, and no encryption method. The report showed RemoteSigned → RemoteSigned, with no CurrentUser execution-policy change. Local Policy also succeeded through UAC. These validate the tested same-account paths, **not** separate-admin UAC, cancellation handling, or other Windows configurations. The earlier no-result error was not reproduced after the instrumentation change; its underlying cause remains unconfirmed.
+
 ### Added
 
 - **Shared execution-context foundation (Windows validation pending):** Added `Modules/ITToolkit-ExecutionContext.ps1` with an explicit validated launcher mode, actual process Windows identity/SID, administrator token state, and process session ID. GUI and Classic load the same module, and the mode follows GUI ↔ Classic switching without forwarding credentials or target state. Direct script execution defaults to Current mode. The launcher passes a non-secret mode argument. Mode is informational and never grants privileges; remote Default/Alternate selection and UAC remain separate. Existing GUI UAC visibility uses the shared token-elevation evidence.
