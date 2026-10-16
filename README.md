@@ -1,12 +1,12 @@
 # IT Toolkit
 
-**v1.27 — Development release candidate** · Windows PowerShell 5.1 · Windows administration and diagnostics
+**v1.28 — Development release candidate** · Windows PowerShell 5.1 · Windows administration and diagnostics
 
-> **Release status:** v1.27 is under final validation on [`develop/v1.27`](https://github.com/wisper1977/ITToolkit/tree/develop/v1.27). **v1.26** on `main` remains the stable release until v1.27 passes testing and is approved. See [CHANGELOG.md](CHANGELOG.md) for development history and [ROADMAP.md](ROADMAP.md) for outstanding validation.
+> **Release status:** v1.28 is under final validation on [`develop/v1.28`](https://github.com/wisper1977/ITToolkit/tree/develop/v1.28). **v1.26** on `main` remains the stable release until v1.28 passes testing and is approved. See [CHANGELOG.md](CHANGELOG.md) for development history and [ROADMAP.md](ROADMAP.md) for outstanding validation.
 
 IT Toolkit is a portable, PowerShell-based Windows administration utility for technicians. It combines system diagnostics, access checks, reporting, inventory comparisons, and frequently used tools in graphical and Classic console interfaces.
 
-## What's new in v1.27
+## What's new in v1.28
 
 - **Updated Launcher:** Choose Current Windows User, Separate Administrative Account, or Standard Session + On-Demand Administration.
 - **Scoped elevation:** Run supported local BitLocker and Group Policy diagnostics through an explicit Windows UAC request without automatically elevating the entire Toolkit. For a single remote Default diagnostic that returns ACCESS DENIED, the GUI can offer an explicit one-time **Retry with Admin Credentials** using target-bound remote authentication (Enterprise-tested for the supported single-diagnostic workflow).
@@ -53,7 +53,7 @@ macOS and Linux are not supported. The launcher does not install an agent on rem
 
 ## Installation
 
-1. For the **stable v1.26 release**, download the package from [GitHub Releases](https://github.com/wisper1977/ITToolkit/releases/tag/v1.26). For the **v1.27 development build**, use the [development branch](https://github.com/wisper1977/ITToolkit/tree/develop/v1.27).
+1. For the **stable v1.26 release**, download the package from [GitHub Releases](https://github.com/wisper1977/ITToolkit/releases/tag/v1.26). For the **v1.28 development build**, use the [development branch](https://github.com/wisper1977/ITToolkit/tree/develop/v1.28).
 2. **Install to a local folder on `C:\`**, such as `C:\ITToolkit` (not directly in the root of `C:\`). Do **not** run the Toolkit from the Desktop: technicians have encountered environments where a Desktop-based installation fails to launch or run correctly. Preserve the `Modules`, `Branding`, scripts, and configuration file layout.
 3. Review `Toolkit-config.json` and adapt the organization branding, default authentication domain, report directory, and optional tool paths.
 4. Run `Launch.cmd`, choose an execution mode, then open the graphical or Classic interface.
@@ -90,8 +90,8 @@ A successful query does not guarantee that the machine is healthy. Unavailable c
 
 ## Development and release versions
 
-- **Development:** `Major.Minor.Commit` (current candidate: `1.27.b3bb971`), where the suffix identifies the verified Git source revision used for the build.
-- **Stable:** `Major.Minor` (example: `1.27`), after required Windows validation and formal release approval.
+- **Development:** `Major.Minor.Commit` (current candidate: `1.28.b3bb971`), where the suffix identifies the verified Git source revision used for the build.
+- **Stable:** `Major.Minor` (example: `1.28`), after required Windows validation and formal release approval.
 - GUI, Classic, Launcher, and generated report metadata should consistently identify their source build. A configured suffix must not be assumed to identify a newer commit until the build version is regenerated and verified.
 
 ## Project layout
@@ -120,5 +120,5 @@ ITToolkit/
 ## Project history and plans
 
 - [CHANGELOG.md](CHANGELOG.md) — development changes, fixes, and validation history.
-- [ROADMAP.md](ROADMAP.md) — remaining v1.27 release checks and planned future work.
+- [ROADMAP.md](ROADMAP.md) — remaining v1.28 release checks and planned future work.
 - [GitHub Releases](https://github.com/wisper1977/ITToolkit/releases) — published stable releases.
