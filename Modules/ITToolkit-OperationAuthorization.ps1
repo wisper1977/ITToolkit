@@ -146,8 +146,8 @@ function Assert-ToolkitLocalDiagnosticAuthorization {
     return $accepted.ToArray()
 }
 
-// Remote preflight for one or more sections. No connection, elevation, or
-// credentials in returned assessments. Never replace Alternate with Default.
+# Remote preflight for one or more sections. No connection, elevation, or
+# credentials in returned assessments. Never replace Alternate with Default.
 function Assert-ToolkitRemoteDiagnosticAuthorization {
     [CmdletBinding()]
     param(
