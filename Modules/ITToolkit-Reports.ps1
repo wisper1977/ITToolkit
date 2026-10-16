@@ -502,13 +502,38 @@ function Get-RemoteIpConfig([string]$Target) {
         return "IPCONFIG /ALL: UNAVAILABLE - Remote WinRM failed: $winrmError; WMI fallback failed: $($_.Exception.Message)"
     }
 }
+# Remote systeminfo.exe uses an external process: bound it so RPC permission
+# failures or transport stalls cannot hold the reporting worker indefinitely.
+# This helper uses the existing process identity; it does not pass credentials.
+function Invoke-ToolkitBoundedRemoteSystemInfo {
+    [CmdletBinding()]
+    param([Parameter(Mandatory=$true)][string]$Target,[int]$TimeoutSeconds=30)
+    $exe=Join-Path $env:SystemRoot 'System32\systeminfo.exe'
+    $stdout=Join-Path ([IO.Path]::GetTempPath()) ('itt-systeminfo-'+[guid]::NewGuid().ToString('N')+'.out')
+    $stderr=$stdout+'.err'
+    $process=$null
+    try {
+        $process=Start-Process -FilePath $exe -ArgumentList @('/s',$Target) -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -ErrorAction Stop
+        if (-not $process.WaitForExit($TimeoutSeconds*1000)) {
+            try { $process.Kill() } catch { }
+            throw ('UNAVAILABLE: Remote systeminfo timed out after '+$TimeoutSeconds+' seconds. The target may be inaccessible or the remote query may be stalled; access denial is not established.')
+        }
+        $result=if(Test-Path -LiteralPath $stdout){[IO.File]::ReadAllText($stdout)}else{''}
+        $errorText=if(Test-Path -LiteralPath $stderr){[IO.File]::ReadAllText($stderr)}else{''}
+        if($process.ExitCode -ne 0) {
+            throw ('Remote systeminfo failed (exit '+$process.ExitCode+'): '+($result+' '+$errorText).Trim())
+        }
+        return $result
+    } finally {
+        if($null -ne $process) { $process.Dispose() }
+        foreach($file in @($stdout,$stderr)){Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue}
+    }
+}
 function Get-ReportSection([string]$Section,[string]$Target) {
     try {
         switch ($Section) {
             'System' {
-                $result = & systeminfo.exe /s $Target 2>&1 | Out-String
-                if ($LASTEXITCODE -ne 0) { throw "systeminfo exit code $LASTEXITCODE : $result" }
-                return $result
+                return (Invoke-ToolkitBoundedRemoteSystemInfo -Target $Target -TimeoutSeconds 30)
             }
             'Network' {
                 $out = New-Object System.Collections.Generic.List[string]
