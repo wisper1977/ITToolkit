@@ -13,6 +13,12 @@ $checks = @(
     @('$shell.Explore($fullFolder)','Open actual Explorer folder for drag-and-drop'),
     @('Get-GUIArchiveFolder','Configured reports path'),
     @('Test-Path -LiteralPath $folder -PathType Container','Existing directory validated'),
+    @("if ($ExecutionMode -eq 'SeparateAccount' -and -not (Test-GUIProcessElevated))",'UAC only for non-elevated Separate Admin mode'),
+    @('Start-Process -FilePath $powerShell -Verb RunAs','Scoped elevated PowerShell helper'),
+    @("'WindowStyle','Hidden'","Hidden helper console"),
+    @('NativeErrorCode -eq 1223','UAC cancellation is handled'),
+    @("No elevation requested.","Technician decline is handled"),
+    @("Replace(\"'\",\"''\")","Folder argument safely literal-quoted"),
     @('Copy Folder Path','Copy path fallback'),
     @('$ui.ArchiveCopyPath.Add_Click({','Copy path action retained')
 )
