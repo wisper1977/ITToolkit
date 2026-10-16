@@ -1,157 +1,42 @@
 # Changelog
 
-Changes to **IT Toolkit** are documented by release version. Development changes for v1.27 are recorded together under **1.27**, not as separate lettered releases. Windows testing and remaining limitations are distinguished from implemented code.
-
-The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a Classic text-menu interface.
+Meaningful IT Toolkit additions, changes, fixes, and release status are grouped by version. Git commits record implementation details and interim testing; the changelog is **not a development journal**. Pending tasks are tracked in [ROADMAP.md](ROADMAP.md).
 
 ## [1.27] — In development (not released)
 
-- **Release README cleanup:** Reorganized the README as a concise v1.27 changes list and practical installation/usage guide, removing in-depth diagnostic testing logs from the landing page. Detailed test history and outstanding release validation remain in the changelog and roadmap.
-
-- **Report version traceability (implementation pending Windows validation):** GUI saved diagnostic reports now include the currently configured Toolkit version in the common source text for HTML, CSV and TXT export. Classic diagnostic headers already include the version; snapshots retain their existing version metadata. `Toolkit-config.json` and the displayed `1.27.aa028e` were intentionally not changed in this patch. Because the code is now on a newer commit, that displayed suffix is not a claim that this patched source matches commit `aa028e`; regenerate a verified build version before release or source-specific validation.
-
-- **Remote authorization integration implemented (Windows automated preflight passed; live remote execution pending):** GUI and Classic now invoke the shared 20-section remote Default/Alternate preflight before diagnostic reporting. Classic explicitly routes Alternate reports through `Get-ClassicAlternateReportSection` and its credential-aware dispatcher rather than the Default report collector; unknown authentication modes are blocked, and new report attempts invalidate stale cached reports. Added `Tests/Test-RemoteAuthorization.ps1` for all-20 Default/Alternate preflight and negative-path tests plus PowerShell syntax parsing. Technician confirmed the complete Windows PowerShell test matrix passed: 20 Default and 20 target-bound Alternate section preflights, missing/mismatched Alternate and injected Default-context rejection, simulated no-collection-after-denial, GUI/Classic references, credential-aware Classic dispatch reference, and PowerShell parser checks. Live remote diagnostic execution, actual identity/transport authorization, and interactive negative paths remain untested; do not promote until separately validated. Remote transport still independently enforces access.
-
-- **Windows test startup fix (October 15):** Initial `Test-RemoteAuthorization.ps1` invocation stopped while loading `ITToolkit-OperationAuthorization.ps1` because two new comment lines mistakenly used `//` instead of PowerShell `#`. Corrected both lines. No authorization assertions executed in that failed attempt; rerun still required.
-
-### Windows validation update — October 15, 2026
-
-- **Explicit Alternate preflight verified on home Windows:** Technician created a typed, target-bound in-memory Alternate authentication context for TESTSERVER; the read-only preflight returned `ReadyForAttempt`, `RequestedAuthenticationMode=Alternate`, and the supplied username (not proof of successful network authentication). Reusing that context for OTHERSERVER returned `Blocked` and left `RequestedIdentity` blank, with no silent Default fallback. Technician cleared the in-memory context after testing. The preflight did not contact either target.
-
-
-- **Authorization preflight edge cases technician-verified on home Windows:** Local System targeting another hostname returned `Blocked`; unsupported `ElevatedLocal` request for System returned `Blocked`; remote Default System preflight returned `ReadyForAttempt` with Default authentication selected. This is configuration validation only, not evidence of remote host availability or authorization.
-
-
-- **Shared registry On-Demand GUI integration (technician-confirmed on home Windows):** Technician confirmed the GUI displayed only **Run Elevated (UAC)** for local BitLocker and Group Policy, only **Run selected check** for ordinary checks such as System and Storage, and completed an ordinary diagnostic successfully. The technician subsequently confirmed the Classic regression checks worked as expected after the registry import (local Disk Space without UAC and Group Policy with UAC and report). This validates the tested home GUI and Classic integration; remote-auth scenarios, UAC cancellation, and alternate user identities remain pending.
-
-- **Home Report Archive folder launch verified:** Technician confirmed **Open Reports Folder** visibly opens the folder from the home GUI while testing v1.27 On-Demand workflow. This validates only the home interactive-user scenario; the previously failing separate-administrator desktop/Explorer handoff at work remains unresolved pending retest.
-
-- **On-Demand GUI home Windows test (technician-confirmed):** Technician reports the **Standard Session + On-Demand Administration** launcher mode behaved as expected: GUI started normally, Computer Health and other ordinary diagnostics worked, and conditional local UAC controls appeared for supported checks. Technician subsequently confirmed On-Demand **Classic** ran without issues as well. These observations validate home GUI and Classic usage, not all user-token combinations, separate-account execution, or remote Alternate credentials.
-
-
-- **Home Classic local diagnostics Windows-verified:** Technician confirmed local Group Policy in Classic prompted for Windows UAC, completed successfully and produced an accurate Group Policy report. Disk Space ran without UAC. This verifies these tested Classic paths; UAC cancellation, separate-admin credentials, and other token contexts remain to be tested.
-
-- **Home GUI ↔ Classic switching verified:** Technician confirmed GUI → Classic opened and operated as expected. Classic → GUI also opened without credential or UAC prompts, and GUI diagnostics ran afterward. This validates the observed bidirectional transition on the home Windows computer; explicit mode/identity inspection across transitions, separate-account and On-Demand scenarios remain pending.
-
-- **Home GUI UAC BitLocker verified:** Technician confirmed `DESKTOP-8EHGAPD\wispe` launched a local BitLocker check through explicit Windows UAC and received a `SUCCESS` report under the same account. C: and E: reported FullyDecrypted, Protection Off, 0% encryption, and no encryption method. The report showed RemoteSigned → RemoteSigned, with no CurrentUser execution-policy change. Local Policy also succeeded through UAC. These validate the tested same-account paths, **not** separate-admin UAC, cancellation handling, or other Windows configurations. The earlier no-result error was not reproduced after the instrumentation change; its underlying cause remains unconfirmed.
-
-### Batch-wide local authorization enforcement (Windows preflight and GUI/Classic execution regression verified)
-
-- Introduced `Assert-ToolkitLocalDiagnosticAuthorization` in the shared authorization module. Before collection, GUI and Classic now preflight **every selected local section** (including all 20 in Run All) rather than only a single System report; any blocked section or invalid request stops the entire local selection before collection. Normal local sections use the current Windows token. Explicit GUI BitLocker/Policy UAC uses the scoped single-section `ElevatedLocal` check; Classic's existing initial current-token probe and separate UAC consent flow are preserved. Remote Default/Alternate execution is unchanged.
-- Expanded `Tests/Test-LocalSystemAuthorization.ps1` into an all-20 Windows PowerShell validation matrix covering registry uniqueness, each section, 20-section batches, mismatched targets, invalid sections and UAC requests, and simulated no-collection-on-denial. Technician confirmed the expanded matrix passed on Windows: GUI/Classic shared-guard source checks, individual preflight for all 20 sections, complete 20-section batch, mismatch/unknown-section/UAC denials before simulated collection, and single-section BitLocker/Policy scoped UAC eligibility. Technician subsequently confirmed the GUI and Classic local Storage/Services checks and full 20-section reports succeeded, along with the GUI local BitLocker explicit UAC path. Remote Default/Alternate, workplace separate-administrator identity, and live interactive denial/report-state regression remain pending.
-
-### Controlled authorization denial test (technician-confirmed on Windows)
-
-- Consolidated the already-enforced single local System diagnostic entry check into `Assert-ToolkitLocalSystemAuthorization` in the shared operation authorization module. GUI and Classic both call the same guard before starting their respective collectors. The guard throws for blocked or invalid preflight results; no additional diagnostics, remote modes, or UAC routes were changed.
-- Added `Tests/Test-LocalSystemAuthorization.ps1`, a Windows PowerShell 5.1 test that checks a valid local target, rejects an intentionally mismatched target, verifies no simulated collector ran after denial, and statically checks that both interface entry points reference the guard. Technician confirmed all three checks passed in Windows PowerShell: valid local target, denied mismatched target before simulated collection, and both interface source references. The technician subsequently confirmed normal local System Information reports completed in both GUI and Classic after shared-guard refactoring. The denial test is simulated, not a live GUI/Classic denial simulation; interactive blocked-request/report-state behavior remains unverified.
-
-### Changed
-
-- **Mutually exclusive selected-check actions (technician-confirmed on home Windows GUI):** GUI now hides **Run selected check** whenever the existing scoped **Run Elevated (UAC)** action is shown for local BitLocker or Policy under a non-elevated token. Other local/remote checks and already-elevated processes retain **Run selected check**. No diagnostic execution, credential handling, elevation scope, or Run all behavior was changed.
-
-### Changed
-
-- **First enforced authorization boundary (home Windows GUI/Classic successful-report test passed):** Single **direct-local System Information** diagnostic entry points in GUI and Classic now invoke shared `Get-ToolkitOperationAuthorization` before collection, requiring `ReadyForAttempt` and `CurrentToken`. A blocked/error preflight prevents that single diagnostic from running and reports the reason. Batch, remote Default/Alternate, and BitLocker/Policy UAC paths are intentionally unchanged. This does not grant privilege or prove Windows authorization; Windows still enforces actual collector access.
-
 ### Added
 
-- **Read-only centralized operation authorization preflight (Windows tests pending):** Added `Modules/ITToolkit-OperationAuthorization.ps1` and loaded it in GUI and Classic. `Get-ToolkitOperationAuthorization` assesses known diagnostic sections using the **actual current Windows process token**, selected local/remote target, optional typed Alternate authentication context and requested route. Returns `ReadyForAttempt`, `ConsentRequired`, or `Blocked`; verifies local target consistency, rejects alternate-context mismatch and implicit Default fallback, and does not serialize any credential. This is **not** Windows authorization or an execution broker. Existing GUI/Classic handlers remain unchanged and still require real UAC/transport checks. Home Windows standalone preflight verified three cases: local System `ReadyForAttempt`, non-elevated local BitLocker `ConsentRequired`, and remote Alternate without explicit credentials `Blocked`. Corrected requested-identity reporting so a blocked Alternate request leaves `RequestedIdentity` blank rather than incorrectly displaying the initiating Windows user; the refinement was technician-verified on home Windows after reloading the updated modules: the blocked Alternate request retained `InitiatingIdentity` and returned a blank `RequestedIdentity`. GUI/Classic execution pathways remain unchanged.
-
-- **Shared privilege-requirements registry (Windows retest pending):** Added `Modules/ITToolkit-PrivilegeRequirements.ps1` with explicit read-only diagnostic metadata for all 20 sections and a strict lookup/selection helper. GUI and Classic load the same module; GUI selected-check button visibility and UAC handler eligibility now consult its `RunElevatedUac` versus `RunSelected` recommendation. The existing UAC collector, remote authentication, and administrative checks remain unchanged. This metadata is not an authorization decision or a general privilege broker. Technician verified the standalone module on home Windows: all 20 registered diagnostic sections were listed, only BitLocker and Policy had `LocalUacAvailable=True`, and non-elevated local BitLocker returned `RunAction=RunElevatedUac`. Additional home PowerShell selection tests passed: local Policy with a non-elevated token returned `RunElevatedUac`; elevated local BitLocker, non-elevated remote Default BitLocker, and non-elevated local System each returned `RunSelected`. These verify decision metadata only; GUI/Classic integration regression testing and unknown-section rejection remain pending.
-
-- **Shared execution-context foundation (Windows validation pending):** Added `Modules/ITToolkit-ExecutionContext.ps1` with an explicit validated launcher mode, actual process Windows identity/SID, administrator token state, and process session ID. GUI and Classic load the same module, and the mode follows GUI ↔ Classic switching without forwarding credentials or target state. Direct script execution defaults to Current mode. The launcher passes a non-secret mode argument. Mode is informational and never grants privileges; remote Default/Alternate selection and UAC remain separate. Existing GUI UAC visibility uses the shared token-elevation evidence.
-
-
-- **Execution Mode dropdown (Windows validation pending):** Replaced the temporary current-user checkbox in the WPF launcher with three remembered choices: **Current Windows User**, **Separate Administrative Account**, and **Standard Session + On-Demand Administration**. The latter two current-token modes (Current and On-Demand) inherit the launcher's token and disable username/password fields; Separate Account retains the explicit credential process launch. On-Demand uses only the toolkit's existing explicitly authorized Alternate-credential and UAC operations, not an automatic privilege broker. Saved earlier checkbox preferences are migrated; passwords are never persisted. Both GUI and Classic start from the chosen process context. No change to collectors, remote authentication, or Explorer desktop handoff.
-
-
-- **Launcher execution mode (Windows test pending):** Added an explicit **Run as my current Windows user** checkbox for GUI and Classic. Checked mode starts without a second account or password and inherits the launcher's existing Windows token; unchecked mode retains the previous separate-account credential launch. The non-secret mode preference is stored per launcher user. No identity escalation, token handoff, or remote diagnostic credential change is implied. The separate-admin Reports-folder Explorer issue remains unresolved.
-
-- **Direct-local diagnostics:** Introduced explicit **Use Local Computer** mode and shared, read-only collectors for all 20 categories: Health, System, Hardware, Network, Storage, Services, Events, Policy, Users, Groups, Shares, Software, Updates, Tasks, Administrators, Sessions, SharePermissions, Firewall, BitLocker, and Startup. Local collection uses the current Windows identity and does not require local WinRM or `ADMIN$`.
-- **Local snapshots:** Added seven-category direct-local snapshot capture through the existing schema and archive workflow, including GUI and Classic capture paths and an optional Classic saved-report snapshot sidecar. Existing remote snapshot capture is preserved; evidence from inaccessible categories is not silently treated as comparable.
-- **Scoped local administrator checks:** Added explicit Windows UAC elevation for selected local BitLocker or Policy diagnostics rather than elevating the toolkit. Supports a different Windows-authorized administrator identity while recording both initiating and actual collector identities. Temporary result transfer is restricted and validated; recovery secrets and credentials are not stored.
-- **Conditional PowerShell execution-policy option:** Where the elevated administrator's effective policy is Restricted and neither Group Policy scope controls it, a **separately confirmed** action may set only that account's `CurrentUser` policy to `RemoteSigned`. This is a disclosed persistent change, not a silent bypass or machine-wide change.
-- **Elevated PowerShell tool:** Added **Windows PowerShell (Administrator)** to the built-in Tools catalog for GUI and Classic, with explicit confirmation and Windows UAC. It opens a separate console without elevating the toolkit or reusing remote-target credentials. The ordinary PowerShell tool remains.
-- **Health analysis:** Added a shared, read-only evidence interpreter used by GUI and Classic. Seven independently assessed observations cover system-drive free space, non-running automatic-start services, recent System critical/error events, OS uptime, Windows Firewall profile status, installed QFE hotfix inventory, and selected pending-restart indicators (CBS, Windows Update, and pending-file-rename registry signals).
-- **GUI Computer Health:** Added a compact, independently scrollable health pane beneath the selected target in the left sidebar, with Review / Checked / Unknown counts, category-specific evidence, collection scope, and follow-up guidance. Classic retains the same analysis in its report output without a persistent text dashboard, by design.
-- **Report copying:** Added GUI **Copy Report** for the exact displayed diagnostic result with collection-scope protections; copying does not rerun a diagnostic.
+- Three explicit Launcher modes: **Current Windows User**, **Separate Administrative Account**, and **Standard Session + On-Demand Administration**, with per-user mode preference and no saved passwords.
+- Shared execution-context, privilege-requirements, and authorization-preflight modules for GUI and Classic. Target-bound remote Alternate authentication is checked before collection; invalid or mismatched requests are blocked without silent identity fallback.
+- Direct-local diagnostic collection for all 20 sections and local structured inventory snapshots alongside existing remote collection.
+- Scoped, separately approved local UAC diagnostic paths for BitLocker and Group Policy, including identity/provenance handling; optional, separately consented `CurrentUser` execution-policy adjustment when specifically eligible.
+- Evidence-based seven-check Computer Health interpretation across supported local and remote modes, including storage, services, System events, uptime, firewall profiles, installed hotfix inventory, and selected pending-restart indicators.
+- Compact GUI Computer Health sidebar showing review, checked, and unknown findings, and **Copy Report** for completed diagnostic output.
+- Explicitly confirmed Windows PowerShell (Administrator) entry in the GUI and Classic tools catalog, launching a separate UAC-authorized console without elevating the Toolkit.
+- Development build version format `Major.Minor.Commit`; version metadata in GUI diagnostic exports, Classic report headings, and structured snapshots.
 
 ### Changed
 
-- **GUI usability:** Improved multiline tool/favorite labels, target and report-name wrapping, dashboard spacing and footer readability. Persisted per-technician GUI window bounds, maximized state, and last page, with off-screen recovery and no automatic target reconnection.
-- **Classic menus and interface switching:** Organized Classic choices consistently and provided GUI ↔ Classic switching under the currently authorized Windows identity. Target state and alternate credentials are never silently carried into the other interface; active collection blocks unsafe switching.
-- **Shared diagnostic status semantics:** Introduced consistent success, no-data, review, partial, unavailable, access-denied, not-tested and unknown classifications while preserving error details and actual data. No collector success is presented as an overall system-health verdict.
-- **Remote health parity:** Extended Health evidence to remote Default and Alternate modes using the selected credential-scoped WinRM path; unavailable remote evidence is not replaced with a local query or another identity. Shared findings appear in GUI and Classic reports.
-- **Report formats and access:** Preserved HTML/CSV/TXT saving and report provenance. GUI saved-HTML opening uses explicit Microsoft Edge launch where available, with the Windows shell as fallback; Recent Reports and Reports Archive share the opening workflow.
+- Improved GUI/Classic feature alignment, menu organization, safe interface switching, diagnostic status classifications, and retained source/credential provenance.
+- Refined GUI layout, multiline labels, target/report display, adjustable window placement, last-page preference, and compact health-sidebar scrolling with fixed navigation.
+- Improved saved report presentation and HTML opening, report archive access, and supported snapshot comparison flows.
+- Reworked the README as release highlights and practical instructions rather than a diagnostic-test journal.
 
 ### Fixed
 
-- **Elevated local diagnostic handoff instrumentation (Windows test pending):** Following a technician test where BitLocker UAC returned process exit code 0 but no accessible result file, added a temporary non-secret child execution-stage checkpoint to the existing restricted ACL folder. Missing-result failures now distinguish no checkpoint, child started, and report write reached. No access-control broadening, credential storage, or changes to UAC/collection behavior; checkpoints are deleted with the handoff directory. The cause of the missing report is **not yet confirmed**.
+- Corrected RPC/transport failures previously presented as access-denied solely because of a generic error prefix.
+- Corrected startup failure caused by assigning to PowerShell's reserved `$ExecutionContext` variable.
+- Tightened context-sensitive local UAC button visibility and failure reporting, and preserved honest statuses for unavailable evidence.
+- Added non-secret elevated-child result-handoff diagnostics for investigating missing results without broadening permissions.
+- Improved Report Archive **Open Reports Folder** launch/error reporting. Opening Explorer remains unreliable in some separate-administrator desktop sessions; **Copy Folder Path** remains available.
+- Corrected local-mode messaging and clearing of stale target/authentication health results.
 
+### Validation and release status
 
-- **GUI/Classic startup regression — Windows error reproduced (2026-10-15):** The shared execution-context integration assigned to PowerShell's built-in, read-only `$ExecutionContext` automatic variable, causing GUI startup to fail with `VariableNotWritable`. Renamed all application-specific references in both interfaces to `$script:ToolkitExecutionContext`. No security logic or privilege behavior changed. **Windows GUI and Classic launch retest pending.**
-
-
-- **Context-sensitive UAC action (GUI, Windows test pending):** The existing **Run Elevated (UAC)** diagnostic button is now hidden by default and appears only for local **BitLocker** or **Policy** selections when the current toolkit token is not elevated. Its visibility refreshes on target/section changes, and the handler independently enforces its scope. Windows continues to own UAC approval; no automatic elevation or credential reuse is introduced. An already elevated toolkit uses the normal diagnostic button. Other diagnostics are not represented as having a generic UAC execution path. Classic's existing explicit UAC menu behavior is unchanged pending parity review.
-
-- **Launcher vertical scrollbar (layout change, Windows retest pending):** Increased the default launcher window height and compacted execution-mode, credential, interface, message, and footer spacing. Reduced the optional banner height and constrained the window to the usable screen area. Ordinary desktop layouts should show the full form without a scrollbar; scrolling remains an accessibility fallback on small/high-DPI screens. No authentication or login-mode logic changed.
-
-- Corrected diagnostic exception classification so an RPC/transport error is **Unavailable**, not **Access Denied**, merely because the legacy generic error label contains that phrase.
-- Improved scoped UAC failure reporting for cancelled approvals, process-launch failures, script-policy restrictions, and missing elevated results.
-- Corrected outdated GUI/Classic messages that had claimed most local diagnostics and local snapshots were unsupported.
-- Replaced a crowded full-width health panel with the sidebar card, then kept navigation and selected target visible and **Switch to Classic** anchored at the bottom while only health evidence scrolls. An unnecessary scroll-reset experiment was reverted after the technician clarified the scrollbar had been moved intentionally.
-- Prevented a prior target/authentication context's health evidence from being displayed as current after switching targets, modes or identities.
-
-### Windows validation — completed or technician-confirmed (October 14–15, 2026)
-
-- **Local diagnostics:** All 20 direct-local collectors were exercised in Windows PowerShell 5.1; the majority also had successful GUI/Classic and HTML reopen tests. The workplace checklist was technician-confirmed across GUI/Classic functionality, saved reports, UAC cancellation and core authentication regressions. Individual logs were not supplied for every check.
-- **Cross-account UAC:** Workplace `IT-7PY1M84` GUI BitLocker succeeded when initiated by standard `COCHISE\ccollins` and collected under Windows-authorized `COCHISE\CCollinsadm`; C: was fully encrypted, XTS-AES-256, protection on. The administrator account had an explicitly approved `Restricted` → `RemoteSigned` CurrentUser change on an earlier run, and later reported no further policy change.
-- **Known Policy limitation:** `gpresult.exe /SCOPE COMPUTER /R` returned **ACCESS DENIED** even in an independently verified elevated administrator PowerShell session on the affected workstation. The toolkit must continue reporting this failure and must not claim a successful Policy evidence query there.
-- **Snapshots and launcher:** Technician confirmed **local and remote snapshot creation** works. The separate Windows PowerShell (Administrator) tool also launched as intended. Comparison correctness, archive reload and some edge cases have not been independently confirmed.
-- **GUI layout:** The technician verified the compact sidebar at regular and smaller window sizes, including independent health scrolling, visible navigation, target status and bottom Classic switch.
-- **Seven-check Health GUI:** Technician screenshots showed **7 Checked / 3 Review / 0 Unknown** for local `IT-7PY1M84` and remote `ML-PCSCALE` under Default credentials, with distinct storage/services/system evidence. Both displayed a pending-file-rename review indicator. Technician also reported a successful remote Alternate-mode run on `ML-PCSCALE`; the screenshot verifies populated results but does not independently identify the executing remote security token.
-- **Seven-check Health Classic:** Technician confirmed Classic Health reports run and show the expected readings under Local, remote Default and remote Alternate account modes. Classic remains intentionally report-based rather than adding a persistent dashboard.
-
-### Scope decision — diagnostic detail audit assigned to v1.28 (2026-10-15)
-
-- Reserved **v1.28** for a systematic review of completeness and technician usefulness across all 20 diagnostic categories, starting with local-versus-remote Network evidence (`ipconfig` compared with `ipconfig /all`).
-- Current remote Network attempts `ipconfig /all` through selected-identity WinRM; local Network currently returns a narrower set of structured adapter fields. This is a planned future audit and **no v1.28 collector code has been implemented** in this change.
-- Kept v1.27 focused on remaining health-analysis quality and final release validation; see [ROADMAP.md](ROADMAP.md).
-
-### Report Archive Explorer launch and local snapshot comparison verification (2026-10-15)
-
-- **Fixed in development:** Report Archive **Open Reports Folder** now starts the Windows `explorer.exe` executable with the validated full reports-folder path instead of invoking the folder's shell `open` verb. This addresses the technician-observed `Access is denied` on `C:\GitHub\ITToolkit\Reports` under the alternate-administrator launch context. **Windows retest pending**; the existing Copy Folder Path fallback remains.
-- **Verified local snapshot comparison artifacts:** Two uploaded v1.27 SchemaVersion 1 snapshots of `IT-7PY1M84`, Local mode under the same collection identity, have all seven inventory categories present. Their uploaded HTML comparison lists **9 service-property changes** across Services (including BITS State Running→Stopped and StartMode Auto→Manual) and no differences for Software, Updates, Users, Groups, Administrators or Shares. These observations agree with the supplied snapshot values and validate this local baseline/newer comparison and HTML-output case; they do not establish remote, missing/failed inventory, or archive reload edge cases.
-- No permissions, user identity, Explorer policy, collector, or production changes were made.
-
-- **Reports-folder Explorer launch follow-up (2026-10-15):** The prior direct `explorer.exe` invocation returned successfully in GUI but displayed no folder in the separately authorized admin workflow. Technician tested the identical PowerShell command with Explorer's `/n,"C:\GitHub\ITToolkit\Reports"` argument and confirmed it opened the folder. GUI Report Archive → Open Reports Folder now uses that tested `/n` form, without altering credentials, directory permissions or the Copy Folder Path fallback. **GUI Windows retest still required**; success in standalone PowerShell does not prove the WPF button path works.
-
-### Reports folder Explorer GUI follow-up — child-process launch (2026-10-15)
-
-- Direct `explorer.exe` launch with `/n` from the Reports button returned without error but still did **not** display a folder in the GUI, although the same command worked interactively under the administrator account. A separate PowerShell process launched from an administrator PowerShell session also opened the folder successfully.
-- Changed only the GUI **Open Reports Folder** handler to start an independent, same-identity Windows PowerShell process, which launches Explorer with the tested `/n` argument. The launch command is supplied using Unicode `-EncodedCommand` to retain path quoting, not to bypass execution policy. No credentials, UAC elevation, ACLs, or security policy are changed.
-- **Windows GUI validation is pending.** Starting the child process is not proof that the Explorer window appeared. **Copy Folder Path** remains available. Production `main` unchanged.
-
-### Report Archive diagnostic launch result (2026-10-15)
-
-- Technician confirmed the previous separate-PowerShell Explorer attempt **still did not display the Reports folder** from the GUI; GUI status only reported that a launch had been requested.
-- Updated the **Open Reports Folder** handler to wait briefly for the child PowerShell process, capture its exit code and standard-error details, and distinguish a completed child (which does not prove a visible Explorer window) from launch failure or timeout. Existing Copy Folder Path remains the workaround. No credentials, ACLs, or execution policies are modified.
-- **Windows GUI test pending:** reproduce the failure using the instrumented handler and report the resulting status or error for diagnosis.
-
-### Report Archive folder visibility diagnostics (2026-10-15)
-
-- Added exit-code and stderr reporting for the same-identity child PowerShell that requests `explorer.exe` from GUI Report Archive. Process creation alone is not treated as confirmed folder visibility.
-- **Windows technician observation:** the GUI reported `Explorer child completed (exit 0, PID 34660); window visibility not verified`, but the Reports folder did **not** appear. Direct and nested administrative PowerShell launches worked outside the GUI. Thus the GUI Open Folder issue remains unresolved; investigate Explorer desktop session and process ownership before another launcher change.
-- **Copy Folder Path** remains functional. No execution-policy, account, ACL, or production-branch changes were made.
-
-### Remaining release checks and limitations
-
-- Validate unavailable/denied and partial Health paths, negative pending-restart indicators, and alternate remote authentication **provenance** where observable. Check latest saved seven-check output in the relevant HTML/CSV/TXT workflows.
-- Validate baseline-to-current snapshot comparison, archive reload, partial-category and optional Classic sidecar behavior; verify source-target/identity labeling throughout.
-- Reconcile the current local system-drive review threshold (below **10%** free) and remote threshold (below **15%** free) with one documented policy before release; continue regression testing.
-- Installed QFE entries **do not** establish missing-update or patch compliance; enabled firewall profiles **do not** establish overall security compliance; pending-file-rename entries **do not** prove Windows Update requires a reboot. Findings are prompts for investigation, not automated repairs.
-- v1.27 remains on `develop/v1.27`. Stable production v1.26 on `main` is unchanged; release promotion requires explicit approval. See [ROADMAP.md](ROADMAP.md) for the remaining plan.
-
+- Technician-confirmed Windows testing includes local diagnostic workflows, GUI/Classic navigation, selected UAC paths, local and remote snapshot capture, and seven-check Computer Health under local, Default remote, and reported Alternate remote use.
+- Automated PowerShell authorization/preflight tests passed for local and remote Default/Alternate scenarios. Those tests do **not** verify live remote transport or actual target authorization.
+- **Release not approved:** live county-network credential/identity and remote-report regression, negative/partial evidence cases, saved export formats, cross-session Explorer behavior, and full GUI/Classic parity remain open. See [ROADMAP.md](ROADMAP.md).
+- **Build traceability:** The configured development suffix `aa028e` was deliberately retained during later commits. It must be regenerated from the exact source revision before testing a new traceable build or promoting v1.27.
 
 ## [1.26] — 2026-10-14
 
