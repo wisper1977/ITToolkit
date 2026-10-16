@@ -13,6 +13,9 @@
 
 ## v1.27 — Remaining work
 
+- **Shared local System guard negative-path test (Windows pending):** Run `Tests/Test-LocalSystemAuthorization.ps1` to validate rejection of a mismatched local target before a simulated collector and verify static GUI/Classic guard references. This validates the shared denial boundary, **not** a live WPF/Classic denial flow. Retest normal local System in both interfaces after guard refactoring and confirm report state after any interactive failure. Avoid injecting invalid targets into live GUI or changing system permissions.
+
+
 - **First enforced local System diagnostic boundary (normal-path GUI and Classic Windows-tested):** Technician confirmed single local System Information reports ran successfully in GUI and Classic after integrating the shared authorization preflight. Still verify explicit reported identity and no-UAC behavior, and verify a local target mismatch blocks before collection without leaving a valid new report. Regression-test batch/all, BitLocker/Policy UAC, and remote Default/Alternate afterward. This increment only gates single local System and does not claim complete centralized enforcement.
 
 
