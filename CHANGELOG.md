@@ -6,7 +6,7 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ## [1.27] — In development (not released)
 
-- **Remote authorization integration in progress (not Windows-tested):** Shared remote preflight helper and GUI entry-point integration committed. Classic entry-point integration remains incomplete and must not be treated as validated. Remote collectors and authentication behavior still require independent regression, especially Classic Alternate identity consistency. Do not promote the branch until the incomplete work has been reviewed and tested.
+- **Remote authorization integration implemented (Windows testing pending):** GUI and Classic now invoke the shared 20-section remote Default/Alternate preflight before diagnostic reporting. Classic explicitly routes Alternate reports through `Get-ClassicAlternateReportSection` and its credential-aware dispatcher rather than the Default report collector; unknown authentication modes are blocked, and new report attempts invalidate stale cached reports. Added `Tests/Test-RemoteAuthorization.ps1` for all-20 Default/Alternate preflight and negative-path tests plus PowerShell syntax parsing. These changes are not Windows-validated and must not be promoted until regression-tested. Remote transport still independently enforces access.
 
 ### Windows validation update — October 15, 2026
 
