@@ -8,7 +8,7 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Windows validation update — October 15, 2026
 
-- **Home Classic local diagnostic UAC selection checked:** Technician reported Group Policy in Classic prompted for Windows UAC, while Disk Space ran without UAC on the home computer. This verifies the observed prompt distinction only; Group Policy completion, UAC cancellation, and other identities still require validation.
+- **Home Classic local diagnostics Windows-verified:** Technician confirmed local Group Policy in Classic prompted for Windows UAC, completed successfully and produced an accurate Group Policy report. Disk Space ran without UAC. This verifies these tested Classic paths; UAC cancellation, separate-admin credentials, and other token contexts remain to be tested.
 
 - **Home GUI → Classic transition verified:** Technician reports Classic opened and operated as intended after switching from GUI on the home Windows computer. Reverse Classic → GUI transition, explicit identity/mode inspection, and separate-account or On-Demand transition regressions remain pending.
 
