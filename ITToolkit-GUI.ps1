@@ -1228,6 +1228,9 @@ function Update-GUIElevatedDiagnosticButton {
     $selected = if ($null -ne $ui.DiagnosticSection.SelectedItem) { [string]$ui.DiagnosticSection.SelectedItem.Tag } else { '' }
     $supported = [bool]$script:LocalTargetMode -and $selected -in @('BitLocker','Policy')
     $needed = $supported -and -not (Test-GUIProcessElevated)
+    # Exactly one selected-check action is visible. UAC replaces the normal
+    # action only for scoped local checks needing an elevated token.
+    $ui.RunDiagnostic.Visibility = if ($needed) { [Windows.Visibility]::Collapsed } else { [Windows.Visibility]::Visible }
     $ui.RunElevatedLocalDiagnostic.Visibility = if ($needed) { [Windows.Visibility]::Visible } else { [Windows.Visibility]::Collapsed }
     $ui.RunElevatedLocalDiagnostic.IsEnabled = $needed -and $null -eq $script:DiagnosticPS
 }
