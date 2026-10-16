@@ -12,7 +12,7 @@ For v1.27 local BitLocker or Policy diagnostics in a non-elevated GUI, **Run Ele
 
 ## Features
 
-- **Two interfaces:** Windows GUI and numbered Classic PowerShell menus. On the v1.27 development branch, the Classic main menu numbers are grouped sequentially and both interfaces offer a switch to the other under the current Windows process identity (Windows validation pending). No target selection or alternate credential is transferred.
+- **Two interfaces:** Windows GUI and numbered Classic PowerShell menus. On the v1.27 development branch, the Classic main menu numbers are grouped sequentially and both interfaces offer a switch to the other under the current Windows process identity (GUI → Classic operation technician-confirmed on home Windows; reverse direction and other launch identities still pending). No target selection or alternate credential is transferred.
 - **v1.27A GUI refinements (development branch):** Multiline labels on Tools and Dashboard favorite buttons; improved display of long target names, recent reports, and footer text in narrower windows.
 - **v1.27A window preferences (development branch; Windows-tested):** Remembers main GUI size, position, maximized state, and last open page per technician. Off-screen or invalid saved layouts fall back to default placement; previously selected targets are not automatically reconnected.
 - **Remote access checks:** DNS resolution, ICMP reachability, WMI, WinRM, and `ADMIN$` accessibility.
