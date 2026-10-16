@@ -108,6 +108,8 @@ function Save-ClassicCollectedReport {
 function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
     $target = Get-Target
     if (-not $target) { return }
+    # A blocked or failed new request must not retain an older savable report.
+    $script:ClassicLastReport = $null
     # Validate all local sections before beginning a single or batch report.
     # Existing Classic BitLocker/Policy consent and UAC path remain unchanged.
     if ($script:LocalTargetMode) {
@@ -120,9 +122,12 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
         }
     }
     if (-not $script:LocalTargetMode) {
-        $authMode = if ($script:ToolkitAuthMode -eq 'Alternate') { 'Alternate' } else { 'Default' }
-        $authContext = if ($authMode -eq 'Alternate') { $script:ToolkitAuthContext } else { $null }
         try {
+            if ($script:ToolkitAuthMode -notin @('Default','Alternate')) {
+                throw 'Unknown remote authentication mode; select credentials again.'
+            }
+            $authMode = [string]$script:ToolkitAuthMode
+            $authContext = if ($authMode -eq 'Alternate') { $script:ToolkitAuthContext } else { $null }
             $null = Assert-ToolkitRemoteDiagnosticAuthorization -Sections $Sections -TargetComputer $target -Mode $authMode -AuthenticationContext $authContext
         } catch {
             Write-Host ('Remote preflight rejected the request: ' + $_.Exception.Message)
@@ -130,7 +135,6 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
             return
         }
     }
-    $script:ClassicLastReport = $null
     $results = New-Object System.Collections.Generic.List[object]
     foreach ($section in $Sections) {
         Write-Host "Collecting $section ..." -ForegroundColor Cyan
