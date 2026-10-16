@@ -647,7 +647,8 @@ function Get-ToolkitLocalDiagnostic {
                         RecordType = 'NetworkAdapter'
                         Name = [string]$adapter.NetConnectionID
                         Description = [string]$adapter.Description
-                        InterfaceIndex = [int]$adapter.Index
+                        InterfaceIndex = if ($null -ne $adapter.InterfaceIndex) { [int]$adapter.InterfaceIndex } else { $null }
+                        WmiAdapterIndex = [int]$adapter.Index
                         MACAddress = [string]$adapter.MACAddress
                         ConnectionStatus = $connectionState
                         NetEnabled = if ($null -ne $adapter.NetEnabled) { [bool]$adapter.NetEnabled } else { $null }
@@ -685,6 +686,30 @@ function Get-ToolkitLocalDiagnostic {
                     foreach ($netInterface in @(Get-NetIPInterface -ErrorAction Stop)) {
                         $key = ([string]$netInterface.InterfaceIndex + '|' + [string]$netInterface.AddressFamily)
                         $interfacesByKey[$key] = $netInterface
+                    }
+                    # Default-route summary comes first, with connection state.
+                    # Metrics describe route preference, not verified path selection.
+                    foreach ($route in @($routes | Where-Object {
+                        $_.DestinationPrefix -eq '0.0.0.0/0' -or $_.DestinationPrefix -eq '::/0'
+                    } | Sort-Object AddressFamily,InterfaceAlias,NextHop)) {
+                        $key = ([string]$route.InterfaceIndex + '|' + [string]$route.AddressFamily)
+                        $netInterface = $interfacesByKey[$key]
+                        $interfaceMetric = if ($null -ne $netInterface) { $netInterface.InterfaceMetric } else { $null }
+                        $networkRecords.Add([pscustomobject]@{
+                            RecordType = 'DefaultRoute'
+                            AddressFamily = [string]$route.AddressFamily
+                            DestinationPrefix = [string]$route.DestinationPrefix
+                            NextHop = [string]$route.NextHop
+                            InterfaceIndex = [int]$route.InterfaceIndex
+                            InterfaceAlias = [string]$route.InterfaceAlias
+                            ConnectionState = if ($null -ne $netInterface) { [string]$netInterface.ConnectionState } else { 'Unknown' }
+                            RouteMetric = $route.RouteMetric
+                            InterfaceMetric = $interfaceMetric
+                            CombinedMetric = if ($null -ne $interfaceMetric -and $null -ne $route.RouteMetric) {
+                                [long]$route.RouteMetric + [long]$interfaceMetric
+                            } else { $null }
+                            Note = 'Listed default route; not proof that Windows selected or can reach this gateway.'
+                        })
                     }
                     $networkRecords.Add([pscustomobject]@{
                         RecordType = 'RouteSummary'
