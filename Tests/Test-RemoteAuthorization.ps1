@@ -60,4 +60,12 @@ if ($classic -notmatch 'Get-ClassicAlternateReportSection -Section') {
     throw 'Classic Alternate route is not using the credential-aware dispatcher.'
 }
 Write-Host 'PASS: GUI/Classic use shared remote preflight; Classic Alternate uses credential-aware dispatcher.'
+foreach ($file in @('ITToolkit-GUI.ps1','Modules\ITToolkit-ReportMenu.ps1','Modules\ITToolkit-OperationAuthorization.ps1')) {
+    $errors = $null
+    $tokens = $null
+    $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $root $file),[ref]$tokens,[ref]$errors)
+    if (@($errors).Count -gt 0) { throw ('PowerShell syntax errors in ' + $file + ': ' + ($errors -join '; ')) }
+}
+Write-Host 'PASS: GUI, Classic report menu, and authorization module parse without syntax errors.'
+
 Write-Host 'NOTE: No actual remote connections or GUI/Classic interactive sessions were tested.'
