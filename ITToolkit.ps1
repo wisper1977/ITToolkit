@@ -20,6 +20,10 @@ $script:ToolkitExecutionContext = Get-ToolkitExecutionContext -Mode $ExecutionMo
 $requirementsPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-PrivilegeRequirements.ps1'
 if (-not (Test-Path -LiteralPath $requirementsPath -PathType Leaf)) { throw "Missing toolkit privilege requirements: $requirementsPath" }
 . $requirementsPath
+# Read-only authorization preflight: no execution routing or credentials changed.
+$authorizationPath = Join-Path $script:ToolkitRoot 'Modules\ITToolkit-OperationAuthorization.ps1'
+if (-not (Test-Path -LiteralPath $authorizationPath -PathType Leaf)) { throw "Missing toolkit authorization module: $authorizationPath" }
+. $authorizationPath
 $componentFolder = Join-Path $script:ToolkitRoot 'Modules'
 $componentPath = Join-Path $componentFolder 'ITToolkit-Config.ps1'
 if (-not (Test-Path -LiteralPath $componentPath -PathType Leaf)) { throw "Missing toolkit component: $componentPath" }
