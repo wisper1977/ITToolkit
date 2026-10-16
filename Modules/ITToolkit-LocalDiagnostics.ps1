@@ -674,7 +674,54 @@ function Get-ToolkitLocalDiagnostic {
                         } else { '' }
                     }
                 })
-                # A successful inventory with no eligible adapters is NO RESULTS.
+                # Route evidence uses the Windows active route table; no route is changed.
+                # Preserve adapter results if the NetTCPIP route provider is unavailable.
+                $networkRecords = New-Object System.Collections.Generic.List[object]
+                foreach ($adapterRow in @($result.Data)) { $networkRecords.Add($adapterRow) }
+                try {
+                    $routes = @(Get-NetRoute -PolicyStore ActiveStore -ErrorAction Stop |
+                        Sort-Object AddressFamily,DestinationPrefix,InterfaceIndex,RouteMetric,NextHop)
+                    $interfacesByKey = @{}
+                    foreach ($netInterface in @(Get-NetIPInterface -ErrorAction Stop)) {
+                        $key = ([string]$netInterface.InterfaceIndex + '|' + [string]$netInterface.AddressFamily)
+                        $interfacesByKey[$key] = $netInterface
+                    }
+                    $networkRecords.Add([pscustomobject]@{
+                        RecordType = 'RouteSummary'
+                        Table = 'ActiveStore'
+                        RouteCount = $routes.Count
+                        Note = 'Active Windows routes only; listed routes are not evidence of reachability or a persistent route.'
+                    })
+                    foreach ($route in $routes) {
+                        $key = ([string]$route.InterfaceIndex + '|' + [string]$route.AddressFamily)
+                        $netInterface = $interfacesByKey[$key]
+                        $interfaceMetric = if ($null -ne $netInterface) { $netInterface.InterfaceMetric } else { $null }
+                        $networkRecords.Add([pscustomobject]@{
+                            RecordType = 'ActiveRoute'
+                            AddressFamily = [string]$route.AddressFamily
+                            DestinationPrefix = [string]$route.DestinationPrefix
+                            NextHop = [string]$route.NextHop
+                            InterfaceIndex = [int]$route.InterfaceIndex
+                            InterfaceAlias = [string]$route.InterfaceAlias
+                            RouteMetric = $route.RouteMetric
+                            InterfaceMetric = $interfaceMetric
+                            CombinedMetric = if ($null -ne $interfaceMetric -and $null -ne $route.RouteMetric) {
+                                [long]$route.RouteMetric + [long]$interfaceMetric
+                            } else { $null }
+                            State = [string]$route.State
+                            PolicyStore = 'ActiveStore'
+                        })
+                    }
+                } catch {
+                    $networkRecords.Add([pscustomobject]@{
+                        RecordType = 'RouteCollection'
+                        Status = 'UNAVAILABLE'
+                        Detail = [string]$_.Exception.Message
+                    })
+                    $result.Status = 'PARTIAL / UNAVAILABLE'
+                    $result.StatusCategory = 'Partial'
+                }
+                $result.Data = @($networkRecords.ToArray())
             }
             'Storage' {
                 # Match the existing remote disk-space report: fixed logical disks only.
