@@ -628,7 +628,7 @@ function Get-ToolkitLocalDiagnostic {
                 $adapters = @(Get-CimInstance -ClassName Win32_NetworkAdapter -ErrorAction Stop |
                     Where-Object {
                         (-not [string]::IsNullOrWhiteSpace([string]$_.NetConnectionID)) -or
-                        $configByIndex.ContainsKey([int]$_.Index)
+                        ($configByIndex.ContainsKey([int]$_.Index) -and [bool]$configByIndex[[int]$_.Index].IPEnabled)
                     } | Sort-Object Index)
                 $result.Data = @($adapters | ForEach-Object {
                     $adapter = $_
@@ -652,7 +652,7 @@ function Get-ToolkitLocalDiagnostic {
                         NetEnabled = if ($null -ne $adapter.NetEnabled) { [bool]$adapter.NetEnabled } else { $null }
                         PhysicalAdapter = if ($null -ne $adapter.PhysicalAdapter) { [bool]$adapter.PhysicalAdapter } else { $null }
                         SpeedMbps = if ($null -ne $adapter.Speed -and [double]$adapter.Speed -gt 0) {
-                            [math]::Round([double]$adapter.Speed / 1MB, 1)
+                            [math]::Round([double]$adapter.Speed / 1000000, 1)
                         } else { $null }
                         IPEnabled = if ($null -ne $config) { [bool]$config.IPEnabled } else { $false }
                         DHCPEnabled = if ($null -ne $config) { [bool]$config.DHCPEnabled } else { $false }
