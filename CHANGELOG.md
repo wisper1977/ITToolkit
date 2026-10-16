@@ -35,6 +35,9 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Fixed
 
+- **GUI/Classic startup regression — Windows error reproduced (2026-10-15):** The shared execution-context integration assigned to PowerShell's built-in, read-only `$ExecutionContext` automatic variable, causing GUI startup to fail with `VariableNotWritable`. Renamed all application-specific references in both interfaces to `$script:ToolkitExecutionContext`. No security logic or privilege behavior changed. **Windows GUI and Classic launch retest pending.**
+
+
 - **Context-sensitive UAC action (GUI, Windows test pending):** The existing **Run Elevated (UAC)** diagnostic button is now hidden by default and appears only for local **BitLocker** or **Policy** selections when the current toolkit token is not elevated. Its visibility refreshes on target/section changes, and the handler independently enforces its scope. Windows continues to own UAC approval; no automatic elevation or credential reuse is introduced. An already elevated toolkit uses the normal diagnostic button. Other diagnostics are not represented as having a generic UAC execution path. Classic's existing explicit UAC menu behavior is unchanged pending parity review.
 
 - **Launcher vertical scrollbar (layout change, Windows retest pending):** Increased the default launcher window height and compacted execution-mode, credential, interface, message, and footer spacing. Reduced the optional banner height and constrained the window to the usable screen area. Ordinary desktop layouts should show the full form without a scrollbar; scrolling remains an accessibility fallback on small/high-DPI screens. No authentication or login-mode logic changed.
