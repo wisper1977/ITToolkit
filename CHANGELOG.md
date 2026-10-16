@@ -24,6 +24,7 @@ Meaningful IT Toolkit additions, changes, fixes, and release status are grouped 
 
 ### Fixed
 
+- **GUI remote diagnostic cancellation (pending Windows verification):** Added Cancel Diagnostics, asynchronous cancellation requests, and time budgets for single remote checks and batches. Cancelled output is not saved as a completed report; changing targets still waits for the worker to actually stop. Some blocked Windows network calls may not stop immediately.
 - **GUI comparison HTML:** Restored collapsible category sections, jump links and added/changed/removed highlighting by routing HTML-only comparison headings through the existing shared report renderer. Underlying snapshot comparisons and TXT/CSV exports are unchanged. Windows GUI startup and HTML export validation remain pending.
 
 - Corrected RPC/transport failures previously presented as access-denied solely because of a generic error prefix.
