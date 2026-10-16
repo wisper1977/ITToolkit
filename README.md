@@ -8,7 +8,7 @@ IT Toolkit is a portable, PowerShell-based Windows administration utility for te
 
 ## v1.28 development focus
 
-The v1.28 milestone is a **diagnostic completeness review** of all 20 sections, beginning with Network. We plan to compare direct-local, remote Default, and remote Alternate evidence; improve completeness and readability while maintaining GUI/Classic parity, existing authentication boundaries, and snapshot compatibility. Work will be implemented and validated incrementally on Enterprise Windows systems. These are plans, **not implemented v1.28 features**.
+The v1.28 milestone is a **diagnostic completeness review** of all 20 sections, beginning with Network. The first local Network inventory expansion is implemented but **awaiting Enterprise Windows validation**; remote Network and routing enhancements are not yet implemented. Local, remote Default, and remote Alternate evidence will be compared while maintaining GUI/Classic parity, authentication boundaries, and report compatibility.
 
 The v1.27 stable baseline already includes three launcher modes, shared authorization, verified remote identity evidence, seven-check Computer Health, HTML/CSV/TXT reports, structured inventory snapshots and comparisons, and the scoped UAC Reports-folder helper. See the [v1.27 release notes](CHANGELOG.md) for established features and testing.
 
@@ -76,7 +76,7 @@ A successful query does not guarantee that the machine is healthy. Unavailable c
 
 ## Development and release versions
 
-- **Development:** `Major.Minor.Commit` (initial v1.28 baseline: `1.28.b3bb971`), where the suffix identifies the latest inherited application-code commit, `b3bb971` (from v1.27). Update the suffix only when a newer application-code commit is made; docs-only commits do not change it.
+- **Development:** `Major.Minor.Commit` (current application-code version: `1.28.e42f7c5`), where the suffix identifies the verified Network collector source revision `e42f7c5`. Documentation-only commits do not change it.
 - **Stable:** `Major.Minor` (current production: `1.27`); v1.28 will use `1.28` only after Windows validation and explicit release approval.
 - GUI, Classic, Launcher, and generated report metadata should consistently identify their source build. A configured suffix must not be assumed to identify a newer commit until the build version is regenerated and verified.
 
