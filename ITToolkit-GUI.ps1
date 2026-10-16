@@ -2148,54 +2148,20 @@ $ui.ArchiveFolder.Add_Click({
         return
     }
     try {
-        # Direct Explorer launches return without error from the GUI but do
-        # not display a window in the tested alternate-admin desktop context.
-        # A separate Windows PowerShell process launching Explorer with /n
-        # opened the folder in a technician test. Preserve the same identity,
-        # with no elevated handoff, credentials, ACL changes or policy override.
+        # Shell.Application.Explore opens a real Explorer folder window. County
+        # technician verified this in a separate-admin PowerShell session where
+        # Start-Process explorer.exe did not show a window. Keep the Explorer
+        # window for drag-and-drop attachment into email or chat.
         $fullFolder = [IO.Path]::GetFullPath($folder)
-        $explorer = Join-Path $env:WINDIR 'explorer.exe'
-        $powerShell = Join-Path $PSHOME 'powershell.exe'
-        if (-not (Test-Path -LiteralPath $explorer -PathType Leaf)) {
-            throw "Windows Explorer executable not found: $explorer"
-        }
-        if (-not (Test-Path -LiteralPath $powerShell -PathType Leaf)) {
-            throw "Windows PowerShell executable not found: $powerShell"
-        }
-        # Encode only the validated absolute path in a literal child command;
-        # no input is interpreted as PowerShell code from the path itself.
-        $quotedExplorer = "'" + $explorer.Replace("'", "''") + "'"
-        $quotedFolder = "'" + $fullFolder.Replace("'", "''") + "'"
-        $launchScript = "try { Start-Process -FilePath $quotedExplorer -ArgumentList ('/n,' + [char]34 + $quotedFolder + [char]34) -ErrorAction Stop | Out-Null; exit 0 } catch { [Console]::Error.WriteLine(`$_.Exception.Message); exit 1 }"
-        $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($launchScript))
-        # Capture the child PowerShell result rather than interpreting process
-        # creation alone as an Explorer launch success. No temporary log files,
-        # background credentials, or permission changes are required.
-        $startInfo = New-Object System.Diagnostics.ProcessStartInfo
-        $startInfo.FileName = $powerShell
-        $startInfo.Arguments = "-NoLogo -NoProfile -NonInteractive -EncodedCommand $encoded"
-        $startInfo.UseShellExecute = $false
-        $startInfo.CreateNoWindow = $true
-        $startInfo.RedirectStandardError = $true
-        $child = [System.Diagnostics.Process]::Start($startInfo)
-        if ($null -eq $child) { throw 'Windows PowerShell child process did not start.' }
-        try {
-            if (-not $child.WaitForExit(5000)) {
-                $ui.ArchiveStatus.Text = "Explorer child PowerShell is still running (PID $($child.Id)). If no folder appears, use Copy Folder Path."
-                return
-            }
-            $childError = $child.StandardError.ReadToEnd().Trim()
-            if ($child.ExitCode -ne 0) {
-                if ([string]::IsNullOrWhiteSpace($childError)) { $childError = 'No error text was returned.' }
-                throw "Explorer child PowerShell exited with code $($child.ExitCode): $childError"
-            }
-            $ui.ArchiveStatus.Text = "Explorer child completed (exit 0, PID $($child.Id)); window visibility not verified. If the folder does not appear, use Copy Folder Path."
-        } finally {
-            $child.Dispose()
-        }
+        $shell = New-Object -ComObject Shell.Application -ErrorAction Stop
+        if ($null -eq $shell) { throw 'Windows Shell automation is unavailable.' }
+        $shell.Explore($fullFolder)
+        # COM Explore is asynchronous: invocation success does not prove a
+        # window appeared. Preserve the Copy Folder Path fallback.
+        $ui.ArchiveStatus.Text = "Requested Explorer folder window: $fullFolder. If nothing appears, use Copy Folder Path."
     } catch {
         $ui.ArchiveStatus.Text = "Explorer could not open this directory. Use Copy Folder Path: $folder"
-        [Windows.MessageBox]::Show("Unable to open the reports folder in Explorer.`n$folder`n`n$($_.Exception.Message)`n`nYou can use Copy Folder Path and paste it in Explorer.", 'Report Archive') | Out-Null
+        [Windows.MessageBox]::Show("Unable to open the reports folder in Explorer.`n$folder`n`n$($_.Exception.Message)`n`nUse Copy Folder Path and paste the path into Explorer.", 'Report Archive') | Out-Null
     }
 })
 $ui.ArchiveCopyPath.Add_Click({
