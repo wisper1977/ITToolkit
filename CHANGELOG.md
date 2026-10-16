@@ -8,6 +8,9 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Windows validation update — October 15, 2026
 
+- **On-Demand GUI home Windows test (technician-confirmed):** Technician reports the **Standard Session + On-Demand Administration** launcher mode behaved as expected: GUI started normally, Computer Health and other ordinary diagnostics worked, and conditional local UAC controls appeared for supported checks. This verifies the observed home GUI scenario, not all user-token combinations, Classic in On-Demand mode, separate-account execution, or remote Alternate credentials.
+
+
 - **Home Classic local diagnostics Windows-verified:** Technician confirmed local Group Policy in Classic prompted for Windows UAC, completed successfully and produced an accurate Group Policy report. Disk Space ran without UAC. This verifies these tested Classic paths; UAC cancellation, separate-admin credentials, and other token contexts remain to be tested.
 
 - **Home GUI ↔ Classic switching verified:** Technician confirmed GUI → Classic opened and operated as expected. Classic → GUI also opened without credential or UAC prompts, and GUI diagnostics ran afterward. This validates the observed bidirectional transition on the home Windows computer; explicit mode/identity inspection across transitions, separate-account and On-Demand scenarios remain pending.
