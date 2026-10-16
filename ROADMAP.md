@@ -13,6 +13,8 @@
 
 ## v1.27 — Remaining work
 
+- **Saved-report version traceability — Windows validation pending:** Confirm GUI HTML, CSV and TXT saved diagnostics each contain the configured Toolkit version; recheck Classic exported diagnostics and snapshot metadata. The configured suffix `aa028e` remains untouched by request, so a build from the new commit must receive its own verified commit-based version before traceable validation or stable promotion.
+
 - **Remote authorization integration committed; Windows automated preflight passed, live remote validation pending:** Shared Default/Alternate preflight now gates GUI and Classic diagnostic reporting. Classic Alternate reports use the credential-aware dispatcher; invalid modes and target-mismatched contexts fail closed. `Tests/Test-RemoteAuthorization.ps1` checks all 20 sections for both modes, missing/mismatched/injected credential contexts, simulated refusal, source integration, and PowerShell parsing without network connections. Technician confirmed the complete script passed on Windows for both 20-section modes, refusal paths, GUI/Classic source integration and parsing. Next: verify actual authorized GUI/Classic Default and Alternate remote reports, identity/transport behavior, and interactive negative paths. Keep as a release blocker until complete.
 
 
