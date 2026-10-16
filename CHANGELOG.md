@@ -8,6 +8,9 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Added
 
+- **Shared execution-context foundation (Windows validation pending):** Added `Modules/ITToolkit-ExecutionContext.ps1` with an explicit validated launcher mode, actual process Windows identity/SID, administrator token state, and process session ID. GUI and Classic load the same module, and the mode follows GUI ↔ Classic switching without forwarding credentials or target state. Direct script execution defaults to Current mode. The launcher passes a non-secret mode argument. Mode is informational and never grants privileges; remote Default/Alternate selection and UAC remain separate. Existing GUI UAC visibility uses the shared token-elevation evidence.
+
+
 - **Execution Mode dropdown (Windows validation pending):** Replaced the temporary current-user checkbox in the WPF launcher with three remembered choices: **Current Windows User**, **Separate Administrative Account**, and **Standard Session + On-Demand Administration**. The latter two current-token modes (Current and On-Demand) inherit the launcher's token and disable username/password fields; Separate Account retains the explicit credential process launch. On-Demand uses only the toolkit's existing explicitly authorized Alternate-credential and UAC operations, not an automatic privilege broker. Saved earlier checkbox preferences are migrated; passwords are never persisted. Both GUI and Classic start from the chosen process context. No change to collectors, remote authentication, or Explorer desktop handoff.
 
 
