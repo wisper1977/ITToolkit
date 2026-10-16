@@ -1,109 +1,35 @@
 # IT Toolkit Development Roadmap
 
-> **Current development:** v1.27 on `develop/v1.27`. **Production:** v1.26 on `main`. This roadmap lists outstanding work and future proposals, **not completed feature history**. Completed implementations, technician-confirmed Windows checks, limitations, and commit history belong under the single **v1.27** entry in [CHANGELOG.md](CHANGELOG.md) (not lettered subversions). The [README.md](README.md) describes current usage.
+> **Active development:** v1.27 on `develop/v1.27`. **Stable production:** v1.26 on `main`. This document lists **unfinished work and proposals only**. Implemented release changes belong in [CHANGELOG.md](CHANGELOG.md); general product guidance belongs in [README.md](README.md). Individual commits provide detailed engineering history.
 
-## Active milestones
+## v1.27 — Release blockers
 
-| Milestone | Outstanding goal | State |
-| --- | --- | --- |
-| **v1.27 — Health analysis and release validation** | Validate edge cases, finish evidence interpretation and release checks without breaking GUI or Classic | In development |
-| **v1.28 — Diagnostic completeness review** | Audit all 20 diagnostic categories for actionable detail, local/remote coverage and report parity | Planned after v1.27 release |
-| **Technician-confirmed Quick Fix** | Explicitly authorized, previewed repairs with post-action verification | Proposed; version unassigned |
-| **NIST / Best Practices Computer Check** | Versioned, evidence-backed Windows configuration/security posture assessment | Proposed; version unassigned |
+- **County-network authentication and reporting:** Validate actual remote Default and target-bound Alternate connections for all 20 diagnostic sections in GUI and Classic. Confirm the executing identity where observable, correct permission/transport failures, no implicit credential fallback, and no stale results after changing the target or credentials.
+- **Local authorization regression:** Check interactive refusals, invalid targets/sections, successful normal diagnostic paths, batch reporting, and local BitLocker/Policy UAC under appropriate Windows identities. Include UAC cancellation, different administrator identities, and correct report provenance.
+- **Launcher and interface identity:** Test Current Windows User, Separate Administrative Account, and On-Demand modes with the expected tokens and session identities. Verify startup, GUI ↔ Classic switching, preference migration, credential field behavior, and no automatic elevation or identity substitution.
+- **Seven-check Computer Health:** Validate inaccessible or partially failed evidence, unavailable WinRM, malformed responses, negative pending-restart signals, and both authentication modes. Reconcile local **10%** versus remote **15%** system-drive free-space review thresholds. Ensure QFE inventory, firewall states, and registry reboot indicators are not overrepresented as compliance findings.
+- **Reports and snapshots:** Test saved HTML/CSV/TXT output in GUI and Classic, report copying, recent/archive opening, and source-build version labeling. Validate remote and partial-category snapshot comparisons, archive reload, Classic optional snapshot sidecars, and target/identity consistency.
+- **Report Archive folder opening:** Resolve the separately authorized administrator desktop-session case where GUI **Open Reports Folder** does not display Explorer even though the child process reports successful completion; retain **Copy Folder Path** as a fallback.
+- **GUI/Classic regression:** Confirm small/high-DPI and maximized layout, health-sidebar scrolling/navigation, tools/favorites, ordinary and elevated PowerShell tool launch, and current diagnostic behavior in both interfaces.
+- **Build and release traceability:** Replace the intentionally retained `1.27.aa028e` display value with a verified source-commit suffix when generating the final development build. Record exactly which revision was tested; repeat impacted tests if code changes.
+- **Promotion decision:** Resolve release-blocking defects, review documentation for accuracy, complete required Windows validation, and obtain explicit approval before changing `main`, applying stable version `1.27`, or tagging `v1.27`.
 
-## v1.27 — Remaining work
+## v1.28 — Diagnostic completeness review
 
-- **Saved-report version traceability — Windows validation pending:** Confirm GUI HTML, CSV and TXT saved diagnostics each contain the configured Toolkit version; recheck Classic exported diagnostics and snapshot metadata. The configured suffix `aa028e` remains untouched by request, so a build from the new commit must receive its own verified commit-based version before traceable validation or stable promotion.
+- Audit the usefulness, missing evidence, authorization boundaries, and GUI/Classic parity of all **20 diagnostic sections**, comparing direct-local, remote Default and remote Alternate output.
+- Start with **Network**: compare local structured adapter inventory to remote `ipconfig /all` evidence, including DNS, DHCP, gateways, routes, and disconnected adapters; design a clear consistent output format.
+- Review remaining diagnostic sections for accurate, actionable detail while preserving readable reports, structured snapshot compatibility, least privilege, and honest unavailable/denied states.
+- Deliver focused, Windows-tested improvements incrementally after v1.27 stabilizes.
 
-- **Remote authorization integration committed; Windows automated preflight passed, live remote validation pending:** Shared Default/Alternate preflight now gates GUI and Classic diagnostic reporting. Classic Alternate reports use the credential-aware dispatcher; invalid modes and target-mismatched contexts fail closed. `Tests/Test-RemoteAuthorization.ps1` checks all 20 sections for both modes, missing/mismatched/injected credential contexts, simulated refusal, source integration, and PowerShell parsing without network connections. Technician confirmed the complete script passed on Windows for both 20-section modes, refusal paths, GUI/Classic source integration and parsing. Next: verify actual authorized GUI/Classic Default and Alternate remote reports, identity/transport behavior, and interactive negative paths. Keep as a release blocker until complete.
+## Future proposals
 
+- **Technician-confirmed Quick Fix:** Explicitly approved, auditable corrective actions (for example, flush DNS or restart a selected service), with target/identity verification, risk preview, and post-action confirmation. No automatic repair triggered by a health finding.
+- **NIST / Best Practices Computer Check:** Read-only, OS-aware, evidence-backed configuration assessment against a defined baseline; do not claim certification or compliance based only on inventory.
+- **Additional investigation:** Expanded DNS/routing and multi-NIC diagnostics, stronger comparison workflows, and clearer ticket-ready reports. Evaluate useful code from other repositories without committing to integrations before a scope review.
 
-- **Remote test startup failure corrected; Windows retest passed:** The first Windows invocation terminated during module import due to two `//` comment lines in the remote authorization module. Both are now valid PowerShell `#` comments. No test assertions ran during that invocation; rerun `Tests/Test-RemoteAuthorization.ps1` before proceeding to live remote checks.
+## Documentation policy
 
-- **All-20 local preflight rollout (Windows preflight and interactive execution verified):** Technician-confirmed expanded `Tests/Test-LocalSystemAuthorization.ps1` results passed all 20 sections, 20-section batch, denied invalid targets/sections/UAC requests, simulated no-collection-after-denial, and shared GUI/Classic guard references. Technician subsequently confirmed individual GUI/Classic Storage and Services diagnostics, both full 20-section report workflows, and explicit GUI BitLocker UAC succeeded. The controlled denial test passed in PowerShell, but live interactive denial/report-state behavior and separate Policy UAC regression are not newly confirmed. Remote Default/Alternate and workplace separate-administrator mode still need independent regression tests. This rollout only enforces authorization preflight for local diagnostic operations; Windows remains the final permissions authority.
-
-
-- **Shared local System guard negative-path test (technician-confirmed on Windows):** `Tests/Test-LocalSystemAuthorization.ps1` passed valid local target acceptance, mismatched target denial before simulated collection, and static GUI/Classic guard-reference checks. This validates the shared denial boundary, **not** a live WPF/Classic denial flow. Normal local System reports were subsequently technician-confirmed in both GUI and Classic after guard refactoring. Still confirm report state after an interactive failure. Avoid injecting invalid targets into live GUI or changing system permissions.
-
-
-- **First enforced local System diagnostic boundary (normal-path GUI and Classic Windows-tested, including post-refactor regression):** Technician confirmed single local System Information reports ran successfully in GUI and Classic both before and after the shared authorization-guard refactor. Still verify explicit reported identity and no-UAC behavior, and verify a local target mismatch blocks before collection without leaving a valid new report. Regression-test batch/all, BitLocker/Policy UAC, and remote Default/Alternate afterward. This increment only gates single local System and does not claim complete centralized enforcement.
-
-
-- **Central authorization preflight (partially validated on Windows):** Home PowerShell tests passed local System (`ReadyForAttempt`), non-elevated BitLocker (`ConsentRequired`) and Alternate without credentials (`Blocked`). Technician verified on home Windows that blocked Alternate without credentials returns `RequestedIdentity` blank while preserving the initiating identity. Technician subsequently verified local-target mismatch and unsupported System elevation each return `Blocked`, while remote Default System returns `ReadyForAttempt` (not proof of remote access). Technician also verified a typed TESTSERVER Alternate context returns `ReadyForAttempt`, while presenting it for OTHERSERVER returns `Blocked` with blank `RequestedIdentity`. No remote connection or credential validation took place. Still verify GUI/Classic imports and diagnostic execution regression under actual Default/Alternate network contexts. Ensure this read-only preflight does not change execution behavior; enforce at operation boundaries only after further approval and testing.
-
-
-- **Shared privilege registry regression (partially verified on home Windows):** Standalone registry displayed all 20 sections with UAC availability only for BitLocker and Policy; local non-elevated BitLocker selected `RunElevatedUac`. Follow-up decisions passed for local Policy non-elevated (UAC), local BitLocker elevated (normal), remote Default BitLocker non-elevated (normal), and local System non-elevated (normal). Home On-Demand GUI integration now technician-confirmed for local BitLocker/Policy versus System/Storage button exclusivity and an ordinary diagnostic completing. Classic integration regression was also technician-confirmed with Disk Space running normally and Group Policy using UAC and returning its report. Still verify uniqueness, strict unknown-section rejection, remaining combinations, and remote target/authentication transitions. Confirm no behavior drift in Classic or remote Default/Alternate credentials. This phase is metadata plus GUI visibility/eligibility only, not centralized execution authorization.
-
-### Health analysis quality and parity
-
-- **Failure and negative cases:** Exercise inaccessible/denied and partial checks, unavailable WinRM, malformed/missing evidence, and a machine without the selected pending-restart indicators. Confirm unavailable data are not interpreted as healthy, and a detected pending-file-rename operation is not claimed to be an update-required reboot.
-- **Credential and target provenance:** Verify requested and actual remote identities where the transport exposes them. Changing target, authentication mode, or credentials must not display or save health evidence from the previous context; no silent local or default-identity fallback.
-- **Evidence rules:** Reconcile the current local system-drive review threshold (**below 10%**) and remote threshold (**below 15%**) with a documented rule. Keep installed-QFE inventory distinct from **missing-update compliance**. Do not present enabled firewall profiles as proof of full security compliance.
-- **Further analysis, if warranted:** Add only actionable, defensible security posture or Windows Update checks with an authoritative evidence source and clear uncertainty. Do not invent an overall health score or imply comprehensive policy/compliance assessment from seven inventory checks.
-
-### Report, snapshot, and usability regression
-- **Open Reports Folder home result:** Technician confirmed the Reports folder opens from the GUI on the home interactive-user setup (v1.27). Still reproduce/resolve the workplace **Separate Administrative Account** Explorer desktop handoff; do not interpret the home pass as verifying that different-identity scenario.
-
-
-- **Startup regression retest:** GUI startup and both GUI → Classic and Classic → GUI transitions were technician-confirmed on the home Windows computer after replacing the conflicting `$ExecutionContext` variable with `$script:ToolkitExecutionContext`; no UAC or credential prompt occurred on the return transition and GUI diagnostics still ran. Still verify direct Classic startup, explicit identity/mode metadata across transitions, and the Current, On-Demand, and Separate Administrative Account launcher modes across relevant Windows identities.
-- **Shared execution-context Windows validation:** Verify all three launcher modes produce correct Windows identity, elevated-token status and session ID in GUI and Classic; verify mode metadata survives GUI ↔ Classic switching and direct script starts default to Current. Check failures and remote Default/Alternate authentication remain independent of launcher mode. No automatic UAC should occur from merely choosing a mode.
-
-
-- **UAC result-handoff follow-up:** Home BitLocker and Policy UAC runs subsequently succeeded under the same initiating/collecting Windows user (October 15, 2026), with no execution-policy change. Earlier missing-result failure is not explained by this success; capture stage diagnostics if it recurs. Still test UAC cancellation, explicitly authorized separate-administrator UAC, and failure reporting without broadening ACLs.
-- **Selected-check button exclusivity (home GUI selection behavior confirmed):** Technician verified the new mutually exclusive button behavior on Windows. Remaining regression coverage: remote targets, already-elevated processes, and busy/completion states.
-- **Classic conditional UAC follow-up:** Home Windows technician confirmed local Group Policy raised UAC and returned an accurate report, while Disk Space ran without UAC. Remaining: verify recorded collection identity/provenance, UAC cancellation, and other account/token conditions.
-- **Context-sensitive elevation button validation:** On Windows, check GUI local BitLocker/Policy under non-elevated and elevated tokens, remote-mode and other-category hiding, switching targets and sections, UAC cancellation and reporting. Confirm an elevated standard diagnostic succeeds or accurately reports any access failure; validate Classic's explicit UAC workflow separately. Do not infer needed elevation solely from launcher mode.
-
-
-- **Launcher layout Windows validation:** Confirm the execution-mode dropdown, username/password, interface selection and buttons are all visible without a vertical scrollbar at normal Windows screen size, both with and without configured banner art. Verify small work areas/high DPI still allow access to all controls and changing modes does not clip explanatory text.
-
-- **Launcher execution-mode Windows validation:** Home technician confirmed On-Demand GUI startup, ordinary diagnostics/Computer Health, and conditional local UAC button behavior, and subsequently confirmed Classic On-Demand usage worked without issues. Still verify remembered dropdown modes in GUI and Classic, explicit identity/mode metadata, Current versus On-Demand token inheritance, and Separate Account launch under the authorized account. Check dynamic field enablement, legacy checkbox preference migration, reload, non-admin tokens, explicit UAC/Alternate diagnostics in On-Demand, and no credential spillover. The separate-account Explorer desktop handoff remains unresolved.
-
-- **Health reports:** Verify latest seven-check findings and collection provenance in GUI and Classic saved HTML/CSV/TXT, Copy Report, Recent Reports, and archive opening. Confirm partial/denied statuses survive formatting.
-- **Report Archive folder button — unresolved:** Windows GUI child PowerShell exited with code 0, but Explorer did not display the folder. Manual and nested launches worked outside the GUI. Compare GUI/Explorer process owners and session IDs, investigate the desktop handoff, and verify a visible window before closing this item. Preserve Copy Folder Path.
-- **Snapshots:** Local two-snapshot same-target comparison and its saved HTML report were confirmed from the technician's uploaded artifacts (nine service-property differences, no changes elsewhere). **Still check:** remote comparison, archive reload, partial/inaccessible categories, optional Classic report-sidecar creation, and target/identity mismatch protections. Local and remote capture was already technician-verified.
-- **Privileged diagnostics:** Preserve separate-user UAC provenance and explicit consent behavior; test residual edge cases including cancellation and enterprise security controls as needed. On the tested workstation, computer-scope `gpresult /SCOPE COMPUTER /R` returns **ACCESS DENIED** even independently under an elevated administrator account; keep reporting that limitation rather than treating it as a successful Policy result.
-- **UI/Classic regression:** Check compact and maximized GUI sizing, independently scrollable health evidence with fixed navigation/target/Classic switch, ordinary and alternate credential modes, normal and elevated PowerShell Tools launch, and retained Classic reporting behavior.
-
-### Release gate
-
-- Record Windows test evidence and outstanding limitations in [CHANGELOG.md](CHANGELOG.md), update [README.md](README.md) where functionality or usage changes, and resolve significant regressions.
-- Obtain **explicit release approval** before version promotion or any changes to production `main`.
-
-## v1.28 — Diagnostic completeness and quality audit
-
-**Goal:** Ensure every diagnostic delivers the information an IT technician needs to investigate the target, rather than merely completing a successful collection.
-
-- **Inventory all 20 diagnostics:** For each category, document the current GUI and Classic output, direct-local and remote Default/Alternate sources, missing fields, permissions, error cases, and differences between local and remote results. Prioritize technician usefulness and actionable context.
-- **Network first — `ipconfig` versus `ipconfig /all`:** Audit IPv4/IPv6, adapter identity and status, per-adapter DNS and connection suffixes, domain/DNS suffix search lists, gateways, DHCP state and servers, lease obtained/expiry, MAC, routing-related indicators, and meaningful disabled/disconnected-adapter evidence. Existing remote Network already attempts `ipconfig /all` via credential-scoped WinRM; local Network currently emits a smaller structured CIM/WMI inventory. Design a consistent, readable schema and document any unavoidable source differences.
-- **Then audit each remaining diagnostic:** Confirm that System, Hardware, Storage, Services, Events, Policy, Users, Groups, Administrators, Shares, SharePermissions, Software, Updates, Tasks, Sessions, Startup, Firewall, BitLocker and Health expose sufficient details for practical troubleshooting. Record any desired additional evidence without assuming it can be read from every target.
-- **Output and parity:** Decide where structured values, concise summaries, and full command output are most useful. Avoid walls of irrelevant data or duplicating the same evidence. Preserve GUI/Classic parity, report formats, snapshot compatibility, provenance and the ability to distinguish query success from a healthy system.
-- **Authentication, safety and testing:** Maintain read-only collection, least privilege, selected target and credential context, and honest NoData/Unavailable/AccessDenied statuses. Do not silently fall back to local/default credentials if a remote request fails. Implement improvements incrementally and validate each local, remote Default and remote Alternate path on Windows.
-
-This is a **planned v1.28 audit**, not an implementation or Windows-validated feature. Do not expand v1.27 scope to cover the audit unless a release-blocking defect is identified.
-
-## Future — Technician-confirmed Quick Fix
-
-A shared, deliberately invoked repair workflow for authorized administrators. **No repair should run merely because a health finding exists.**
-
-Possible tasks: flush DNS cache on the selected computer, restart an explicitly chosen service, inspect/repair Windows Update services, run approved SFC/DISM checks, or assist with WinRM configuration through an already authorized management path. Treat DHCP renewal, network adapter changes, and restarts as disruptive operations requiring stronger safeguards.
-
-Before execution, verify target, actual identity, authorization, transport, proposed changes and risks; require explicit technician approval, record the result and recheck the target. Never silently switch identities or bootstrap WinRM over unavailable WinRM.
-
-## Future — NIST / Best Practices Computer Check
-
-Build a **read-only**, OS-aware and versioned security configuration assessment from verified local/remote evidence. This would **not** certify NIST or organization-wide compliance.
-
-Candidate areas include privileged identities, UAC and account policy, firewall, BitLocker, endpoint security, auditing, patch/update compliance, RDP/WinRM, SMB, and password/lockout policy. Report **Pass / Finding / Not Applicable / Unable to Verify**, tied to the applicable approved baseline, policy scope, date and supporting evidence. Respect domain-managed controls and documented exceptions. Keep any remediation in a separate consent-driven workflow.
-
-## Additional proposals
-
-Unscheduled possibilities: expanded DNS/routing and multi-NIC diagnostics, improved inventory and snapshot comparison, and clearer ticket-ready or work-order reports. These are proposals, not promises for v1.27.
-
-## Development rules
-
-- **GitHub is the source of truth:** work on the latest active development branch; do not modify stable `main` without explicit permission.
-- Preserve functionality and both interfaces; share collection and analysis code rather than duplicating interpretation where practical.
-- Apply least privilege, explicit UAC and target/identity provenance. Keep collected diagnostic operations read-only, and never store credentials or silently substitute identities.
-- Make incremental, testable changes and validate Windows-specific behavior on Windows.
-- Record what was actually implemented and tested in [CHANGELOG.md](CHANGELOG.md). Keep [README.md](README.md) and this roadmap synchronized.
+- **README:** Concise feature summary, installation, and usage; change only when user-facing capabilities or instructions materially change.
+- **ROADMAP:** Outstanding work, release blockers, and future proposals; remove completed items.
+- **CHANGELOG:** Meaningful implemented features, changes, fixes, and release-level validation status grouped by version; avoid individual test transcripts and commit-by-commit narratives.
+- **Git history:** The authoritative detailed development record. Do not repeat the commit journal in documentation.
