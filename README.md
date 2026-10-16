@@ -9,7 +9,7 @@ IT Toolkit is a portable, PowerShell-based Windows administration utility for te
 ## What's new in v1.27
 
 - **Updated Launcher:** Choose Current Windows User, Separate Administrative Account, or Standard Session + On-Demand Administration.
-- **Scoped elevation:** Run supported local BitLocker and Group Policy diagnostics through an explicit Windows UAC request without automatically elevating the entire Toolkit.
+- **Scoped elevation:** Run supported local BitLocker and Group Policy diagnostics through an explicit Windows UAC request without automatically elevating the entire Toolkit. For a single remote Default diagnostic that returns ACCESS DENIED, the GUI can offer an explicit one-time **Retry with Admin Credentials** using target-bound remote authentication (requires county Windows validation).
 - **Shared execution and authorization:** GUI and Classic use consistent execution context, privilege requirements, and diagnostic preflight checks; mismatched or invalid authentication requests are blocked before collection.
 - **Diagnostic cancellation and remote failure recovery:** County-tested GUI Cancel Diagnostics requests a non-blocking stop and restores target switching when the worker stops. Single remote checks now request cancellation after 60 seconds; Run All remains ten minutes. Default remote System Information has a 30-second process deadline (new deadline pending Windows retest). A blocked underlying Windows call can still delay cancellation.
 - **Remote identity evidence (Windows retest pending):** GUI and Classic Alternate reports separately show the requested remote account and a read-only identity returned from the target, or NOT VERIFIED if the verification call fails.
