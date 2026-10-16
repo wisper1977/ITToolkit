@@ -112,3 +112,36 @@ function Assert-ToolkitLocalSystemAuthorization {
     }
     return $assessment
 }
+
+# Shared, batch-aware local preflight. Validate every section before any collector starts.
+# CurrentToken permits an ordinary read-only attempt, including initial Classic
+# BitLocker/Policy probes. ElevatedLocal is only allowed for one scoped UAC section.
+function Assert-ToolkitLocalDiagnosticAuthorization {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string[]]$Sections,
+        [Parameter(Mandatory=$true)][ValidateNotNullOrEmpty()][string]$TargetComputer,
+        [switch]$ElevatedLocal
+    )
+    if ($ElevatedLocal -and ($Sections.Count -ne 1 -or $Sections[0] -notin @('BitLocker','Policy'))) {
+        throw 'Scoped UAC requires exactly one local BitLocker or Policy section.'
+    }
+    $accepted = New-Object 'System.Collections.Generic.List[object]'
+    foreach ($section in $Sections) {
+        $route = if ($ElevatedLocal) { 'ElevatedLocal' } else { 'CurrentToken' }
+        $assessment = Get-ToolkitOperationAuthorization -Section $section -TargetMode Local -TargetComputer $TargetComputer -RequestedRoute $route
+        if ($assessment.Assessment -eq 'Blocked' -or $assessment.ProposedRoute -eq 'None') {
+            throw ('Local ' + $section + ' diagnostic blocked by preflight: ' + [string]$assessment.Reason)
+        }
+        if ($ElevatedLocal) {
+            if ($assessment.Assessment -notin @('ConsentRequired','ReadyForAttempt') -or
+                $assessment.ProposedRoute -notin @('ElevatedLocalUac','CurrentToken')) {
+                throw ('Local ' + $section + ' diagnostic has an invalid UAC preflight route.')
+            }
+        } elseif ($assessment.Assessment -ne 'ReadyForAttempt' -or $assessment.ProposedRoute -ne 'CurrentToken') {
+            throw ('Local ' + $section + ' diagnostic requires another execution route.')
+        }
+        [void]$accepted.Add($assessment)
+    }
+    return $accepted.ToArray()
+}
