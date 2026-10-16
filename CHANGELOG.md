@@ -2,7 +2,10 @@
 
 Meaningful IT Toolkit additions, changes, fixes, and release status are grouped by version. Git commits record implementation details and interim testing; the changelog is **not a development journal**. Pending tasks are tracked in [ROADMAP.md](ROADMAP.md).
 
-## [1.28] — Development
+## [1.28] — In development (not released)
+
+- No new diagnostic functionality has been implemented or validated for v1.28 yet. The diagnostic completeness review, beginning with Network, is tracked in [ROADMAP.md](ROADMAP.md).
+- Initial development baseline inherits the v1.27 application code at `b3bb971`; documentation-only changes are not new application-code revisions.
 
 ## [1.27] — 2026-10-16
 
@@ -35,7 +38,7 @@ Meaningful IT Toolkit additions, changes, fixes, and release status are grouped 
 - Enterprise technician accepted local and remote GUI/Classic diagnostic workflows, including 20-section Run All, verified remote Alternate identity, On-Demand retry success/cancellation, and expected partial/unavailable outcomes.
 - Enterprise Windows testing confirmed GUI Services HTML/CSV/TXT exports, remote seven-category snapshots, comparison output, archive persistence after restart, and Reports-folder opening in all three launcher modes. Elevated-folder Explorer drag-and-drop was also tested.
 - Windows PowerShell 5.1 static authorization and regression tests support the implementation but do not replace interactive or transport validation.
-- **Release candidate only:** version `1.27.b3bb971`; `main` remains at stable v1.26. A final clean-build smoke test and explicit promotion approval are outstanding. Untested negative and edge cases remain tracked in [ROADMAP.md](ROADMAP.md).
+- **Stable release approved:** Enterprise-network functional testing and technician-accepted clean-install smoke test completed for source build `1.27.b3bb971`; v1.27 was promoted and published as stable `1.27` on `main`. Optional edge cases remain tracked in [ROADMAP.md](ROADMAP.md).
 
 ## [1.26] — 2026-10-14
 
