@@ -108,6 +108,20 @@ function Save-ClassicCollectedReport {
 function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
     $target = Get-Target
     if (-not $target) { return }
+    # First enforced boundary: a single direct-local System report only.
+    # No remote, batch, or elevated diagnostic routing is altered.
+    if ($script:LocalTargetMode -and $Sections.Count -eq 1 -and $Sections[0] -eq 'System') {
+        try {
+            $authorization = Get-ToolkitOperationAuthorization -Section System -TargetMode Local -TargetComputer ([string]$script:TargetComputer) -RequestedRoute CurrentToken
+            if ($authorization.Assessment -ne 'ReadyForAttempt' -or $authorization.ProposedRoute -ne 'CurrentToken') {
+                throw ("Local System diagnostic blocked by preflight: {0}" -f $authorization.Reason)
+            }
+        } catch {
+            Write-Host ("Local System diagnostic was not started: " + [string]$_.Exception.Message) -ForegroundColor Yellow
+            Pause-Toolkit
+            return
+        }
+    }
     $script:ClassicLastReport = $null
     $results = New-Object System.Collections.Generic.List[object]
     foreach ($section in $Sections) {
