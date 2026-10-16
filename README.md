@@ -9,9 +9,9 @@ IT Toolkit is a portable, PowerShell-based Windows administration utility for te
 ## What's new in v1.27
 
 - **Updated Launcher:** Choose Current Windows User, Separate Administrative Account, or Standard Session + On-Demand Administration.
-- **Scoped elevation:** Run supported local BitLocker and Group Policy diagnostics through an explicit Windows UAC request without automatically elevating the entire Toolkit. For a single remote Default diagnostic that returns ACCESS DENIED, the GUI can offer an explicit one-time **Retry with Admin Credentials** using target-bound remote authentication (county-tested for the supported single-diagnostic workflow).
+- **Scoped elevation:** Run supported local BitLocker and Group Policy diagnostics through an explicit Windows UAC request without automatically elevating the entire Toolkit. For a single remote Default diagnostic that returns ACCESS DENIED, the GUI can offer an explicit one-time **Retry with Admin Credentials** using target-bound remote authentication (Enterprise-tested for the supported single-diagnostic workflow).
 - **Shared execution and authorization:** GUI and Classic use consistent execution context, privilege requirements, and diagnostic preflight checks; mismatched or invalid authentication requests are blocked before collection.
-- **Diagnostic cancellation and remote failure recovery:** County-tested GUI Cancel Diagnostics requests a non-blocking stop and restores target switching when the worker stops. Single remote checks now request cancellation after 60 seconds; Run All remains ten minutes. Default remote System Information has a 30-second process deadline, exercised against an inaccessible county target. A blocked underlying Windows call can still delay cancellation.
+- **Diagnostic cancellation and remote failure recovery:** Enterprise-tested GUI Cancel Diagnostics requests a non-blocking stop and restores target switching when the worker stops. Single remote checks now request cancellation after 60 seconds; Run All remains ten minutes. Default remote System Information has a 30-second process deadline, exercised against an inaccessible Enterprise target. A blocked underlying Windows call can still delay cancellation.
 - **Remote identity evidence:** GUI and Classic Alternate reports separately show the requested remote account and a read-only identity returned from the target, or NOT VERIFIED if the verification call fails.
 - **Remote credential handling:** Explicit, target-bound Alternate credentials are supported for applicable diagnostics without silently falling back to another identity.
 - **GUI and Classic alignment:** Shared diagnostic capabilities, simpler interface switching, and a reorganized Classic menu.
@@ -19,12 +19,12 @@ IT Toolkit is a portable, PowerShell-based Windows administration utility for te
 - **Computer Health:** Evidence-based local and remote health checks with review, checked, and unavailable states, including storage, services, events, uptime, firewall, updates inventory, and pending-restart indicators.
 - **Improved dashboard:** Compact, independently scrollable health details, better navigation and sizing, clearer target status, and remembered window preferences.
 - **Reports and comparisons:** Improved saved-report handling, HTML/CSV/TXT export, structured inventory snapshots, and side-by-side changes between captures.
-- **Reports folder:** Open Folder requests an actual Windows Explorer directory for dragging reports into email or chat. A non-elevated Separate Administrative Account GUI requests one-time UAC approval for a separate folder-opening helper (not elevation of the toolkit). Other launch modes use the normal route; Copy Folder Path remains available. All three folder-opening modes were county-tested; Separate Admin requires UAC when not already elevated.
+- **Reports folder:** Open Folder requests an actual Windows Explorer directory for dragging reports into email or chat. A non-elevated Separate Administrative Account GUI requests one-time UAC approval for a separate folder-opening helper (not elevation of the toolkit). Other launch modes use the normal route; Copy Folder Path remains available. All three folder-opening modes were Enterprise-tested; Separate Admin requires UAC when not already elevated.
 - **Version traceability:** Development versions include an abbreviated source commit identifier; diagnostic exports and structured snapshots include version information.
 - **Tools and Favorites:** More flexible tool access, favorites, and an explicitly authorized Windows PowerShell (Administrator) launch option.
 - **Refined branding and usability:** Updated Launcher presentation, improved long-label display, and revised README screenshots.
 
-Core GUI and Classic diagnostic, authentication, reporting, snapshot, and Reports-folder workflows have been accepted in county Windows testing. This development release candidate is **not yet approved for production**; see the [roadmap](ROADMAP.md) for final release requirements and deferred edge cases.
+Core GUI and Classic diagnostic, authentication, reporting, snapshot, and Reports-folder workflows have been accepted in Enterprise Windows testing. This development release candidate is **not yet approved for production**; see the [roadmap](ROADMAP.md) for final release requirements and deferred edge cases.
 
 ## Features
 
