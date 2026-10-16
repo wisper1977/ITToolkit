@@ -10,7 +10,7 @@ The **IT Toolkit** is a portable, PowerShell-based utility for IT technicians wh
 
 For v1.27 local BitLocker or Policy diagnostics in a non-elevated GUI, **Run Elevated (UAC)** replaces **Run selected check** rather than appearing beside it. Other checks and already-elevated processes show the normal selected-check action. Windows GUI retest pending.
 
-**Classic Windows test (October 15, 2026):** Local Group Policy prompted for UAC while Disk Space did not. Successful completion of the Policy check has not yet been independently confirmed in this Classic test.
+**Classic Windows test (October 15, 2026):** Local Group Policy prompted for UAC and returned an accurate report after approval; Disk Space ran without UAC. Other authorization identities and UAC cancellation are still pending.
 
 ## Features
 
