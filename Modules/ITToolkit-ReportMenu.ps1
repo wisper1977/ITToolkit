@@ -179,6 +179,7 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
                 $content = $parts -join "`r`n"
             }
         } else {
+            $status = $null
             try {
                 if ($script:ToolkitAuthMode -eq 'Alternate') {
                     $alternateReport = Get-ClassicAlternateReportSection -Section $section
