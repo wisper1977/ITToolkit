@@ -12,7 +12,7 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Changed
 
-- **Mutually exclusive selected-check actions (Windows retest pending):** GUI now hides **Run selected check** whenever the existing scoped **Run Elevated (UAC)** action is shown for local BitLocker or Policy under a non-elevated token. Other local/remote checks and already-elevated processes retain **Run selected check**. No diagnostic execution, credential handling, elevation scope, or Run all behavior was changed.
+- **Mutually exclusive selected-check actions (technician-confirmed on home Windows GUI):** GUI now hides **Run selected check** whenever the existing scoped **Run Elevated (UAC)** action is shown for local BitLocker or Policy under a non-elevated token. Other local/remote checks and already-elevated processes retain **Run selected check**. No diagnostic execution, credential handling, elevation scope, or Run all behavior was changed.
 
 ### Added
 
