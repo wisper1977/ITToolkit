@@ -617,24 +617,60 @@ function Get-ToolkitLocalDiagnostic {
                 $result.Data = @($records.ToArray())
             }
             'Network' {
-                # Read-only local adapter configuration; no remote ping, traceroute or WinRM.
-                # Preserve each address/gateway as a distinct list in a single string field
-                # so GUI, Classic, and saved text reports remain readable.
-                $adapters = @(Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration -Filter 'IPEnabled=True' -ErrorAction Stop)
-                $result.Data = @($adapters | Sort-Object Index | ForEach-Object {
+                # Keep the v1.27 IP-enabled fields for report compatibility; add
+                # connection-aware adapter inventory without network probes or elevation.
+                # Include Windows-named disconnected/disabled adapters where available.
+                $configs = @(Get-CimInstance -ClassName Win32_NetworkAdapterConfiguration -ErrorAction Stop)
+                $configByIndex = @{}
+                foreach ($config in $configs) {
+                    $configByIndex[[int]$config.Index] = $config
+                }
+                $adapters = @(Get-CimInstance -ClassName Win32_NetworkAdapter -ErrorAction Stop |
+                    Where-Object {
+                        (-not [string]::IsNullOrWhiteSpace([string]$_.NetConnectionID)) -or
+                        $configByIndex.ContainsKey([int]$_.Index)
+                    } | Sort-Object Index)
+                $result.Data = @($adapters | ForEach-Object {
+                    $adapter = $_
+                    $config = $configByIndex[[int]$adapter.Index]
+                    # Win32_NetworkAdapter.NetConnectionStatus: 2 = Connected;
+                    # null means Windows did not report a connection state.
+                    $connectionCode = $adapter.NetConnectionStatus
+                    $connectionState = if ($null -eq $connectionCode) { 'UNKNOWN' }
+                        elseif ([int]$connectionCode -eq 2) { 'Connected' }
+                        elseif ([int]$connectionCode -eq 7) { 'Media disconnected' }
+                        elseif ([int]$connectionCode -eq 0) { 'Disconnected' }
+                        elseif ([int]$connectionCode -eq 5) { 'Hardware disabled' }
+                        else { 'State code ' + [string]$connectionCode }
                     [pscustomobject]@{
-                        Description = [string]$_.Description
-                        InterfaceIndex = [int]$_.Index
-                        MACAddress = [string]$_.MACAddress
-                        DHCPEnabled = [bool]$_.DHCPEnabled
-                        IPAddresses = (@($_.IPAddress | Where-Object { $_ }) -join ', ')
-                        SubnetMasks = (@($_.IPSubnet | Where-Object { $_ }) -join ', ')
-                        DefaultGateways = (@($_.DefaultIPGateway | Where-Object { $_ }) -join ', ')
-                        DNSServers = (@($_.DNSServerSearchOrder | Where-Object { $_ }) -join ', ')
-                        DNSDomain = [string]$_.DNSDomain
+                        RecordType = 'NetworkAdapter'
+                        Name = [string]$adapter.NetConnectionID
+                        Description = [string]$adapter.Description
+                        InterfaceIndex = [int]$adapter.Index
+                        MACAddress = [string]$adapter.MACAddress
+                        ConnectionStatus = $connectionState
+                        NetEnabled = if ($null -ne $adapter.NetEnabled) { [bool]$adapter.NetEnabled } else { $null }
+                        PhysicalAdapter = if ($null -ne $adapter.PhysicalAdapter) { [bool]$adapter.PhysicalAdapter } else { $null }
+                        SpeedMbps = if ($null -ne $adapter.Speed -and [double]$adapter.Speed -gt 0) {
+                            [math]::Round([double]$adapter.Speed / 1MB, 1)
+                        } else { $null }
+                        IPEnabled = if ($null -ne $config) { [bool]$config.IPEnabled } else { $false }
+                        DHCPEnabled = if ($null -ne $config) { [bool]$config.DHCPEnabled } else { $false }
+                        DHCPServer = if ($null -ne $config) { [string]$config.DHCPServer } else { '' }
+                        DHCPLeaseObtained = if ($null -ne $config -and $config.DHCPEnabled) { [string]$config.DHCPLeaseObtained } else { '' }
+                        DHCPLeaseExpires = if ($null -ne $config -and $config.DHCPEnabled) { [string]$config.DHCPLeaseExpires } else { '' }
+                        IPAddresses = if ($null -ne $config) { (@($config.IPAddress | Where-Object { $_ }) -join ', ') } else { '' }
+                        SubnetMasks = if ($null -ne $config) { (@($config.IPSubnet | Where-Object { $_ }) -join ', ') } else { '' }
+                        DefaultGateways = if ($null -ne $config) { (@($config.DefaultIPGateway | Where-Object { $_ }) -join ', ') } else { '' }
+                        DNSServers = if ($null -ne $config) { (@($config.DNSServerSearchOrder | Where-Object { $_ }) -join ', ') } else { '' }
+                        DNSDomain = if ($null -ne $config) { [string]$config.DNSDomain } else { '' }
+                        DNSHostName = if ($null -ne $config) { [string]$config.DNSHostName } else { '' }
+                        DNSDomainSuffixSearchOrder = if ($null -ne $config) {
+                            (@($config.DNSDomainSuffixSearchOrder | Where-Object { $_ }) -join ', ')
+                        } else { '' }
                     }
                 })
-                # A valid query with no enabled IP adapters yields NoData, not Success.
+                # A successful inventory with no eligible adapters is NO RESULTS.
             }
             'Storage' {
                 # Match the existing remote disk-space report: fixed logical disks only.
