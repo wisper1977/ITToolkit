@@ -1878,7 +1878,7 @@ $ui.RetryRemoteWithAdmin.Add_Click({
     $txt.Margin = '0,0,0,6'; [void]$stack.Children.Add($txt)
     $nameInput = New-Object Windows.Controls.TextBox
     $nameInput.Height = 30; $nameInput.Padding = '6,4'
-    if ($cfg.AuthenticationDomain) { $nameInput.Text = [string]$cfg.AuthenticationDomain + '\\' }
+    if ($cfg.AuthenticationDomain) { $nameInput.Text = [string]$cfg.AuthenticationDomain + [char]92 }
     [void]$stack.Children.Add($nameInput)
     $pt = New-Object Windows.Controls.TextBlock; $pt.Text = 'Password (not saved)'
     $pt.Margin = '0,14,0,6'; [void]$stack.Children.Add($pt)
