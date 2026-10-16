@@ -25,7 +25,9 @@ function Get-ToolkitOperationAuthorization {
     $state = 'ReadyForAttempt'
     $route = 'CurrentToken'
     $authMode = if ($TargetMode -eq 'Local') { 'CurrentWindowsToken' } else { $TargetMode }
-    $requestedIdentity = [string]$actual.WindowsIdentity
+    # No alternate identity is selected until its typed, target-bound context validates.
+    # Do not present the initiating Windows identity as a fallback on a blocked request.
+    $requestedIdentity = if ($TargetMode -eq 'Alternate') { '' } else { [string]$actual.WindowsIdentity }
 
     if ([string]::IsNullOrWhiteSpace($target)) {
         throw 'TargetComputer must not be empty.'
