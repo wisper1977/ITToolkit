@@ -24,7 +24,7 @@ Meaningful IT Toolkit additions, changes, fixes, and release status are grouped 
 
 ### Fixed
 
-- Reverted an incomplete GUI snapshot-comparison HTML formatter update after it prevented GUI startup. The previous plain HTML export is restored while the formatting improvement awaits a separately validated fix.
+- **GUI comparison HTML:** Restored collapsible category sections, jump links and added/changed/removed highlighting by routing HTML-only comparison headings through the existing shared report renderer. Underlying snapshot comparisons and TXT/CSV exports are unchanged. Windows GUI startup and HTML export validation remain pending.
 
 - Corrected RPC/transport failures previously presented as access-denied solely because of a generic error prefix.
 - Corrected startup failure caused by assigning to PowerShell's reserved `$ExecutionContext` variable.
