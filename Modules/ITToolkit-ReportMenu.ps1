@@ -135,6 +135,11 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
             return
         }
     }
+    $remoteIdentityEvidence = $null
+    if (-not $script:LocalTargetMode -and $script:ToolkitAuthMode -eq 'Alternate') {
+        # One remote identity attestation per report, using the same target-bound credentials.
+        $remoteIdentityEvidence = Test-ToolkitRemoteExecutionIdentity -Context $script:ToolkitAuthContext
+    }
     $results = New-Object System.Collections.Generic.List[object]
     foreach ($section in $Sections) {
         Write-Host "Collecting $section ..." -ForegroundColor Cyan
@@ -210,6 +215,9 @@ function Save-DiagnosticReport([string[]]$Sections,[string]$Label) {
     $lines.Add("Report: $Label")
     $lines.Add("Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')")
     $lines.Add("Technician account: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)")
+    if ($null -ne $remoteIdentityEvidence) {
+        $lines.Add((Format-ToolkitRemoteExecutionIdentity -Result $remoteIdentityEvidence))
+    }
     $lines.Add("Target hostname: $target")
     $lines.Add("Target IPv4: $(if ($script:LocalTargetMode) {'(not needed for local collection)'} else {Resolve-TargetIPv4 $target})")
     $lines.Add('Read-only queries. UNAVAILABLE does not establish that an issue does not exist.')
