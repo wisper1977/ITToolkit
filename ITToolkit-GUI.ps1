@@ -1732,7 +1732,7 @@ $ui.SaveDiagnosticReport.Add_Click({
             'Read-only diagnostics; a successful query does not establish system health.'
         }
         $reportScope = if ($captured.Mode -eq 'Local') { 'LOCAL' } else { 'REMOTE' }
-        $reportText = "${org} ${appTitle} - $reportScope DIAGNOSTIC REPORT`r`nReport: $label`r`nCollected: $($captured.CollectedAt.ToString('yyyy-MM-dd HH:mm:ss zzz'))`r`nSaved: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')`r`nTechnician account: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)`r`nDiagnostic authentication: $($captured.Mode)`r`nDiagnostic identity: $($captured.Identity)`r`n$disclaimer`r`n$($captured.Results)"
+        $reportText = "${org} ${appTitle} - $reportScope DIAGNOSTIC REPORT`r`nToolkit version: $version`r`nReport: $label`r`nCollected: $($captured.CollectedAt.ToString('yyyy-MM-dd HH:mm:ss zzz'))`r`nSaved: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz')`r`nTechnician account: $([Security.Principal.WindowsIdentity]::GetCurrent().Name)`r`nDiagnostic authentication: $($captured.Mode)`r`nDiagnostic identity: $($captured.Identity)`r`n$disclaimer`r`n$($captured.Results)"
         $lines = [string[]]@($reportText -split '\r?\n')
         switch ($format) {
             'HTML' { $contents = Convert-ReportHtml $reportText $title }
