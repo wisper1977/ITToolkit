@@ -8,6 +8,8 @@ The toolkit targets Windows PowerShell 5.1, with a WPF graphical interface and a
 
 ### Windows validation update — October 15, 2026
 
+- **Home GUI → Classic transition verified:** Technician reports Classic opened and operated as intended after switching from GUI on the home Windows computer. Reverse Classic → GUI transition, explicit identity/mode inspection, and separate-account or On-Demand transition regressions remain pending.
+
 - **Home GUI UAC BitLocker verified:** Technician confirmed `DESKTOP-8EHGAPD\wispe` launched a local BitLocker check through explicit Windows UAC and received a `SUCCESS` report under the same account. C: and E: reported FullyDecrypted, Protection Off, 0% encryption, and no encryption method. The report showed RemoteSigned → RemoteSigned, with no CurrentUser execution-policy change. Local Policy also succeeded through UAC. These validate the tested same-account paths, **not** separate-admin UAC, cancellation handling, or other Windows configurations. The earlier no-result error was not reproduced after the instrumentation change; its underlying cause remains unconfirmed.
 
 ### Changed
