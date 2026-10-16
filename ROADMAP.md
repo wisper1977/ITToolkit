@@ -13,7 +13,7 @@
 
 ## v1.27 — Remaining work
 
-- **Shared privilege registry regression (partially verified on home Windows):** Standalone registry displayed all 20 sections with UAC availability only for BitLocker and Policy; local non-elevated BitLocker selected `RunElevatedUac`. Follow-up decisions passed for local Policy non-elevated (UAC), local BitLocker elevated (normal), remote Default BitLocker non-elevated (normal), and local System non-elevated (normal). Still verify uniqueness, strict unknown-section rejection, remaining combinations, GUI and Classic imports, and GUI target/section transitions. Confirm no behavior drift in Classic or remote Default/Alternate credentials. This phase is metadata plus GUI visibility/eligibility only, not centralized execution authorization.
+- **Shared privilege registry regression (partially verified on home Windows):** Standalone registry displayed all 20 sections with UAC availability only for BitLocker and Policy; local non-elevated BitLocker selected `RunElevatedUac`. Follow-up decisions passed for local Policy non-elevated (UAC), local BitLocker elevated (normal), remote Default BitLocker non-elevated (normal), and local System non-elevated (normal). Home On-Demand GUI integration now technician-confirmed for local BitLocker/Policy versus System/Storage button exclusivity and an ordinary diagnostic completing. Still verify uniqueness, strict unknown-section rejection, remaining combinations, Classic import and diagnostic parity, and remote target/authentication transitions. Confirm no behavior drift in Classic or remote Default/Alternate credentials. This phase is metadata plus GUI visibility/eligibility only, not centralized execution authorization.
 
 ### Health analysis quality and parity
 
