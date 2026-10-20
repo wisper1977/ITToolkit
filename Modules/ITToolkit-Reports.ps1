@@ -514,38 +514,144 @@ function Get-RemoteIpConfig([string]$Target) {
             'Remote configuration was not collected using the selected Windows identity.')
     }
 }
-# Remote systeminfo.exe uses an external process: bound it so RPC permission
-# failures or transport stalls cannot hold the reporting worker indefinitely.
-# This helper uses the existing process identity; it does not pass credentials.
-function Invoke-ToolkitBoundedRemoteSystemInfo {
+# Legacy Default-mode report entry point. A bounded job uses the current Windows
+# identity; no stored/Alternate credential is supplied or silently substituted.
+# Its process may be stopped at the timeout; WinRM transport cleanup is best-effort.
+function Invoke-ToolkitBoundedRemoteSystemDiagnostic {
     [CmdletBinding()]
     param([Parameter(Mandatory=$true)][string]$Target,[int]$TimeoutSeconds=30)
-    $exe=Join-Path $env:SystemRoot 'System32\systeminfo.exe'
-    $stdout=Join-Path ([IO.Path]::GetTempPath()) ('itt-systeminfo-'+[guid]::NewGuid().ToString('N')+'.out')
-    $stderr=$stdout+'.err'
-    $process=$null
+    $remote = {
+        $records = New-Object System.Collections.Generic.List[object]
+                            $failures = New-Object System.Collections.Generic.List[string]
+                            foreach ($check in @('OperatingSystem','ComputerSystem','Processor','BIOS','PendingRestart','SecureBoot','TPM')) {
+                                try {
+                                    switch ($check) {
+                                        'OperatingSystem' {
+                                            $os = Get-CimInstance Win32_OperatingSystem -ErrorAction Stop
+                                            if (-not $os) { throw 'No operating system data returned.' }
+                                            $total = [double]$os.TotalVisibleMemorySize
+                                            $free = [double]$os.FreePhysicalMemory
+                                            $records.Add([pscustomobject]@{
+                                                Check=$check; QueryStatus='Available'
+                                                ComputerName=[string]$env:COMPUTERNAME
+                                                Caption=[string]$os.Caption; Version=[string]$os.Version
+                                                BuildNumber=[string]$os.BuildNumber; OSArchitecture=[string]$os.OSArchitecture
+                                                InstallDate=$os.InstallDate; LastBootUpTime=$os.LastBootUpTime
+                                                UptimeDays=if($os.LastBootUpTime){[math]::Round(((Get-Date)-[datetime]$os.LastBootUpTime).TotalDays,1)}else{$null}
+                                                TotalMemoryGB=if($total -gt 0){[math]::Round($total/1MB,2)}else{$null}
+                                                AvailableMemoryGB=if($total -gt 0){[math]::Round($free/1MB,2)}else{$null}
+                                                MemoryUsedPercent=if($total -gt 0){[math]::Round(100*($total-$free)/$total,1)}else{$null}
+                                                WindowsDirectory=[string]$os.WindowsDirectory
+                                            })
+                                        }
+                                        'ComputerSystem' {
+                                            $cs = Get-CimInstance Win32_ComputerSystem -ErrorAction Stop
+                                            if (-not $cs) { throw 'No computer system data returned.' }
+                                            $records.Add([pscustomobject]@{
+                                                Check=$check;QueryStatus='Available'
+                                                Manufacturer=[string]$cs.Manufacturer; Model=[string]$cs.Model
+                                                Domain=[string]$cs.Domain; PartOfDomain=[bool]$cs.PartOfDomain
+                                                SystemType=[string]$cs.SystemType
+                                                LogicalProcessors=$cs.NumberOfLogicalProcessors
+                                                PhysicalProcessors=$cs.NumberOfProcessors
+                                                HypervisorPresent=$cs.HypervisorPresent
+                                            })
+                                        }
+                                        'Processor' {
+                                            $cpu = @(Get-CimInstance Win32_Processor -ErrorAction Stop)
+                                            if (-not $cpu.Count) { throw 'No processor data returned.' }
+                                            foreach($p in $cpu) {
+                                                $records.Add([pscustomobject]@{
+                                                    Check=$check;QueryStatus='Available'
+                                                    Name=[string]$p.Name; Cores=$p.NumberOfCores
+                                                    LogicalProcessors=$p.NumberOfLogicalProcessors
+                                                    MaxClockSpeedMHz=$p.MaxClockSpeed
+                                                })
+                                            }
+                                        }
+                                        'BIOS' {
+                                            $bios = Get-CimInstance Win32_BIOS -ErrorAction Stop
+                                            if (-not $bios) { throw 'No BIOS data returned.' }
+                                            $records.Add([pscustomobject]@{
+                                                Check=$check;QueryStatus='Available'
+                                                Manufacturer=[string]$bios.Manufacturer
+                                                SMBIOSBIOSVersion=[string]$bios.SMBIOSBIOSVersion
+                                                ReleaseDate=$bios.ReleaseDate
+                                            })
+                                        }
+                                        'PendingRestart' {
+                                            $found = New-Object System.Collections.Generic.List[string]
+                                            foreach($key in @(
+                                                'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Component Based Servicing\RebootPending',
+                                                'HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Auto Update\RebootRequired'
+                                            )) { if(Test-Path -LiteralPath $key -ErrorAction Stop) { $found.Add($key.Split('\')[-1]) } }
+                                            $session = Get-ItemProperty -LiteralPath 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager' -Name PendingFileRenameOperations -ErrorAction SilentlyContinue
+                                            if ($null -ne $session -and @($session.PendingFileRenameOperations).Count -gt 0) { $found.Add('PendingFileRenameOperations') }
+                                            $records.Add([pscustomobject]@{
+                                                Check=$check;QueryStatus='Available'
+                                                IndicatorsPresent=($found.Count -gt 0);Indicators=($found -join ', ')
+                                                Note='Selected indicators only; no indicator does not establish that a reboot is unnecessary.'
+                                            })
+                                        }
+                                        'SecureBoot' {
+                                            if (-not (Get-Command Confirm-SecureBootUEFI -ErrorAction SilentlyContinue)) { throw 'Secure Boot query command unavailable.' }
+                                            $enabled = Confirm-SecureBootUEFI -ErrorAction Stop
+                                            $records.Add([pscustomobject]@{Check=$check;QueryStatus='Available';Enabled=[bool]$enabled})
+                                        }
+                                        'TPM' {
+                                            if (-not (Get-Command Get-Tpm -ErrorAction SilentlyContinue)) { throw 'TPM query command unavailable.' }
+                                            $tpm = Get-Tpm -ErrorAction Stop
+                                            if ($null -eq $tpm -or $null -eq $tpm.TpmPresent -or
+                                                $null -eq $tpm.TpmReady -or $null -eq $tpm.TpmEnabled) {
+                                                throw 'TPM query returned incomplete status values.'
+                                            }
+                                            $records.Add([pscustomobject]@{
+                                                Check=$check;QueryStatus='Available'
+                                                TpmPresent=$tpm.TpmPresent;TpmReady=$tpm.TpmReady
+                                                TpmEnabled=$tpm.TpmEnabled
+                                            })
+                                        }
+                                    }
+                                } catch {
+                                    $failures.Add($check)
+                                    $records.Add([pscustomobject]@{Check=$check;QueryStatus='Unavailable';Error=[string]$_.Exception.Message})
+                                }
+                            }
+                            $records
+    }
+    $job = $null
     try {
-        $process=Start-Process -FilePath $exe -ArgumentList @('/s',$Target) -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -ErrorAction Stop
-        if (-not $process.WaitForExit($TimeoutSeconds*1000)) {
-            try { $process.Kill() } catch { }
-            throw ('UNAVAILABLE: Remote systeminfo timed out after '+$TimeoutSeconds+' seconds. The target may be inaccessible or the remote query may be stalled; access denial is not established.')
+        $job = Start-Job -ScriptBlock {
+            param($ComputerName,$RemoteBlock)
+            Invoke-Command -ComputerName $ComputerName -ScriptBlock $RemoteBlock -ErrorAction Stop
+        } -ArgumentList $Target,$remote -ErrorAction Stop
+        if (-not (Wait-Job -Job $job -Timeout $TimeoutSeconds -ErrorAction Stop)) {
+            throw ("UNAVAILABLE: Remote System diagnostic timed out after {0} seconds. The remote query may be stalled or inaccessible; access denial is not established." -f $TimeoutSeconds)
         }
-        $result=if(Test-Path -LiteralPath $stdout){[IO.File]::ReadAllText($stdout)}else{''}
-        $errorText=if(Test-Path -LiteralPath $stderr){[IO.File]::ReadAllText($stderr)}else{''}
-        if($process.ExitCode -ne 0) {
-            throw ('Remote systeminfo failed (exit '+$process.ExitCode+'): '+($result+' '+$errorText).Trim())
+        $rows = @(Receive-Job -Job $job -ErrorAction Stop)
+        if (-not $rows.Count) { return 'System diagnostic returned no results.' }
+        $output = New-Object System.Collections.Generic.List[string]
+        $available = @($rows | Where-Object { $_.QueryStatus -eq 'Available' }).Count
+        $state = if ($available -eq 0) { 'UNAVAILABLE' } elseif ($available -lt $rows.Count) { 'PARTIAL / UNAVAILABLE' } else { 'SUCCESS' }
+        $output.Add("Collection status: $state")
+        $output.Add("Evidence source: target CIM / registry (Default current-user WinRM)")
+        foreach ($record in $rows) {
+            $output.Add('')
+            $output.Add(($record | Select-Object * -ExcludeProperty PSComputerName,RunspaceId,PSShowComputerName | Format-List | Out-String -Width 220).TrimEnd())
         }
-        return $result
+        return ($output -join "`r`n")
     } finally {
-        if($null -ne $process) { $process.Dispose() }
-        foreach($file in @($stdout,$stderr)){Remove-Item -LiteralPath $file -Force -ErrorAction SilentlyContinue}
+        if ($null -ne $job) {
+            if ($job.State -eq 'Running') { Stop-Job -Job $job -ErrorAction SilentlyContinue }
+            Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+        }
     }
 }
 function Get-ReportSection([string]$Section,[string]$Target) {
     try {
         switch ($Section) {
             'System' {
-                return (Invoke-ToolkitBoundedRemoteSystemInfo -Target $Target -TimeoutSeconds 30)
+                return (Invoke-ToolkitBoundedRemoteSystemDiagnostic -Target $Target -TimeoutSeconds 30)
             }
             'Network' {
                 $out = New-Object System.Collections.Generic.List[string]
