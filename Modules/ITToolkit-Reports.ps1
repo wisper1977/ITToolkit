@@ -622,9 +622,10 @@ function Invoke-ToolkitBoundedRemoteSystemDiagnostic {
     $job = $null
     try {
         $job = Start-Job -ScriptBlock {
-            param($ComputerName,$RemoteBlock)
-            Invoke-Command -ComputerName $ComputerName -ScriptBlock $RemoteBlock -ErrorAction Stop
-        } -ArgumentList $Target,$remote -ErrorAction Stop
+            param($ComputerName,$RemoteText)
+            $remoteBlock = [scriptblock]::Create([string]$RemoteText)
+            Invoke-Command -ComputerName $ComputerName -ScriptBlock $remoteBlock -ErrorAction Stop
+        } -ArgumentList $Target,$remote.ToString() -ErrorAction Stop
         if (-not (Wait-Job -Job $job -Timeout $TimeoutSeconds -ErrorAction Stop)) {
             throw ("UNAVAILABLE: Remote System diagnostic timed out after {0} seconds. The remote query may be stalled or inaccessible; access denial is not established." -f $TimeoutSeconds)
         }
