@@ -107,6 +107,10 @@ function Get-ToolkitMixedDiagnostic {
                                 'TPM' {
                                     if (-not (Get-Command Get-Tpm -ErrorAction SilentlyContinue)) { throw 'TPM query command unavailable.' }
                                     $tpm = Get-Tpm -ErrorAction Stop
+                                    if ($null -eq $tpm -or $null -eq $tpm.TpmPresent -or
+                                        $null -eq $tpm.TpmReady -or $null -eq $tpm.TpmEnabled) {
+                                        throw 'TPM query returned incomplete status values.'
+                                    }
                                     $records.Add([pscustomobject]@{
                                         Check=$check;QueryStatus='Available'
                                         TpmPresent=$tpm.TpmPresent;TpmReady=$tpm.TpmReady
