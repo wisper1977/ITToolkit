@@ -63,6 +63,7 @@ function Convert-ClassicDispatcherResult {
             'SharePermissions' { if ($item.Share) { $heading='Share: '+[string]$item.Share } }
             'Health' { if ($item.Check) { $heading='Check: '+[string]$item.Check } }
             'Network' { if ($item.Check) { $heading='Check: '+[string]$item.Check } }
+            'Hardware' { if ($item.RecordType) { $heading='Hardware: '+[string]$item.RecordType+' ('+[string]$index+')' } }
         }
         if (-not $heading) { $heading = 'Record {0}' -f $index }
         $lines.Add($heading)
