@@ -899,8 +899,8 @@ function Get-ToolkitLocalDiagnostic {
                 })
             }
         }
-        if ($result.StatusCategory -eq 'Partial') {
-            # Preserve a partial result when a per-log failure was recorded.
+        if ($result.StatusCategory -in @('Partial','Unavailable')) {
+            # Preserve evidence-aware System and per-check statuses.
         } elseif (@($result.Data).Count -gt 0) {
             $result.Status = 'SUCCESS'
             $result.StatusCategory = 'Success'
