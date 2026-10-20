@@ -944,7 +944,7 @@ function Get-ToolkitLocalDiagnostic {
             }
         }
         if ($result.StatusCategory -eq 'Partial' -or
-            ($Section -in @('System','Hardware') -and $result.StatusCategory -eq 'Unavailable' -and @($result.Data).Count -gt 0)) {
+            ($Section -in @('System','Hardware') -and $result.StatusCategory -eq 'Unavailable' -and @($result.Data).Count -gt 0 -and @($result.Data | Where-Object { $_.QueryStatus -eq 'Available' }).Count -eq 0)) {
             # Preserve explicitly calculated partial or all-unavailable System evidence.
         } elseif (@($result.Data).Count -gt 0) {
             $result.Status = 'SUCCESS'
