@@ -903,8 +903,9 @@ function Get-ToolkitLocalDiagnostic {
                 })
             }
         }
-        if ($result.StatusCategory -in @('Partial','Unavailable')) {
-            # Preserve evidence-aware System and per-check statuses.
+        if ($result.StatusCategory -eq 'Partial' -or
+            ($Section -eq 'System' -and $result.StatusCategory -eq 'Unavailable' -and @($result.Data).Count -gt 0)) {
+            # Preserve explicitly calculated partial or all-unavailable System evidence.
         } elseif (@($result.Data).Count -gt 0) {
             $result.Status = 'SUCCESS'
             $result.StatusCategory = 'Success'
