@@ -662,48 +662,88 @@ function Get-ToolkitLocalDiagnostic {
                 # Zero local accounts returned is NoData; query success alone is not account-health assessment.
             }
             'Hardware' {
-                # Read-only direct CIM inventory. Preserve type per record for report clarity.
-                $computer = Get-CimInstance -ClassName Win32_ComputerSystem -ErrorAction Stop
-                $bios = Get-CimInstance -ClassName Win32_BIOS -ErrorAction Stop
-                $processors = @(Get-CimInstance -ClassName Win32_Processor -ErrorAction Stop)
-                $drives = @(Get-CimInstance -ClassName Win32_DiskDrive -ErrorAction Stop)
-                if ($null -eq $computer -or $null -eq $bios -or $processors.Count -eq 0) {
-                    throw 'Essential local hardware inventory was missing; collection cannot be verified.'
-                }
+                # Independent, read-only component inventory. Missing optional evidence
+                # is reported explicitly instead of discarding successful checks.
                 $records = New-Object System.Collections.Generic.List[object]
-                $records.Add([pscustomobject]@{
-                    RecordType = 'Computer'
-                    Manufacturer = [string]$computer.Manufacturer
-                    Model = [string]$computer.Model
-                    TotalPhysicalMemoryGB = if ($null -ne $computer.TotalPhysicalMemory) {
-                        [math]::Round([double]$computer.TotalPhysicalMemory / 1GB, 2)
-                    } else { $null }
-                })
-                $records.Add([pscustomobject]@{
-                    RecordType = 'BIOS'
-                    Manufacturer = [string]$bios.Manufacturer
-                    SMBIOSBIOSVersion = [string]$bios.SMBIOSBIOSVersion
-                    SerialNumber = [string]$bios.SerialNumber
-                })
-                foreach ($cpu in $processors) {
-                    $records.Add([pscustomobject]@{
-                        RecordType = 'Processor'
-                        Name = [string]$cpu.Name
-                        NumberOfCores = $cpu.NumberOfCores
-                        NumberOfLogicalProcessors = $cpu.NumberOfLogicalProcessors
-                    })
-                }
-                foreach ($disk in $drives) {
-                    $records.Add([pscustomobject]@{
-                        RecordType = 'PhysicalDisk'
-                        Model = [string]$disk.Model
-                        InterfaceType = [string]$disk.InterfaceType
-                        SizeGB = if ($null -ne $disk.Size) {
-                            [math]::Round([double]$disk.Size / 1GB, 2)
-                        } else { $null }
-                    })
+                foreach ($entry in @(
+                    @('Computer','Win32_ComputerSystem'),
+                    @('BIOS','Win32_BIOS'),
+                    @('Processor','Win32_Processor'),
+                    @('MemoryModule','Win32_PhysicalMemory'),
+                    @('PhysicalDisk','Win32_DiskDrive'),
+                    @('Enclosure','Win32_SystemEnclosure')
+                )) {
+                    $kind = [string]$entry[0]
+                    try {
+                        $items = @(Get-CimInstance -ClassName ([string]$entry[1]) -ErrorAction Stop)
+                        if (-not $items.Count) { throw ('No ' + $kind + ' records returned.') }
+                        foreach ($item in $items) {
+                            switch ($kind) {
+                                'Computer' {
+                                    $records.Add([pscustomobject]@{
+                                        RecordType=$kind; QueryStatus='Available'
+                                        Name=[string]$item.Name;Manufacturer=[string]$item.Manufacturer;Model=[string]$item.Model
+                                        TotalPhysicalMemoryGB=if($null -ne $item.TotalPhysicalMemory){[math]::Round([double]$item.TotalPhysicalMemory/1GB,2)}else{$null}
+                                        PhysicalProcessors=$item.NumberOfProcessors;LogicalProcessors=$item.NumberOfLogicalProcessors
+                                        HypervisorPresent=$item.HypervisorPresent
+                                        Note='Hypervisor presence alone does not establish that this system is a virtual machine.'
+                                    })
+                                }
+                                'BIOS' {
+                                    $records.Add([pscustomobject]@{
+                                        RecordType=$kind;QueryStatus='Available'
+                                        Manufacturer=[string]$item.Manufacturer;SMBIOSBIOSVersion=[string]$item.SMBIOSBIOSVersion
+                                        SerialNumber=[string]$item.SerialNumber;ReleaseDate=$item.ReleaseDate
+                                    })
+                                }
+                                'Processor' {
+                                    $records.Add([pscustomobject]@{
+                                        RecordType=$kind;QueryStatus='Available';Name=[string]$item.Name
+                                        NumberOfCores=$item.NumberOfCores;NumberOfLogicalProcessors=$item.NumberOfLogicalProcessors
+                                        MaxClockSpeedMHz=$item.MaxClockSpeed
+                                    })
+                                }
+                                'MemoryModule' {
+                                    $records.Add([pscustomobject]@{
+                                        RecordType=$kind;QueryStatus='Available';BankLabel=[string]$item.BankLabel
+                                        DeviceLocator=[string]$item.DeviceLocator;Manufacturer=[string]$item.Manufacturer
+                                        CapacityGB=if($null -ne $item.Capacity){[math]::Round([double]$item.Capacity/1GB,2)}else{$null}
+                                        SpeedMHz=$item.Speed;ConfiguredClockSpeedMHz=$item.ConfiguredClockSpeed
+                                        PartNumber=[string]$item.PartNumber
+                                    })
+                                }
+                                'PhysicalDisk' {
+                                    $records.Add([pscustomobject]@{
+                                        RecordType=$kind;QueryStatus='Available';Model=[string]$item.Model
+                                        InterfaceType=[string]$item.InterfaceType;MediaType=[string]$item.MediaType
+                                        SizeGB=if($null -ne $item.Size){[math]::Round([double]$item.Size/1GB,2)}else{$null}
+                                        Index=$item.Index
+                                        Note='Windows-reported physical disk properties; interface and media classifications may be virtualized.'
+                                    })
+                                }
+                                'Enclosure' {
+                                    $records.Add([pscustomobject]@{
+                                        RecordType=$kind;QueryStatus='Available';Manufacturer=[string]$item.Manufacturer
+                                        Model=[string]$item.Model;ChassisTypes=(@($item.ChassisTypes) -join ', ')
+                                        SerialNumber=[string]$item.SerialNumber
+                                        Note='Chassis information is reported by firmware or hypervisor.'
+                                    })
+                                }
+                            }
+                        }
+                    } catch {
+                        $records.Add([pscustomobject]@{
+                            RecordType=$kind;QueryStatus='Unavailable';Error=[string]$_.Exception.Message
+                        })
+                    }
                 }
                 $result.Data = @($records.ToArray())
+                $available = @($result.Data | Where-Object { $_.QueryStatus -eq 'Available' }).Count
+                if ($available -eq 0) {
+                    $result.Status = 'UNAVAILABLE';$result.StatusCategory='Unavailable'
+                } elseif ($available -lt @($result.Data).Count) {
+                    $result.Status='PARTIAL / UNAVAILABLE';$result.StatusCategory='Partial'
+                }
             }
             'Network' {
                 # Keep the v1.27 IP-enabled fields for report compatibility; add
@@ -904,7 +944,7 @@ function Get-ToolkitLocalDiagnostic {
             }
         }
         if ($result.StatusCategory -eq 'Partial' -or
-            ($Section -eq 'System' -and $result.StatusCategory -eq 'Unavailable' -and @($result.Data).Count -gt 0)) {
+            ($Section -in @('System','Hardware') -and $result.StatusCategory -eq 'Unavailable' -and @($result.Data).Count -gt 0)) {
             # Preserve explicitly calculated partial or all-unavailable System evidence.
         } elseif (@($result.Data).Count -gt 0) {
             $result.Status = 'SUCCESS'
